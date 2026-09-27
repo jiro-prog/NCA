@@ -88,7 +88,11 @@ def table(items):
     return "\n".join(lines)
 
 
+FAILED_LOSS = 0.05   # 成長後の平均ロスがこれ以上（空のキャンバスは約0.08）なら、花になっていないので図から外す
+
+
 def plot(items, path):
+    items = [it for it in items if metrics(it["s"])["after_loss"] < FAILED_LOSS]
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -140,7 +144,9 @@ def main():
     out = HERE / "report"
     out.mkdir(exist_ok=True)
     md = ["# Step 1 の比較", "", "`step1_concentration/compare.py` が作る表。数字は各 run の summary.json から。",
-          "「傷→0.005」は、傷のあとロスが 0.005 以下に戻るまでのステップ数と、そこまでの発火数。", "",
+          "「傷→0.005」は、傷のあとロスが 0.005 以下に戻るまでのステップ数と、そこまでの発火数。",
+          f"図（pareto.png）には、成長後の平均ロスが {FAILED_LOSS} 未満のもの（花になったもの）だけを載せる。"
+          "空のキャンバスのロスは約0.08。", "",
           table(items), ""]
     (out / "compare.md").write_text("\n".join(md), encoding="utf-8")
     plot(items, out / "pareto.png")
