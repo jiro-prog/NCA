@@ -166,10 +166,11 @@ def evaluate(model, h, w, device, out_dir, title, fire_rate, period=None, stop_a
 
 
 def git_commit():
+    """今のコミットと、追跡中のファイルに未コミットの変更があるか（学習を始める前に呼ぶ）"""
     try:
         h = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
                            capture_output=True, text=True).stdout.strip()
-        dirty = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT,
+        dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT,
                                capture_output=True, text=True).stdout.strip()
         return h + ("+未コミットの変更あり" if dirty else "")
     except OSError:
@@ -208,6 +209,7 @@ def main():
     else:
         run = ROOT / "baseline" / "runs" / (args.name or f"seed{args.seed}_{policy_name}")
         run.mkdir(parents=True, exist_ok=True)
+        commit = git_commit()
         seed_everything(args.seed)
         nca.FIRE_RATE = args.fire_rate
         if dev == "cuda":
@@ -222,7 +224,7 @@ def main():
         cfg = dict(
             seed=args.seed, iters=args.iters, fire_rate=args.fire_rate, period=args.period,
             policy=policy_name, device=torch.cuda.get_device_name(0) if dev == "cuda" else "cpu",
-            torch=torch.__version__, git=git_commit(), train_seconds=round(time.time() - t0, 1),
+            torch=torch.__version__, git=commit, train_seconds=round(time.time() - t0, 1),
             peak_vram_mb=round(torch.cuda.max_memory_allocated() / 2**20) if dev == "cuda" else None,
         )
         (run / "config.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")

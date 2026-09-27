@@ -9,6 +9,7 @@
 モデルごとの違いは「アダプター」に閉じ込める。アダプターは次を持つ：
     reset()              -> state                      種から始める
     step(state)          -> state, {"fires", "alive"}  1ステップ進める（どちらも (1,1,H,W) の bool）
+                                                       "extra"（数値の dict）があれば、それも記録に足す
     rgba(state)          -> (1,4,H,W)                  見た目のチャンネル
     damage(state, hole)  -> state                      hole（(H,W) の bool）のセルを殺す
 """
@@ -71,6 +72,7 @@ def run_protocol(adapter, target, proto=Protocol(), collect_frames=True):
             t=t, phase=proto.phase(t),
             loss=float(((rgba - target) ** 2).mean().item()),
             fires=n_fire, alive=int(alive.sum().item()), cum_fires=cum,
+            **ev.get("extra", {}),
         ))
         acc += fires[0, 0].float()
         if collect_frames and ((t + 1) % proto.frame_every == 0 or t in keep):

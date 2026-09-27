@@ -1,0 +1,45 @@
+iter     0  loss 0.08257
+iter   100  loss 0.05325
+iter   200  loss 0.03322
+iter   300  loss 0.01675
+iter   400  loss 0.01599
+iter   500  loss 0.01844
+iter   600  loss 0.01475
+iter   700  loss 0.01307
+iter   800  loss 0.01076
+iter   900  loss 0.01018
+iter  1000  loss 0.00935
+iter  1100  loss 0.01000
+iter  1200  loss 0.00993
+iter  1300  loss 0.00715
+iter  1400  loss 0.00643
+iter  1500  loss 0.00931
+iter  1600  loss 0.00426
+iter  1700  loss 0.00402
+iter  1800  loss 0.00522
+iter  1900  loss 0.00511
+iter  2000  loss 0.00454
+iter  2100  loss 0.00334
+iter  2200  loss 0.00323
+iter  2300  loss 0.00264
+iter  2400  loss 0.00263
+iter  2500  loss 0.00258
+iter  2600  loss 0.00124
+iter  2700  loss 0.00214
+iter  2800  loss 0.00136
+iter  2900  loss 0.00141
+iter  3000  loss 0.00133
+iter  3100  loss 0.00142
+iter  3200  loss 0.00107
+iter  3300  loss 0.00097
+iter  3400  loss 0.00101
+iter  3500  loss 0.00112
+iter  3600  loss 0.00088
+iter  3700  loss 0.00107
+iter  3800  loss 0.00132
+iter  3900  loss 0.00087
+iter  3999  loss 0.00059
+学習 586.6 秒, VRAM最大 2992 MB
+評価        : 成長 ロス末0.0008 発火81669 | 維持 ロス平均0.0008 発火/ステップ463.7 | 回復 ロス末0.0016 発火178785 | 総発火353186
+時限停止    : 成長 ロス末0.0008 発火81669 | 維持 ロス平均0.0008 発火/ステップ0.0 | 回復 ロス末0.0223 発火0 | 総発火81669
+出力: C:\Users\sojir\projects\NCA\baseline\runs\seed0_dice0.5

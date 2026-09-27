@@ -1,0 +1,70 @@
+{
+  "protocol": {
+    "total_steps": 800,
+    "grow_end": 200,
+    "damage_at": 400,
+    "damage_center": [
+      35.5,
+      44.5
+    ],
+    "damage_radius": 8.0,
+    "frame_every": 4,
+    "thresholds": [
+      0.02,
+      0.01,
+      0.005,
+      0.002
+    ]
+  },
+  "total_fires": 81669,
+  "grow": {
+    "loss_mean": 0.017043830367620104,
+    "loss_end": 0.0007980953669175506,
+    "fires_total": 81669,
+    "fires_per_step": 408.345,
+    "fire_rate": 0.500800235471587,
+    "alive_mean": 815.385
+  },
+  "maintain": {
+    "loss_mean": 0.0007980953669175506,
+    "loss_end": 0.0007980953669175506,
+    "fires_total": 0,
+    "fires_per_step": 0.0,
+    "fire_rate": 0.0,
+    "alive_mean": 934.0
+  },
+  "recover": {
+    "loss_mean": 0.022294944152235985,
+    "loss_end": 0.022294944152235985,
+    "fires_total": 0,
+    "fires_per_step": 0.0,
+    "fire_rate": 0.0,
+    "alive_mean": 748.0
+  },
+  "damage_loss_peak": 0.022294944152235985,
+  "grow_first_hit": {
+    "0.02": {
+      "steps": 42,
+      "fires": 7779
+    },
+    "0.01": {
+      "steps": 47,
+      "fires": 9766
+    },
+    "0.005": {
+      "steps": 53,
+      "fires": 12240
+    },
+    "0.002": {
+      "steps": 59,
+      "fires": 14825
+    }
+  },
+  "recover_first_hit": {
+    "0.02": null,
+    "0.01": null,
+    "0.005": null,
+    "0.002": null
+  },
+  "recover_to_maintain": null
+}
