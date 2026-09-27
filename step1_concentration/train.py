@@ -86,7 +86,10 @@ def train(args, run, dev):
     pool = seed_state(h, w, POOL_SIZE)
 
     log = open(run / "train_log.csv", "w", encoding="utf-8", newline="")
-    log.write("iter,steps,loss,rgba_loss,fire_cost,fires,alive_cell_steps,fire_rate,seconds\n")
+    log.write("iter,steps,loss,rgba_loss,fire_cost,fires,alive_cell_steps,fire_rate,"
+              "x_absmax,c_max,d_mean,seconds\n")
+    if args.save_every:
+        (run / "checkpoints").mkdir(exist_ok=True)
     t0 = time.time()
     for i in range(args.iters):
         idx = random.sample(range(POOL_SIZE), BATCH)
@@ -115,8 +118,16 @@ def train(args, run, dev):
         pool_store(pool, idx, out)
 
         nf, na = int(n_fire.item()), int(n_alive.item())
+        with torch.no_grad():                   # 状態の大きさ（爆発の兆し）と、目覚ましの平均（眠り始めたか）
+            live = model.alive(out.x)
+            x_absmax = out.x.abs().max().item()
+            c_max = out.c.max().item()
+            d_mean = ((out.d * live).sum() / live.sum().clamp(min=1)).item()
         log.write(f"{i},{steps},{loss.item():.6g},{rgba_loss.item():.6g},{fire_cost.item():.6g},"
-                  f"{nf},{na},{nf / max(na, 1):.6f},{time.time() - t0:.1f}\n")
+                  f"{nf},{na},{nf / max(na, 1):.6f},{x_absmax:.4g},{c_max:.4g},{d_mean:.4f},"
+                  f"{time.time() - t0:.1f}\n")
+        if args.save_every and (i + 1) % args.save_every == 0:
+            torch.save(model.state_dict(), run / "checkpoints" / f"iter{i + 1}.pt")
         if i % 100 == 0 or i == args.iters - 1:
             log.flush()
             print(f"iter {i:5d}  rgba {rgba_loss.item():.5f}  発火率 {nf / max(na, 1):.3f}  "
@@ -181,6 +192,7 @@ def main():
     ap.add_argument("--iters", type=int, default=4000)
     ap.add_argument("--lam", type=float, default=0.01, help="発火のコストの重み λ")
     ap.add_argument("--checkpoint", type=int, default=1, help="1 なら勾配チェックポイントでVRAMを節約する")
+    ap.add_argument("--save-every", type=int, default=0, help="N回ごとに途中の重みを checkpoints/ に保存する")
     ap.add_argument("--name", default=None)
     ap.add_argument("--eval-only", default=None)
     ap.add_argument("--eval-seed", type=int, default=1000)
@@ -197,6 +209,7 @@ def main():
         run = HERE / "runs" / (args.name or f"seed{args.seed}_lam{args.lam:g}")
         run.mkdir(parents=True, exist_ok=True)
         cfg = dict(seed=args.seed, iters=args.iters, lam=args.lam, checkpoint=bool(args.checkpoint),
+                   save_every=args.save_every,
                    physio=Physio.to_dict(), git=git_commit(), torch=torch.__version__,
                    device=torch.cuda.get_device_name(0) if dev == "cuda" else "cpu")
         seed_everything(args.seed)
