@@ -1,3 +1,6 @@
 .venv/
 __pycache__/
 *.pyc
+/*.log
+# 評価のGIFは --eval-only で同じものを作り直せるので、gitには入れない
+*/runs/**/*.gif
