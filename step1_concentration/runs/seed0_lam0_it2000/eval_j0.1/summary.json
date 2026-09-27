@@ -16,46 +16,51 @@
       0.002
     ]
   },
-  "total_fires": 309608,
+  "total_fires": 415360,
   "grow": {
-    "loss_mean": 0.023270303858444096,
-    "loss_end": 0.010830325074493885,
-    "fires_total": 71844,
-    "fires_per_step": 359.22,
-    "fire_rate": 0.46121550224367824,
-    "alive_mean": 778.855
+    "loss_mean": 0.030791126848198472,
+    "loss_end": 0.018185311928391457,
+    "fires_total": 95205,
+    "fires_per_step": 476.025,
+    "fire_rate": 0.4773759740064382,
+    "alive_mean": 997.17,
+    "birth_fires_total": 1239,
+    "birth_share": 0.013014022372774539
   },
   "maintain": {
-    "loss_mean": 0.011005901196040214,
-    "loss_end": 0.011209848336875439,
-    "fires_total": 80556,
-    "fires_per_step": 402.78,
-    "fire_rate": 0.45754856298988983,
-    "alive_mean": 880.3
+    "loss_mean": 0.01832954158075154,
+    "loss_end": 0.018469078466296196,
+    "fires_total": 108672,
+    "fires_per_step": 543.36,
+    "fire_rate": 0.47596981389909643,
+    "alive_mean": 1141.585,
+    "birth_fires_total": 84,
+    "birth_share": 0.0007729681978798586
   },
   "recover": {
-    "loss_mean": 0.01559886076953262,
-    "loss_end": 0.015152350068092346,
-    "fires_total": 157208,
-    "fires_per_step": 393.02,
-    "fire_rate": 0.45789715896844396,
-    "alive_mean": 858.315
+    "loss_mean": 0.023311432688497006,
+    "loss_end": 0.022573377937078476,
+    "fires_total": 211483,
+    "fires_per_step": 528.7075,
+    "fire_rate": 0.47637529226790887,
+    "alive_mean": 1109.855,
+    "birth_fires_total": 317,
+    "birth_share": 0.0014989384489533437
   },
-  "damage_loss_peak": 0.02905973047018051,
+  "damage_loss_peak": 0.03873658552765846,
+  "birth_fires_total": 1640,
+  "birth_share": 0.003948382126348228,
   "grow_first_hit": {
     "0.02": {
-      "steps": 40,
-      "fires": 7134
+      "steps": 37,
+      "fires": 7048
     },
     "0.01": null,
     "0.005": null,
     "0.002": null
   },
   "recover_first_hit": {
-    "0.02": {
-      "steps": 23,
-      "fires": 8461
-    },
+    "0.02": null,
     "0.01": null,
     "0.005": null,
     "0.002": null

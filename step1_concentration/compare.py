@@ -69,6 +69,7 @@ def metrics(s):
         grow_end=s["grow"]["loss_end"], maint_fps=m["fires_per_step"], maint_loss=m["loss_mean"],
         rec_fires=r["fires_total"], rec_end=r["loss_end"],
         r005=hit.get("0.005"), r002=hit.get("0.002"),
+        birth_share=s.get("birth_share"),       # 誕生の発火（固定のルール）の割合。数えていない run は None
     )
 
 
@@ -77,12 +78,13 @@ def fmt_hit(h):
 
 
 def table(items):
-    lines = ["| 名前 | 総発火 | 成長期末ロス | 維持期 発火/ステップ | 維持期 平均ロス | 成長後 平均ロス | "
+    lines = ["| 名前 | 総発火 | うち誕生 | 成長期末ロス | 維持期 発火/ステップ | 維持期 平均ロス | 成長後 平均ロス | "
              "傷→0.005（ステップ / 発火） | 傷→0.002（ステップ / 発火） | 回復期 発火 | 800のロス |",
-             "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
+             "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
     for it in items:
         k = metrics(it["s"])
-        lines.append(f"| {it['label']} | {k['total_fires']:,} | {k['grow_end']:.5f} | {k['maint_fps']:.1f} | "
+        birth = "—" if k["birth_share"] is None else f"{k['birth_share']:.1%}"
+        lines.append(f"| {it['label']} | {k['total_fires']:,} | {birth} | {k['grow_end']:.5f} | {k['maint_fps']:.1f} | "
                      f"{k['maint_loss']:.5f} | {k['after_loss']:.5f} | {fmt_hit(k['r005'])} | {fmt_hit(k['r002'])} | "
                      f"{k['rec_fires']:,} | {k['rec_end']:.5f} |")
     return "\n".join(lines)

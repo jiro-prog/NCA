@@ -79,7 +79,7 @@ def replace_sample(s, j, new):
 def train(args, run, dev):
     target = make_target().to(dev)
     _, h, w = target.shape
-    model = ConcentrationNCA().to(dev)
+    model = ConcentrationNCA(see_c=bool(args.see_c)).to(dev)
     model.use_checkpoint = args.checkpoint
     opt = torch.optim.Adam(model.parameters(), lr=2e-3)
     sched = torch.optim.lr_scheduler.MultiStepLR(opt, [2000], gamma=0.1)
@@ -92,7 +92,7 @@ def train(args, run, dev):
 
     log = open(run / "train_log.csv", "w", encoding="utf-8", newline="")
     log.write("iter,steps,loss,rgba_loss,fire_cost,fires,alive_cell_steps,fire_rate,"
-              "x_absmax,c_max,d_mean,jitter,seconds\n")
+              "x_absmax,c_max,d_mean,jitter,birth_fires,seconds\n")
     if args.save_every:
         (run / "checkpoints").mkdir(exist_ok=True)
     t0 = time.time()
@@ -110,7 +110,7 @@ def train(args, run, dev):
 
         steps = random.randint(64, 96)
         jp = float(torch.rand((), generator=gen_p)) * args.train_jitter if args.train_jitter > 0 else 0.0
-        out, fire_sum, n_fire, n_alive = model(s, steps, jitter_p=jp, generator=gen_mask)
+        out, fire_sum, n_fire, n_alive, n_birth = model(s, steps, jitter_p=jp, generator=gen_mask)
         rgba_loss = ((out.x[:, :4] - target) ** 2).mean()
         fire_cost = fire_sum.sum() / (BATCH * h * w * steps)
         loss = rgba_loss + args.lam * fire_cost
@@ -131,6 +131,7 @@ def train(args, run, dev):
             d_mean = ((out.d * live).sum() / live.sum().clamp(min=1)).item()
         log.write(f"{i},{steps},{loss.item():.6g},{rgba_loss.item():.6g},{fire_cost.item():.6g},"
                   f"{nf},{na},{nf / max(na, 1):.6f},{x_absmax:.4g},{c_max:.4g},{d_mean:.4f},{jp:.3f},"
+                  f"{int(n_birth.item())},"
                   f"{time.time() - t0:.1f}\n")
         if args.save_every and (i + 1) % args.save_every == 0:
             torch.save(model.state_dict(), run / "checkpoints" / f"iter{i + 1}.pt")
@@ -155,9 +156,10 @@ class Step1Adapter:
         return seed_state(self.h, self.w, 1, self.device)
 
     def step(self, s):
-        s, _, hard, pre = self.model.step(s, self.jitter_p, self.gen)
+        s, _, hard, pre, birth = self.model.step(s, self.jitter_p, self.gen)
         n = pre.sum().clamp(min=1)
-        extra = dict(d_mean=float((s.d * pre).sum() / n), c_mean=float((s.c * pre).sum() / n))
+        extra = dict(birth_fires=int(birth.sum().item()),
+                     d_mean=float((s.d * pre).sum() / n), c_mean=float((s.c * pre).sum() / n))
         return s, {"fires": hard, "alive": pre, "extra": extra}
 
     def rgba(self, s):
@@ -199,6 +201,7 @@ def main():
     ap.add_argument("--lam", type=float, default=0.01, help="発火のコストの重み λ")
     ap.add_argument("--checkpoint", type=int, default=1, help="1 なら勾配チェックポイントでVRAMを節約する")
     ap.add_argument("--save-every", type=int, default=0, help="N回ごとに途中の重みを checkpoints/ に保存する")
+    ap.add_argument("--see-c", type=int, default=0, help="1 なら濃度もルールのネットの入力に入れる（古い設定）")
     ap.add_argument("--train-jitter", type=float, default=0.0,
                     help="学習時のタイミングのずれ。毎回、発火が1ステップ遅れる確率を 0〜この値 から選ぶ")
     ap.add_argument("--name", default=None)
@@ -211,7 +214,7 @@ def main():
     if args.eval_only:
         run = Path(args.eval_only)
         cfg = json.loads((run / "config.json").read_text(encoding="utf-8"))
-        model = ConcentrationNCA().to(dev)
+        model = ConcentrationNCA(see_c=cfg.get("see_c", True)).to(dev)     # 古い run は濃度を入力に入れていた
         weights = run / "checkpoints" / f"{args.ckpt}.pt" if args.ckpt else run / "model.pt"
         model.load_state_dict(torch.load(weights, map_location=dev))
         h, w = make_target().shape[-2:]
@@ -219,7 +222,7 @@ def main():
         run = HERE / "runs" / (args.name or f"seed{args.seed}_lam{args.lam:g}")
         run.mkdir(parents=True, exist_ok=True)
         cfg = dict(seed=args.seed, iters=args.iters, lam=args.lam, checkpoint=bool(args.checkpoint),
-                   save_every=args.save_every, train_jitter=args.train_jitter,
+                   save_every=args.save_every, train_jitter=args.train_jitter, see_c=bool(args.see_c),
                    physio=Physio.to_dict(), git=git_commit(), torch=torch.__version__,
                    device=torch.cuda.get_device_name(0) if dev == "cuda" else "cpu")
         seed_everything(args.seed)
@@ -236,7 +239,7 @@ def main():
     tag = f"_{args.ckpt}" if args.ckpt else ""
     for jp in JITTERS:
         title = f"step1 λ={cfg['lam']:g} seed{cfg['seed']}{tag} ずれ{jp:g}"
-        s = evaluate(model, h, w, dev, run / f"eval{tag}_j{jp:g}", title, jp, args.eval_seed, pictures=(jp == 0))
+        s = evaluate(model, h, w, dev, run / f"eval{tag}_j{jp:g}", title, jp, args.eval_seed)
         print(f"ずれ{jp:<4g}:", brief(s))
     print("出力:", run)
 

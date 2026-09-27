@@ -16,34 +16,45 @@
       0.002
     ]
   },
-  "total_fires": 7394,
+  "total_fires": 375030,
   "grow": {
-    "loss_mean": 0.08226415887475014,
-    "loss_end": 0.08227100223302841,
-    "fires_total": 1123,
-    "fires_per_step": 5.615,
-    "fire_rate": 0.22609220857660559,
-    "alive_mean": 24.835
+    "loss_mean": 0.03296877141110599,
+    "loss_end": 0.018480705097317696,
+    "fires_total": 84846,
+    "fires_per_step": 424.23,
+    "fire_rate": 0.43550970126270405,
+    "alive_mean": 974.1,
+    "birth_fires_total": 1247,
+    "birth_share": 0.014697216132758173
   },
   "maintain": {
-    "loss_mean": 0.08228615038096905,
-    "loss_end": 0.08231080323457718,
-    "fires_total": 1163,
-    "fires_per_step": 5.815,
-    "fire_rate": 0.22365384615384615,
-    "alive_mean": 26.0
+    "loss_mean": 0.018421056549996137,
+    "loss_end": 0.018482446670532227,
+    "fires_total": 98623,
+    "fires_per_step": 493.115,
+    "fire_rate": 0.43529095017831293,
+    "alive_mean": 1132.84,
+    "birth_fires_total": 76,
+    "birth_share": 0.0007706113178467497
   },
   "recover": {
-    "loss_mean": 0.08160493794828654,
-    "loss_end": 0.08156416565179825,
-    "fires_total": 5108,
-    "fires_per_step": 12.77,
-    "fire_rate": 0.2764966980621414,
-    "alive_mean": 46.185
+    "loss_mean": 0.023964652991853654,
+    "loss_end": 0.023453306406736374,
+    "fires_total": 191561,
+    "fires_per_step": 478.9025,
+    "fire_rate": 0.43499023570552703,
+    "alive_mean": 1100.95,
+    "birth_fires_total": 316,
+    "birth_share": 0.0016496050866303684
   },
-  "damage_loss_peak": 0.08227033913135529,
+  "damage_loss_peak": 0.038722433149814606,
+  "birth_fires_total": 1639,
+  "birth_share": 0.004370317041303362,
   "grow_first_hit": {
-    "0.02": null,
+    "0.02": {
+      "steps": 40,
+      "fires": 6379
+    },
     "0.01": null,
     "0.005": null,
     "0.002": null
@@ -54,9 +65,6 @@
     "0.005": null,
     "0.002": null
   },
-  "recover_to_maintain": {
-    "steps": 1,
-    "fires": 11
-  },
+  "recover_to_maintain": null,
   "jitter_p": 0.3
 }

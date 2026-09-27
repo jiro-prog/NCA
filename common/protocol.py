@@ -100,9 +100,11 @@ def summarize(rows, proto=Protocol()):
     loss = np.array([r["loss"] for r in rows])
     fires = np.array([r["fires"] for r in rows], dtype=np.int64)
     alive = np.array([r["alive"] for r in rows], dtype=np.int64)
+    # 誕生の発火（固定のルールによる発火）を別枠で数えているモデルなら、その数と割合も出す
+    birth = np.array([r["birth_fires"] for r in rows], dtype=np.int64) if "birth_fires" in rows[0] else None
 
     def window(a, b):
-        return dict(
+        w = dict(
             loss_mean=float(loss[a:b].mean()),
             loss_end=float(loss[b - 1]),
             fires_total=int(fires[a:b].sum()),
@@ -110,6 +112,10 @@ def summarize(rows, proto=Protocol()):
             fire_rate=float(fires[a:b].sum() / max(alive[a:b].sum(), 1)),   # 生きているセルあたり
             alive_mean=float(alive[a:b].mean()),
         )
+        if birth is not None:
+            w["birth_fires_total"] = int(birth[a:b].sum())
+            w["birth_share"] = float(birth[a:b].sum() / max(fires[a:b].sum(), 1))
+        return w
 
     s = dict(
         protocol=proto.to_dict(),
@@ -119,6 +125,9 @@ def summarize(rows, proto=Protocol()):
         recover=window(proto.damage_at, proto.total_steps),
         damage_loss_peak=float(loss[proto.damage_at:proto.damage_at + 20].max()),
     )
+    if birth is not None:
+        s["birth_fires_total"] = int(birth.sum())
+        s["birth_share"] = float(birth.sum() / max(fires.sum(), 1))
     # 成長：ロスが初めて τ 以下になったステップ数と、そこまでの総発火数
     s["grow_first_hit"] = {str(tau): _first_hit(loss, fires, 0, proto.damage_at, tau)
                            for tau in proto.thresholds}

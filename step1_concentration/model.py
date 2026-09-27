@@ -17,8 +17,12 @@ Step 1：濃度発火の花。
   d が大きいとすぐまた発火し、小さい（1−減衰=0.1 未満）と自分からは二度と起きない
 - 変化イベント e：各セルの1ステップの状態の変化の大きさ（チャンネル平均の絶対値、上限1）。
   傷や死による変化も含む。近所はこれを次のステップで受け取る。発火しても変化しなければ、近所は起こさない
-- 誕生：生死判定で新しく「生きている」側に入ったセルは、しきい値ぶんの一押しをもらう（最初の1回は必ず発火）
+- 誕生（固定のルール）：生死判定で新しく「生きている」側に入ったセルは、しきい値ぶんの一押しをもらう。
+  生まれて最初の発火は「誕生の発火」として別枠で数える
 - 結合は、近所1つのイベント（上限1）だけではしきい値に届かない強さにする（興奮性媒質の暴走を防ぐ）
+- 濃度をネットの入力に入れるか（see_c）：既定は入れない（2026-09-28 の判断。EXPERIMENTS.md）
+- タイミングのずれ（評価・学習用の環境のゆらぎ）：発火が確率 p でちょうど1ステップ遅れる。
+  遅れた発火は、次のステップで濃度に関係なく必ず起きる（持ち越し）。持ち越しをさらに遅らせることはない
 """
 from typing import NamedTuple
 
@@ -48,21 +52,24 @@ class Physio:
 
 
 class State(NamedTuple):
-    x: torch.Tensor     # (B,16,H,W) 状態
-    c: torch.Tensor     # (B,1,H,W)  濃度
-    d: torch.Tensor     # (B,1,H,W)  目覚まし（発火したときにネットが書き、毎ステップ濃度に足される）
-    r: torch.Tensor     # (B,1,H,W)  不応期の残りステップ
-    e: torch.Tensor     # (B,1,H,W)  直前のステップの変化の大きさ（次のステップで近所が受け取る）
-    was: torch.Tensor   # (B,1,H,W)  直前のステップで生きていたか（誕生の判定用、bool）
+    x: torch.Tensor      # (B,16,H,W) 状態
+    c: torch.Tensor      # (B,1,H,W)  濃度
+    d: torch.Tensor      # (B,1,H,W)  目覚まし（発火したときにネットが書き、毎ステップ濃度に足される）
+    r: torch.Tensor      # (B,1,H,W)  不応期の残りステップ
+    e: torch.Tensor      # (B,1,H,W)  直前のステップの変化の大きさ（次のステップで近所が受け取る）
+    was: torch.Tensor    # (B,1,H,W)  直前のステップで生きていたか（誕生の判定用、bool）
+    fresh: torch.Tensor  # (B,1,H,W)  生まれてから、まだ発火していないか（誕生の発火を数える、bool）
+    pend: torch.Tensor   # (B,1,H,W)  前のステップで遅らされた発火が、このステップに持ち越されているか（bool）
 
 
 def seed_state(h, w, n=1, device="cpu"):
     """中央の1セルだけ、α以降を1にした種。濃度などはすべて0。
-    種とその近所は最初のステップで「誕生」するので、必ず発火する"""
+    種とその近所は最初のステップで「誕生」するので、必ず発火する（ずれで1ステップ遅れることはある）"""
     x = torch.zeros(n, CHANNELS, h, w, device=device)
     x[:, 3:, h // 2, w // 2] = 1.0
     z = torch.zeros(n, 1, h, w, device=device)
-    return State(x, z.clone(), z.clone(), z.clone(), z.clone(), torch.zeros_like(z, dtype=torch.bool))
+    b = torch.zeros_like(z, dtype=torch.bool)
+    return State(x, z.clone(), z.clone(), z.clone(), z.clone(), b.clone(), b.clone(), b.clone())
 
 
 def damage_state(s, hole, j=0):
@@ -72,18 +79,20 @@ def damage_state(s, hole, j=0):
     s.e[j, 0][hole] = change
     for t in (s.x, s.c, s.d, s.r):
         t[j][:, hole] = 0
-    s.was[j, 0][hole] = False
+    for t in (s.was, s.fresh, s.pend):
+        t[j, 0][hole] = False
     return s
 
 
 class ConcentrationNCA(nn.Module):
-    def __init__(self):
+    def __init__(self, see_c=False):
         super().__init__()
-        n_in = CHANNELS + 1     # 状態＋濃度（濃度は近所から見える）
+        self.see_c = see_c
+        n_in = CHANNELS + (1 if see_c else 0)      # see_c なら状態＋濃度、でなければ状態だけ（元祖と同じ48次元）
         ident = torch.tensor([[0, 0, 0], [0, 1, 0], [0, 0, 0]], dtype=torch.float32)
         sobel_x = torch.tensor([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=torch.float32) / 8
         k = torch.stack([ident, sobel_x, sobel_x.T]).repeat(n_in, 1, 1).unsqueeze(1)
-        self.register_buffer("kernel", k)                                 # (51, 1, 3, 3)
+        self.register_buffer("kernel", k)                                 # (n_in*3, 1, 3, 3)
         nbr8 = torch.ones(3, 3)
         nbr8[1, 1] = 0
         self.register_buffer("nbr8", nbr8.view(1, 1, 3, 3))               # 近所8つの合計
@@ -106,28 +115,35 @@ class ConcentrationNCA(nn.Module):
         return F.max_pool2d(x[:, 3:4], 3, stride=1, padding=1) > 0.1
 
     def step(self, s, jitter_p=0.0, generator=None):
-        """1ステップ進める。戻り値：新しい状態、発火（学習用のストレートスルー）、発火（0/1）、生きているセル"""
+        """1ステップ進める。
+        戻り値：新しい状態、発火（学習用のストレートスルー）、発火（0/1）、生きているセル、誕生の発火（0/1）"""
         P = Physio
-        x, c, d, r, e, was = s
+        x, c, d, r, e, was, fresh, pend = s
         pre = self.alive(x)
         pre_f = pre.float()
 
         # ---- 毎ステップの安い計算（固定の式、全セル） ----
-        newborn = (pre & ~was).float()
+        newborn = pre & ~was
+        fresh = (fresh | newborn) & pre
         nbr = F.conv2d(e, self.nbr8, padding=1)
-        c = (P.leak * c + d + P.kappa * nbr + P.theta * newborn) * pre_f
+        c = (P.leak * c + d + P.kappa * nbr + P.theta * newborn.float()) * pre_f
         can = pre & (r <= 0)
         u = c - P.theta
-        hard = (u >= 0) & can
-        if jitter_p > 0:        # 評価用：環境のゆらぎで、発火が確率 p で1ステップ遅れる
-            late = torch.rand(hard.shape, device=hard.device, generator=generator) < jitter_p
-            hard = hard & ~late
+        due = ((u >= 0) | pend) & can                  # しきい値を超えた、または前のステップから持ち越した発火
+        if jitter_p > 0:        # 環境のゆらぎ：発火が確率 p でちょうど1ステップ遅れる（持ち越しは遅らせない）
+            late = (torch.rand(due.shape, device=due.device, generator=generator) < jitter_p) & ~pend
+            hard = due & ~late
+            pend = due & late
+        else:
+            hard = due
+            pend = torch.zeros_like(due)
+        birth = hard & fresh                            # 生まれて最初の発火
         hard_f = hard.float()
         soft = (0.5 + 0.5 * P.beta * u / (1 + P.beta * u.abs())) * can.float()
-        fire = hard_f + soft - soft.detach()    # 順方向は 0/1、逆伝播は soft の傾き
+        fire = hard_f + soft - soft.detach()            # 順方向は 0/1、逆伝播は soft の傾き
 
         # ---- 発火したセルだけの高い計算（出力は発火したセルの分以外すべて捨てる） ----
-        z = torch.cat([x, c], 1)
+        z = torch.cat([x, c], 1) if self.see_c else x
         if self.use_checkpoint and z.requires_grad:
             y = checkpoint(self._net, z, use_reentrant=False)
         else:
@@ -139,20 +155,26 @@ class ConcentrationNCA(nn.Module):
         # ---- 発火したあと・生死判定（固定の式） ----
         c = c * (1 - hard_f)                                                # リセット（勾配は流さない）
         r = torch.where(hard, torch.full_like(r, P.refractory), (r - 1).clamp(min=0))
-        live = (pre & self.alive(x_new)).float()
+        fresh = fresh & ~hard
+        live_b = pre & self.alive(x_new)
+        live = live_b.float()
         x_new = x_new * live
         c, d, r = c * live, d * live, r * live
+        fresh, pend = fresh & live_b, pend & live_b
         e = (x_new - x).abs().mean(1, keepdim=True).clamp(max=P.e_max)
-        return State(x_new, c, d, r, e, pre), fire, hard, pre
+        return State(x_new, c, d, r, e, pre, fresh, pend), fire, hard, pre, birth
 
     def forward(self, s, steps, jitter_p=0.0, generator=None):
-        """steps ステップ進める。戻り値：最後の状態、サンプルごとの発火数（学習用）、発火数、生きているセル×ステップ数"""
+        """steps ステップ進める。
+        戻り値：最後の状態、サンプルごとの発火数（学習用）、発火数、生きているセル×ステップ数、誕生の発火数"""
         fire_sum = 0
         n_fire = torch.zeros((), dtype=torch.long, device=s.x.device)
         n_alive = torch.zeros((), dtype=torch.long, device=s.x.device)
+        n_birth = torch.zeros((), dtype=torch.long, device=s.x.device)
         for _ in range(steps):
-            s, fire, hard, pre = self.step(s, jitter_p, generator)
+            s, fire, hard, pre, birth = self.step(s, jitter_p, generator)
             fire_sum = fire_sum + fire.sum(dim=(1, 2, 3))
             n_fire += hard.sum()
             n_alive += pre.sum()
-        return s, fire_sum, n_fire, n_alive
+            n_birth += birth.sum()
+        return s, fire_sum, n_fire, n_alive, n_birth
