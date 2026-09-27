@@ -1,0 +1,22 @@
+{
+  "seed": 0,
+  "iters": 2000,
+  "lam": 0.0,
+  "checkpoint": true,
+  "save_every": 100,
+  "train_jitter": 0.3,
+  "physio": {
+    "leak": 0.9,
+    "theta": 1.0,
+    "kappa": 0.4,
+    "e_max": 1.0,
+    "refractory": 1,
+    "beta": 5.0,
+    "d_bias": 2.0
+  },
+  "git": "21d62a2+未コミットの変更あり",
+  "torch": "2.11.0+cu128",
+  "device": "NVIDIA GeForce RTX 4060 Ti",
+  "train_seconds": 865.6,
+  "peak_vram_mb": 1072
+}

@@ -53,8 +53,9 @@ def collect():
                     continue
                 s = load(ev / "summary.json")
                 jp = s.get("jitter_p", 0.0)
-                items.append(dict(group="step1" if jp == 0 else "step1_jitter",
-                                  label=f"濃度 λ={cfg['lam']:g}" + (f" ずれ{jp:g}" if jp else ""),
+                tj = cfg.get("train_jitter", 0.0)
+                label = f"濃度 λ={cfg['lam']:g}" + (f" 学習ずれ〜{tj:g}" if tj else "") + (f" 評価ずれ{jp:g}" if jp else "")
+                items.append(dict(group="step1" if jp == 0 else "step1_jitter", label=label,
                                   key=cfg["lam"], run=f"{d.name}/{ev.name}", s=s))
     return items
 
