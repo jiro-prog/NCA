@@ -85,9 +85,14 @@ def train(args, run, dev):
     sched = torch.optim.lr_scheduler.MultiStepLR(opt, [2000], gamma=0.1)
     pool = seed_state(h, w, POOL_SIZE)
 
+    # 学習時のタイミングのずれ（環境のゆらぎ）。毎回、確率 p を 0〜train_jitter から選ぶ
+    gen_p = torch.Generator().manual_seed(args.seed + 1)
+    gen_mask = torch.Generator(device=dev)
+    gen_mask.manual_seed(args.seed + 2)
+
     log = open(run / "train_log.csv", "w", encoding="utf-8", newline="")
     log.write("iter,steps,loss,rgba_loss,fire_cost,fires,alive_cell_steps,fire_rate,"
-              "x_absmax,c_max,d_mean,seconds\n")
+              "x_absmax,c_max,d_mean,jitter,seconds\n")
     if args.save_every:
         (run / "checkpoints").mkdir(exist_ok=True)
     t0 = time.time()
@@ -104,7 +109,8 @@ def train(args, run, dev):
                 s = damage_state(s, damage_hole(h, w, (cy, cx), 8, dev), j)
 
         steps = random.randint(64, 96)
-        out, fire_sum, n_fire, n_alive = model(s, steps)
+        jp = float(torch.rand((), generator=gen_p)) * args.train_jitter if args.train_jitter > 0 else 0.0
+        out, fire_sum, n_fire, n_alive = model(s, steps, jitter_p=jp, generator=gen_mask)
         rgba_loss = ((out.x[:, :4] - target) ** 2).mean()
         fire_cost = fire_sum.sum() / (BATCH * h * w * steps)
         loss = rgba_loss + args.lam * fire_cost
@@ -124,7 +130,7 @@ def train(args, run, dev):
             c_max = out.c.max().item()
             d_mean = ((out.d * live).sum() / live.sum().clamp(min=1)).item()
         log.write(f"{i},{steps},{loss.item():.6g},{rgba_loss.item():.6g},{fire_cost.item():.6g},"
-                  f"{nf},{na},{nf / max(na, 1):.6f},{x_absmax:.4g},{c_max:.4g},{d_mean:.4f},"
+                  f"{nf},{na},{nf / max(na, 1):.6f},{x_absmax:.4g},{c_max:.4g},{d_mean:.4f},{jp:.3f},"
                   f"{time.time() - t0:.1f}\n")
         if args.save_every and (i + 1) % args.save_every == 0:
             torch.save(model.state_dict(), run / "checkpoints" / f"iter{i + 1}.pt")
@@ -193,8 +199,11 @@ def main():
     ap.add_argument("--lam", type=float, default=0.01, help="発火のコストの重み λ")
     ap.add_argument("--checkpoint", type=int, default=1, help="1 なら勾配チェックポイントでVRAMを節約する")
     ap.add_argument("--save-every", type=int, default=0, help="N回ごとに途中の重みを checkpoints/ に保存する")
+    ap.add_argument("--train-jitter", type=float, default=0.0,
+                    help="学習時のタイミングのずれ。毎回、発火が1ステップ遅れる確率を 0〜この値 から選ぶ")
     ap.add_argument("--name", default=None)
     ap.add_argument("--eval-only", default=None)
+    ap.add_argument("--ckpt", default=None, help="--eval-only と一緒に使う。checkpoints/ の途中の重みを評価する（例 iter1300）")
     ap.add_argument("--eval-seed", type=int, default=1000)
     args = ap.parse_args()
     dev = "cuda" if torch.cuda.is_available() else "cpu"
@@ -203,13 +212,14 @@ def main():
         run = Path(args.eval_only)
         cfg = json.loads((run / "config.json").read_text(encoding="utf-8"))
         model = ConcentrationNCA().to(dev)
-        model.load_state_dict(torch.load(run / "model.pt", map_location=dev))
+        weights = run / "checkpoints" / f"{args.ckpt}.pt" if args.ckpt else run / "model.pt"
+        model.load_state_dict(torch.load(weights, map_location=dev))
         h, w = make_target().shape[-2:]
     else:
         run = HERE / "runs" / (args.name or f"seed{args.seed}_lam{args.lam:g}")
         run.mkdir(parents=True, exist_ok=True)
         cfg = dict(seed=args.seed, iters=args.iters, lam=args.lam, checkpoint=bool(args.checkpoint),
-                   save_every=args.save_every,
+                   save_every=args.save_every, train_jitter=args.train_jitter,
                    physio=Physio.to_dict(), git=git_commit(), torch=torch.__version__,
                    device=torch.cuda.get_device_name(0) if dev == "cuda" else "cpu")
         seed_everything(args.seed)
@@ -223,9 +233,10 @@ def main():
         torch.save(model.state_dict(), run / "model.pt")
         print(f"学習 {cfg['train_seconds']} 秒, VRAM最大 {cfg['peak_vram_mb']} MB")
 
+    tag = f"_{args.ckpt}" if args.ckpt else ""
     for jp in JITTERS:
-        title = f"step1 λ={cfg['lam']:g} seed{cfg['seed']} ずれ{jp:g}"
-        s = evaluate(model, h, w, dev, run / f"eval_j{jp:g}", title, jp, args.eval_seed, pictures=(jp == 0))
+        title = f"step1 λ={cfg['lam']:g} seed{cfg['seed']}{tag} ずれ{jp:g}"
+        s = evaluate(model, h, w, dev, run / f"eval{tag}_j{jp:g}", title, jp, args.eval_seed, pictures=(jp == 0))
         print(f"ずれ{jp:<4g}:", brief(s))
     print("出力:", run)
 
