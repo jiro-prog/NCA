@@ -114,9 +114,12 @@ class ConcentrationNCA(nn.Module):
     def alive(x):
         return F.max_pool2d(x[:, 3:4], 3, stride=1, padding=1) > 0.1
 
-    def step(self, s, jitter_p=0.0, generator=None):
+    def step(self, s, jitter_p=0.0, generator=None, hardness=1.0):
         """1ステップ進める。
-        戻り値：新しい状態、発火（学習用のストレートスルー）、発火（0/1）、生きているセル、誕生の発火（0/1）"""
+        hardness（学習の初期だけ使う）：1 なら発火は 0/1（ストレートスルー推定）。1 未満なら、順方向の発火を
+        hardness×(0/1) ＋ (1−hardness)×(なめらかな量) にして、発火していないセルも少しだけ更新する。
+        濃度のリセット・不応期・誕生などの仕組みは、いつも 0/1 で動く。評価はいつも hardness=1
+        戻り値：新しい状態、発火（学習用）、発火（0/1）、生きているセル、誕生の発火（0/1）"""
         P = Physio
         x, c, d, r, e, was, fresh, pend = s
         pre = self.alive(x)
@@ -141,6 +144,8 @@ class ConcentrationNCA(nn.Module):
         hard_f = hard.float()
         soft = (0.5 + 0.5 * P.beta * u / (1 + P.beta * u.abs())) * can.float()
         fire = hard_f + soft - soft.detach()            # 順方向は 0/1、逆伝播は soft の傾き
+        if hardness < 1.0:                              # 学習の初期：なめらかな量と混ぜる（逆伝播の傾きは同じ）
+            fire = hardness * fire + (1.0 - hardness) * soft
 
         # ---- 発火したセルだけの高い計算（出力は発火したセルの分以外すべて捨てる） ----
         z = torch.cat([x, c], 1) if self.see_c else x
@@ -164,7 +169,7 @@ class ConcentrationNCA(nn.Module):
         e = (x_new - x).abs().mean(1, keepdim=True).clamp(max=P.e_max)
         return State(x_new, c, d, r, e, pre, fresh, pend), fire, hard, pre, birth
 
-    def forward(self, s, steps, jitter_p=0.0, generator=None):
+    def forward(self, s, steps, jitter_p=0.0, generator=None, hardness=1.0):
         """steps ステップ進める。
         戻り値：最後の状態、サンプルごとの発火数（学習用）、発火数、生きているセル×ステップ数、誕生の発火数"""
         fire_sum = 0
@@ -172,7 +177,7 @@ class ConcentrationNCA(nn.Module):
         n_alive = torch.zeros((), dtype=torch.long, device=s.x.device)
         n_birth = torch.zeros((), dtype=torch.long, device=s.x.device)
         for _ in range(steps):
-            s, fire, hard, pre, birth = self.step(s, jitter_p, generator)
+            s, fire, hard, pre, birth = self.step(s, jitter_p, generator, hardness)
             fire_sum = fire_sum + fire.sum(dim=(1, 2, 3))
             n_fire += hard.sum()
             n_alive += pre.sum()

@@ -92,7 +92,7 @@ def train(args, run, dev):
 
     log = open(run / "train_log.csv", "w", encoding="utf-8", newline="")
     log.write("iter,steps,loss,rgba_loss,fire_cost,fires,alive_cell_steps,fire_rate,"
-              "x_absmax,c_max,d_mean,jitter,birth_fires,seconds\n")
+              "x_absmax,c_max,d_mean,jitter,birth_fires,hardness,seconds\n")
     if args.save_every:
         (run / "checkpoints").mkdir(exist_ok=True)
     t0 = time.time()
@@ -110,7 +110,10 @@ def train(args, run, dev):
 
         steps = random.randint(64, 96)
         jp = float(torch.rand((), generator=gen_p)) * args.train_jitter if args.train_jitter > 0 else 0.0
-        out, fire_sum, n_fire, n_alive, n_birth = model(s, steps, jitter_p=jp, generator=gen_mask)
+        # 発火の固さ：anneal_iters 回かけて、なめらかな量（0）から 0/1（1）へ上げる。0 なら最初から 0/1
+        hardness = min(1.0, i / args.anneal_iters) if args.anneal_iters > 0 else 1.0
+        out, fire_sum, n_fire, n_alive, n_birth = model(s, steps, jitter_p=jp, generator=gen_mask,
+                                                        hardness=hardness)
         rgba_loss = ((out.x[:, :4] - target) ** 2).mean()
         fire_cost = fire_sum.sum() / (BATCH * h * w * steps)
         loss = rgba_loss + args.lam * fire_cost
@@ -131,7 +134,7 @@ def train(args, run, dev):
             d_mean = ((out.d * live).sum() / live.sum().clamp(min=1)).item()
         log.write(f"{i},{steps},{loss.item():.6g},{rgba_loss.item():.6g},{fire_cost.item():.6g},"
                   f"{nf},{na},{nf / max(na, 1):.6f},{x_absmax:.4g},{c_max:.4g},{d_mean:.4f},{jp:.3f},"
-                  f"{int(n_birth.item())},"
+                  f"{int(n_birth.item())},{hardness:.3f},"
                   f"{time.time() - t0:.1f}\n")
         if args.save_every and (i + 1) % args.save_every == 0:
             torch.save(model.state_dict(), run / "checkpoints" / f"iter{i + 1}.pt")
@@ -202,6 +205,8 @@ def main():
     ap.add_argument("--checkpoint", type=int, default=1, help="1 なら勾配チェックポイントでVRAMを節約する")
     ap.add_argument("--save-every", type=int, default=0, help="N回ごとに途中の重みを checkpoints/ に保存する")
     ap.add_argument("--see-c", type=int, default=0, help="1 なら濃度もルールのネットの入力に入れる（古い設定）")
+    ap.add_argument("--anneal-iters", type=int, default=0,
+                    help="学習の初期に発火をなめらかな量として扱い、この回数かけて 0/1 に近づける（0 なら最初から 0/1）")
     ap.add_argument("--d-bias", type=float, default=None,
                     help="目覚ましの初期値のずらし。目覚ましは sigmoid(ネットの出力＋d_bias)。既定は Physio の値（2.0）")
     ap.add_argument("--train-jitter", type=float, default=0.0,
@@ -229,6 +234,7 @@ def main():
             Physio.d_bias = args.d_bias
         cfg = dict(seed=args.seed, iters=args.iters, lam=args.lam, checkpoint=bool(args.checkpoint),
                    save_every=args.save_every, train_jitter=args.train_jitter, see_c=bool(args.see_c),
+                   anneal_iters=args.anneal_iters,
                    physio=Physio.to_dict(), git=git_commit(), torch=torch.__version__,
                    device=torch.cuda.get_device_name(0) if dev == "cuda" else "cpu")
         seed_everything(args.seed)

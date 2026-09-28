@@ -125,6 +125,35 @@ def test_see_c_switch():
     assert ConcentrationNCA(see_c=True).kernel.shape[0] == (CHANNELS + 1) * 3
 
 
+def test_hardness_one_is_unchanged():
+    """固さ1（既定）の動きは、固さを渡さないときとビット単位で同じ"""
+    m = busy_model()
+    s = all_alive_state(c=0.7, d=0.4)
+    with torch.no_grad():
+        a = m.step(s)
+        b = m.step(s, hardness=1.0)
+    for x, y in zip(a[0], b[0]):
+        assert torch.equal(x, y)
+    assert torch.equal(a[1], b[1]) and torch.equal(a[2], b[2])
+
+
+def test_soft_phase_moves_quiet_cells_but_not_the_machinery():
+    """固さ0（学習の初期）では、発火していないセルも少し更新される。ただし不応期のセルは動かず、
+    濃度のリセットや不応期は 0/1 の発火で決まる"""
+    m = busy_model()
+    s = all_alive_state(c=0.5)                          # 誰もしきい値に届いていない
+    r = torch.zeros(1, 1, H, W)
+    r[0, 0, :, :W // 2] = 1                             # 左半分は不応期
+    s = s._replace(r=r)
+    with torch.no_grad():
+        new, _, hard, pre, _ = m.step(s, hardness=0.0)
+    assert hard.sum() == 0                              # 0/1 では誰も発火していない
+    moved = (new.x - s.x).abs().sum(1, keepdim=True) > 0
+    assert moved[0, 0, :, W // 2 + 1:].all()            # 右半分（不応期でない）は少し動く
+    assert not moved[0, 0, :, :W // 2].any()            # 不応期のセルは動かない
+    assert torch.all(new.r[0, 0, :, W // 2:] == 0)      # 0/1 で発火していないので、不応期にはならない
+
+
 def test_gradient_flows():
     """ロスと発火のコストから、ルールのネットの全パラメータに有限の勾配が流れる"""
     m = busy_model()
