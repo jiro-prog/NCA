@@ -43,6 +43,10 @@ RUN_NAMES = {
     "seed1_lam0.01_tj0.3_db0_tanh_warm": "Run G（シード1）",
     "seed0_lam0.01_tj0.3_db0_tanh_mean": "Run H",
     "seed1_lam0.01_tj0.3_db0_tanh_mean": "Run H（シード1）",
+    "seed0_lam0_tj0.3_db0_tanh": "Run I",
+    "seed1_lam0_tj0.3_db0_tanh": "Run I（シード1）",
+    "seed2_lam0_tj0.3_db0_tanh": "Run I（シード2）",
+    "seed3_lam0_tj0.3_db0_tanh": "Run I（シード3）",
 }
 
 
