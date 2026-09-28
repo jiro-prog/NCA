@@ -1,0 +1,87 @@
+{
+  "protocol": {
+    "total_steps": 800,
+    "grow_end": 200,
+    "damage_at": 400,
+    "damage_center": [
+      35.5,
+      44.5
+    ],
+    "damage_radius": 8.0,
+    "frame_every": 4,
+    "thresholds": [
+      0.02,
+      0.01,
+      0.005,
+      0.002
+    ]
+  },
+  "total_fires": 226525,
+  "grow": {
+    "loss_mean": 0.030023010851000436,
+    "loss_end": 0.0019319690763950348,
+    "fires_total": 53731,
+    "fires_per_step": 268.655,
+    "fire_rate": 0.3442463304780149,
+    "alive_mean": 780.415,
+    "birth_fires_total": 1161,
+    "birth_share": 0.021607638048798644
+  },
+  "maintain": {
+    "loss_mean": 0.0019055768678663298,
+    "loss_end": 0.0019360032165423036,
+    "fires_total": 59119,
+    "fires_per_step": 295.595,
+    "fire_rate": 0.3229646382702088,
+    "alive_mean": 915.255,
+    "birth_fires_total": 312,
+    "birth_share": 0.005277491161893807
+  },
+  "recover": {
+    "loss_mean": 0.00836757754557766,
+    "loss_end": 0.007769550662487745,
+    "fires_total": 113675,
+    "fires_per_step": 284.1875,
+    "fire_rate": 0.3255838598621764,
+    "alive_mean": 872.855,
+    "birth_fires_total": 1142,
+    "birth_share": 0.010046184297338905
+  },
+  "damage_loss_peak": 0.02306435815989971,
+  "birth_fires_total": 2615,
+  "birth_share": 0.011543979693190596,
+  "after_loss": 0.006213577319673883,
+  "heal_fraction": 0.7228586224467808,
+  "grow_first_hit": {
+    "0.02": {
+      "steps": 48,
+      "fires": 7797
+    },
+    "0.01": {
+      "steps": 53,
+      "fires": 9405
+    },
+    "0.005": {
+      "steps": 59,
+      "fires": 11342
+    },
+    "0.002": {
+      "steps": 78,
+      "fires": 17203
+    }
+  },
+  "recover_first_hit": {
+    "0.02": {
+      "steps": 8,
+      "fires": 2132
+    },
+    "0.01": {
+      "steps": 33,
+      "fires": 9356
+    },
+    "0.005": null,
+    "0.002": null
+  },
+  "recover_to_maintain": null,
+  "jitter_p": 0.1
+}
