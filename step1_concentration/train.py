@@ -202,6 +202,8 @@ def main():
     ap.add_argument("--checkpoint", type=int, default=1, help="1 なら勾配チェックポイントでVRAMを節約する")
     ap.add_argument("--save-every", type=int, default=0, help="N回ごとに途中の重みを checkpoints/ に保存する")
     ap.add_argument("--see-c", type=int, default=0, help="1 なら濃度もルールのネットの入力に入れる（古い設定）")
+    ap.add_argument("--d-bias", type=float, default=None,
+                    help="目覚ましの初期値のずらし。目覚ましは sigmoid(ネットの出力＋d_bias)。既定は Physio の値（2.0）")
     ap.add_argument("--train-jitter", type=float, default=0.0,
                     help="学習時のタイミングのずれ。毎回、発火が1ステップ遅れる確率を 0〜この値 から選ぶ")
     ap.add_argument("--name", default=None)
@@ -214,6 +216,8 @@ def main():
     if args.eval_only:
         run = Path(args.eval_only)
         cfg = json.loads((run / "config.json").read_text(encoding="utf-8"))
+        for k, v in cfg.get("physio", {}).items():      # 学習したときの固定の定数（d_bias など）に戻す
+            setattr(Physio, k, v)
         model = ConcentrationNCA(see_c=cfg.get("see_c", True)).to(dev)     # 古い run は濃度を入力に入れていた
         weights = run / "checkpoints" / f"{args.ckpt}.pt" if args.ckpt else run / "model.pt"
         model.load_state_dict(torch.load(weights, map_location=dev))
@@ -221,6 +225,8 @@ def main():
     else:
         run = HERE / "runs" / (args.name or f"seed{args.seed}_lam{args.lam:g}")
         run.mkdir(parents=True, exist_ok=True)
+        if args.d_bias is not None:
+            Physio.d_bias = args.d_bias
         cfg = dict(seed=args.seed, iters=args.iters, lam=args.lam, checkpoint=bool(args.checkpoint),
                    save_every=args.save_every, train_jitter=args.train_jitter, see_c=bool(args.see_c),
                    physio=Physio.to_dict(), git=git_commit(), torch=torch.__version__,
