@@ -308,7 +308,10 @@
   - `viz.py`：見た目と発火を並べたGIF、コマを抜き出したコンタクトシート、ロスと発火の推移のグラフ
   - `seeding.py`：シード固定（cuDNN・cuBLASも決定的に）
 - `baseline/run_baseline.py`：元祖を包んで学習・評価する。ヌル対照（`--fire-rate`、`--period`、時限停止）もここから
-- `step1_concentration/`：濃度発火の花（`model.py`、`train.py`、`test_accounting.py`、`compare.py`）
+- `step1_concentration/`：濃度発火の花（`model.py`、`train.py`、`test_accounting.py`、`compare.py`、`criteria.py`、`graduation.py`）
+- `step2_attention/`：注意（波とノイズ）。`DESIGN.md`（設計書）、`world.py`（世界：位相の履歴で v 列/ステップの平面波、
+  位相をつなげたまま周期を変える、右下のノイズ区域、見せない周期を除いた周期の引き方）、`test_world.py`（世界のテスト13件）、
+  `precheck/`（実装前の1セルの模擬）。セル（`model.py`）は書き換え方と σ の追いかけ方が決まってから
 - 各 run の出力は `*/runs/<名前>/`。GIFはgitに入れない（`--eval-only` で同じものを作り直せる）
 
 ### `baseline/nca.py`（改造しない）
