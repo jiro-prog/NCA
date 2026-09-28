@@ -54,9 +54,13 @@ def collect():
                 s = load(ev / "summary.json")
                 jp = s.get("jitter_p", 0.0)
                 tj = cfg.get("train_jitter", 0.0)
-                label = f"濃度 λ={cfg['lam']:g}" + (f" 学習ずれ〜{tj:g}" if tj else "") + (f" 評価ずれ{jp:g}" if jp else "")
+                old = "see_c" not in cfg        # 2026-09-28 の修正より前の run：濃度を入力に入れ、ずれにバグがあった
+                label = (f"濃度 λ={cfg['lam']:g}" + (" 濃度入力あり" if cfg.get("see_c", True) else "")
+                         + (f" 学習ずれ〜{tj:g}" + ("（バグのあるずれ）" if old else "") if tj else "")
+                         + (f" 評価ずれ{jp:g}" if jp else ""))
                 items.append(dict(group="step1" if jp == 0 else "step1_jitter", label=label,
-                                  key=cfg["lam"], run=f"{d.name}/{ev.name}", s=s))
+                                  short=label.replace("濃度 ", "").split(" 評価ずれ")[0] if jp == 0 else f"ずれ{jp:g}",
+                                  key=cfg["lam"], run=f"{d.name}/{ev.name}", model=d.name, s=s))
     return items
 
 
@@ -112,6 +116,11 @@ def plot(items, path):
              ("rec_fires", "rec_end", "傷：回復期（400〜800）の発火数", "800ステップ目のロス")]
     for ax, (xk, yk, xt, yt) in zip(axes, views):
         ax.set_facecolor(viz.SURFACE)
+        # 同じモデルの「ずれなし」と「ずれあり」を細い線でつなぐ（ずれでどれだけ動くか）
+        for it in [i for i in items if i["group"] == "step1"]:
+            for jt in [j for j in items if j["group"] == "step1_jitter" and j.get("model") == it["model"]]:
+                a, b = metrics(it["s"]), metrics(jt["s"])
+                ax.plot([a[xk], b[xk]], [a[yk], b[yk]], color=viz.AXIS, linewidth=0.8, zorder=0)
         for g, st in style.items():
             pts = sorted([it for it in items if it["group"] == g], key=lambda it: it["key"])
             if not pts:
@@ -124,8 +133,8 @@ def plot(items, path):
             ax.scatter(xs, ys, s=48, marker=st["marker"], facecolor=face, edgecolor=st["color"],
                        linewidth=1.5, zorder=3, label=st["name"])
             for x, y, it in zip(xs, ys, pts):
-                ax.annotate(it["label"], (x, y), xytext=(5, 4), textcoords="offset points",
-                            fontsize=8, color=viz.INK_2)
+                ax.annotate(it.get("short", it["label"]), (x, y), xytext=(5, 4), textcoords="offset points",
+                            fontsize=7 if g == "step1_jitter" else 8, color=viz.INK_2)
         ax.set_yscale("log")
         ax.set_xlabel(xt, color=viz.INK_2, fontsize=9)
         ax.set_title(yt, loc="left", fontsize=10, color=viz.INK)

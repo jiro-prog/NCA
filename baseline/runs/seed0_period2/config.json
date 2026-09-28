@@ -1,0 +1,12 @@
+{
+  "seed": 0,
+  "iters": 4000,
+  "fire_rate": 0.5,
+  "period": 2,
+  "policy": "period2",
+  "device": "NVIDIA GeForce RTX 4060 Ti",
+  "torch": "2.11.0+cu128",
+  "git": "6d92397",
+  "train_seconds": 597.5,
+  "peak_vram_mb": 2992
+}
