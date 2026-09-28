@@ -55,7 +55,9 @@ def collect():
                 jp = s.get("jitter_p", 0.0)
                 tj = cfg.get("train_jitter", 0.0)
                 old = "see_c" not in cfg        # 2026-09-28 の修正より前の run：濃度を入力に入れ、ずれにバグがあった
+                db = cfg.get("physio", {}).get("d_bias", 2.0)
                 label = (f"濃度 λ={cfg['lam']:g}" + (" 濃度入力あり" if cfg.get("see_c", True) else "")
+                         + (f" d_bias={db:g}" if db != 2.0 else "")
                          + (f" 学習ずれ〜{tj:g}" + ("（バグのあるずれ）" if old else "") if tj else "")
                          + (f" 評価ずれ{jp:g}" if jp else ""))
                 items.append(dict(group="step1" if jp == 0 else "step1_jitter", label=label,
