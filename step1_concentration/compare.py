@@ -35,6 +35,10 @@ RUN_NAMES = {
     "seed0_lam0.01_tj0.3_db0_mean": "Run E",
     "seed1_lam0_tj0.3_noc_it2000": "Run A（シード1）",
     "seed1_lam0_tj0.3_seec_it2000": "Run D（シード1）",
+    "seed0_lam0.01_tj0.3_db0_tanh": "Run F",
+    "seed0_lam0.01_tj0.3_db0_seec": "Run C'",
+    "seed1_lam0.01_tj0.3_db0_tanh": "Run F（シード1）",
+    "seed1_lam0.01_tj0.3_db0_seec": "Run C'（シード1）",
 }
 
 

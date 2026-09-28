@@ -19,6 +19,7 @@ Step 1：濃度発火の花を学習して、3期のプロトコル（成長・�
     checkpoints/ --save-every ごとの途中の重み
 """
 import argparse
+import collections
 import json
 import random
 import shutil
@@ -95,10 +96,14 @@ def train(args, run, dev):
 
     log = open(run / "train_log.csv", "w", encoding="utf-8", newline="")
     log.write("iter,steps,loss,rgba_loss,fire_cost,fires,alive_cell_steps,fire_rate,"
-              "x_absmax,c_max,d_mean,jitter,birth_fires,hardness,seconds\n")
+              "x_absmax,c_max,d_mean,jitter,birth_fires,hardness,lam,seconds\n")
     if args.save_every:
         (run / "checkpoints").mkdir(exist_ok=True)
     keeper = BestKeeper(run, args.val_jitter, args.keep_max_loss, args.keep_min_heal) if args.val_every else None
+    # λ のウォームアップ（既定はオフ）：見た目のロスの直近 window 回の平均が lam_warmup_loss を下回ったら
+    # （花が育つようになったら）、そこから lam_warmup_iters 回かけて λ を 0 から args.lam まで上げる。それまでは λ=0
+    recent = collections.deque(maxlen=args.lam_warmup_window)
+    info = dict(lam_warmup_trigger=None)
     t0 = time.time()
     for i in range(args.iters):
         idx = random.sample(range(POOL_SIZE), BATCH)
@@ -120,7 +125,16 @@ def train(args, run, dev):
                                                         hardness=hardness)
         rgba_loss = ((out.x[:, :4] - target) ** 2).mean()
         fire_cost = fire_sum.sum() / (BATCH * h * w * steps)
-        loss = rgba_loss + args.lam * fire_cost
+        if args.lam_warmup_loss > 0:
+            start = info["lam_warmup_trigger"]
+            if start is None and len(recent) == recent.maxlen and sum(recent) / len(recent) < args.lam_warmup_loss:
+                start = info["lam_warmup_trigger"] = i
+                print(f"  λ のウォームアップ開始：iter {i}（直近{len(recent)}回の平均ロス {sum(recent) / len(recent):.4f}）",
+                      flush=True)
+            lam = 0.0 if start is None else args.lam * min(1.0, (i - start) / max(args.lam_warmup_iters, 1))
+        else:
+            lam = args.lam
+        loss = rgba_loss + lam * fire_cost
 
         opt.zero_grad()
         loss.backward()
@@ -129,6 +143,7 @@ def train(args, run, dev):
         opt.step()
         sched.step()
         pool_store(pool, idx, out)
+        recent.append(float(rgba_loss.item()))
 
         nf, na = int(n_fire.item()), int(n_alive.item())
         with torch.no_grad():                   # 状態の大きさ（爆発の兆し）と、目覚ましの平均（眠り始めたか）
@@ -138,7 +153,7 @@ def train(args, run, dev):
             d_mean = ((out.d * live).sum() / live.sum().clamp(min=1)).item()
         log.write(f"{i},{steps},{loss.item():.6g},{rgba_loss.item():.6g},{fire_cost.item():.6g},"
                   f"{nf},{na},{nf / max(na, 1):.6f},{x_absmax:.4g},{c_max:.4g},{d_mean:.4f},{jp:.3f},"
-                  f"{int(n_birth.item())},{hardness:.3f},"
+                  f"{int(n_birth.item())},{hardness:.3f},{lam:.6g},"
                   f"{time.time() - t0:.1f}\n")
         if args.save_every and (i + 1) % args.save_every == 0:
             torch.save(model.state_dict(), run / "checkpoints" / f"iter{i + 1}.pt")
@@ -154,7 +169,7 @@ def train(args, run, dev):
     log.close()
     if keeper:
         keeper.close()
-    return model, h, w
+    return model, h, w, info
 
 
 # ---------------------------------------------------------------
@@ -289,6 +304,12 @@ def main():
                     help="学習の初期に発火をなめらかな量として扱い、この回数かけて 0/1 に近づける（0 なら最初から 0/1）")
     ap.add_argument("--d-bias", type=float, default=None,
                     help="目覚ましの初期値のずらし。目覚ましは sigmoid(ネットの出力＋d_bias)。既定は Physio の値（2.0）")
+    ap.add_argument("--dx-bound", choices=["none", "tanh"], default=None,
+                    help="1回の書き換えの大きさの上限。tanh なら dx=tanh(ネットの出力)。既定は Physio の値（上限なし）")
+    ap.add_argument("--lam-warmup-loss", type=float, default=0.0,
+                    help="λ のウォームアップ：見た目のロスの直近平均がこれを下回るまで λ=0（0 で使わない）")
+    ap.add_argument("--lam-warmup-iters", type=int, default=500, help="ウォームアップ開始から、この回数かけて λ を上げる")
+    ap.add_argument("--lam-warmup-window", type=int, default=50, help="ウォームアップの判定に使う直近の回数")
     ap.add_argument("--train-jitter", type=float, default=0.0,
                     help="学習時のタイミングのずれ。毎回、発火が1ステップ遅れる確率を 0〜この値 から選ぶ")
     ap.add_argument("--name", default=None)
@@ -318,17 +339,25 @@ def main():
             Physio.coupling_cap = args.coupling_cap
         if Physio.coupling == "cap" and Physio.coupling_cap is None:
             ap.error("--coupling cap には --coupling-cap が要る")
+        if args.dx_bound is not None:
+            Physio.dx_bound = None if args.dx_bound == "none" else args.dx_bound
         cfg = dict(seed=args.seed, iters=args.iters, lam=args.lam, checkpoint=bool(args.checkpoint),
                    save_every=args.save_every, train_jitter=args.train_jitter, see_c=bool(args.see_c),
                    anneal_iters=args.anneal_iters, val_every=args.val_every, val_jitter=args.val_jitter,
                    keep_max_loss=args.keep_max_loss, keep_min_heal=args.keep_min_heal,
+                   lam_warmup_loss=args.lam_warmup_loss, lam_warmup_iters=args.lam_warmup_iters,
+                   lam_warmup_window=args.lam_warmup_window,
                    physio=Physio.to_dict(), git=git_commit(), torch=torch.__version__,
-                   device=torch.cuda.get_device_name(0) if dev == "cuda" else "cpu")
+                   device=torch.cuda.get_device_name(0) if dev == "cuda" else "cpu", status="training")
+        # 設定は学習の最初にも書き出す（学習中でも途中の重みを --eval-only で評価でき、設定の食い違いも確かめられる）
+        (run / "config.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
         seed_everything(args.seed)
         if dev == "cuda":
             torch.cuda.reset_peak_memory_stats()
         t0 = time.time()
-        model, h, w = train(args, run, dev)
+        model, h, w, info = train(args, run, dev)
+        cfg.update(info)
+        cfg["status"] = "done"
         cfg["train_seconds"] = round(time.time() - t0, 1)
         cfg["peak_vram_mb"] = round(torch.cuda.max_memory_allocated() / 2**20) if dev == "cuda" else None
         (run / "config.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")

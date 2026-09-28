@@ -25,6 +25,9 @@ Step 1：濃度発火の花。
     mean … 平均（8つそろっても 0.4。起きるには、時間をかけて溜まるか、自分の目覚ましが要る）
     cap  … 合計に上限（coupling_cap）をかける
 - 濃度をネットの入力に入れるか（see_c）：既定は入れる（2026-09-28 に一度外したが、外す必要はなかったので戻した）
+- 1回の書き換えの大きさの上限（Physio.dx_bound）：None なら元祖と同じく上限なし。"tanh" なら dx = tanh(ネットの出力) で、
+  1回の発火で各チャンネルが変わる量を ±1 以内に押さえる（発火がまれになるほど1回で大きく書き換え、上限がないと膨らむ、
+  という Run C・Run E の見立てへの対策）
 - タイミングのずれ（評価・学習用の環境のゆらぎ）：発火が確率 p でちょうど1ステップ遅れる。
   遅れた発火は、次のステップで濃度に関係なく必ず起きる（持ち越し）。持ち越しをさらに遅らせることはない
 """
@@ -50,6 +53,7 @@ class Physio:
     d_bias = 2.0        # 目覚ましの初期値 sigmoid(0+2)=0.88 → はじめは2ステップに1回くらい発火する
     coupling = "sum"    # 近所8つの変化イベントのまとめ方：sum（合計）／mean（平均）／cap（合計に上限）
     coupling_cap = None # coupling="cap" のときの、合計の上限
+    dx_bound = None     # 1回の書き換えの大きさの上限：None（上限なし）／"tanh"
 
     @classmethod
     def to_dict(cls):
@@ -166,6 +170,10 @@ class ConcentrationNCA(nn.Module):
         else:
             y = self._net(z)
         dx, a = y[:, :CHANNELS], y[:, CHANNELS:]
+        if P.dx_bound == "tanh":                        # 1回の発火で変わる量を ±1 以内に押さえる
+            dx = torch.tanh(dx)
+        elif P.dx_bound is not None:
+            raise ValueError(f"dx_bound が不明：{P.dx_bound}")
         x_new = x + dx * fire
         d = d + (torch.sigmoid(a + P.d_bias) - d) * fire
 

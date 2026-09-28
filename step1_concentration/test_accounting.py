@@ -146,6 +146,26 @@ def test_coupling_modes():
         Physio.coupling, Physio.coupling_cap = saved
 
 
+def test_dx_bound_tanh():
+    """重みが大きいモデルでも、tanh の上限をつけると、1回の発火で各チャンネルが変わる量は1以内。上限なしなら1を超える"""
+    torch.manual_seed(0)
+    m = ConcentrationNCA()
+    torch.nn.init.normal_(m.rule[-1].weight, std=5.0)
+    s = all_alive_state(c=5.0)                          # 全員がしきい値を超えている
+    saved = Physio.dx_bound
+    try:
+        for bound, capped in [(None, False), ("tanh", True)]:
+            Physio.dx_bound = bound
+            with torch.no_grad():
+                new, _, hard, pre, _ = m.step(s)
+            live = pre & m.alive(new.x)
+            change = (new.x - s.x).abs()[(hard & live).expand_as(new.x)]
+            assert change.numel() > 0
+            assert (change.max() <= 1.0) == capped, bound
+    finally:
+        Physio.dx_bound = saved
+
+
 def test_hardness_one_is_unchanged():
     """固さ1（既定）の動きは、固さを渡さないときとビット単位で同じ"""
     m = busy_model()
