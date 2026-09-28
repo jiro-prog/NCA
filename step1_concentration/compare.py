@@ -48,21 +48,28 @@ def collect():
             if not (d / "config.json").exists() or d.name.startswith("smoke"):
                 continue
             cfg = load(d / "config.json")
-            for ev in sorted(d.glob("eval_j*")):
+            # 最後の重みの評価（eval_j*）と、途中の重みの評価（eval_iterN_j*）
+            for ev in sorted(list(d.glob("eval_j*")) + list(d.glob("eval_iter*_j*"))):
                 if not (ev / "summary.json").exists():
                     continue
                 s = load(ev / "summary.json")
                 jp = s.get("jitter_p", 0.0)
+                ckpt = ev.name.split("_")[1] if ev.name.startswith("eval_iter") else None
                 tj = cfg.get("train_jitter", 0.0)
                 old = "see_c" not in cfg        # 2026-09-28 の修正より前の run：濃度を入力に入れ、ずれにバグがあった
-                db = cfg.get("physio", {}).get("d_bias", 2.0)
-                label = (f"濃度 λ={cfg['lam']:g}" + (" 濃度入力あり" if cfg.get("see_c", True) else "")
+                ph = cfg.get("physio", {})
+                db = ph.get("d_bias", 2.0)
+                cp = ph.get("coupling", "sum")
+                label = (f"濃度 λ={cfg['lam']:g}" + ("" if cfg.get("see_c", True) else " 濃度入力なし")
                          + (f" d_bias={db:g}" if db != 2.0 else "")
+                         + ({"mean": " イベント平均", "cap": f" イベント上限{ph.get('coupling_cap')}"}.get(cp, ""))
                          + (f" 学習ずれ〜{tj:g}" + ("（バグのあるずれ）" if old else "") if tj else "")
+                         + (f" @{ckpt}" if ckpt else "")
                          + (f" 評価ずれ{jp:g}" if jp else ""))
-                items.append(dict(group="step1" if jp == 0 else "step1_jitter", label=label,
+                group = ("ckpt" if ckpt else "step1") + ("_jitter" if jp else "")
+                items.append(dict(group=group, label=label,
                                   short=label.replace("濃度 ", "").split(" 評価ずれ")[0] if jp == 0 else f"ずれ{jp:g}",
-                                  key=cfg["lam"], run=f"{d.name}/{ev.name}", model=d.name, s=s))
+                                  key=cfg["lam"], run=f"{d.name}/{ev.name}", model=d.name + (ckpt or ""), s=s))
     return items
 
 
@@ -70,11 +77,15 @@ def metrics(s):
     m, r = s["maintain"], s["recover"]
     after = (m["loss_mean"] * 200 + r["loss_mean"] * 400) / 600
     hit = s["recover_first_hit"]
+    # 治った割合：（傷の直後の最悪 − 最後）÷（傷の直後の最悪 − 傷の前）。古い summary にはないので計算する
+    heal = s.get("heal_fraction")
+    if heal is None:
+        heal = (s["damage_loss_peak"] - r["loss_end"]) / max(s["damage_loss_peak"] - m["loss_mean"], 1e-9)
     return dict(
         total_fires=s["total_fires"], after_loss=after,
         grow_end=s["grow"]["loss_end"], maint_fps=m["fires_per_step"], maint_loss=m["loss_mean"],
         rec_fires=r["fires_total"], rec_end=r["loss_end"],
-        r005=hit.get("0.005"), r002=hit.get("0.002"),
+        r005=hit.get("0.005"), r002=hit.get("0.002"), heal=heal,
         birth_share=s.get("birth_share"),       # 誕生の発火（固定のルール）の割合。数えていない run は None
     )
 
@@ -85,14 +96,14 @@ def fmt_hit(h):
 
 def table(items):
     lines = ["| 名前 | 総発火 | うち誕生 | 成長期末ロス | 維持期 発火/ステップ | 維持期 平均ロス | 成長後 平均ロス | "
-             "傷→0.005（ステップ / 発火） | 傷→0.002（ステップ / 発火） | 回復期 発火 | 800のロス |",
-             "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
+             "傷→0.005（ステップ / 発火） | 傷→0.002（ステップ / 発火） | 回復期 発火 | 800のロス | 治った割合 |",
+             "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
     for it in items:
         k = metrics(it["s"])
         birth = "—" if k["birth_share"] is None else f"{k['birth_share']:.1%}"
         lines.append(f"| {it['label']} | {k['total_fires']:,} | {birth} | {k['grow_end']:.5f} | {k['maint_fps']:.1f} | "
                      f"{k['maint_loss']:.5f} | {k['after_loss']:.5f} | {fmt_hit(k['r005'])} | {fmt_hit(k['r002'])} | "
-                     f"{k['rec_fires']:,} | {k['rec_end']:.5f} |")
+                     f"{k['rec_fires']:,} | {k['rec_end']:.5f} | {k['heal']:.2f} |")
     return "\n".join(lines)
 
 
@@ -110,6 +121,8 @@ def plot(items, path):
         "dice": dict(color=viz.SERIES[0], marker="o", name="サイコロ（発火率を変えて学習し直したもの）"),
         "step1": dict(color=viz.SERIES[1], marker="D", name="濃度発火（Step 1）"),
         "step1_jitter": dict(color=viz.SERIES[1], marker="D", name="濃度発火・タイミングのずれあり", hollow=True),
+        "ckpt": dict(color=viz.SERIES[1], marker="*", name="濃度発火・途中の重み", size=110),
+        "ckpt_jitter": dict(color=viz.SERIES[1], marker="*", name="途中の重み・ずれあり", hollow=True, size=110),
         "period": dict(color=viz.SERIES[2], marker="s", name="一定周期の時計"),
         "timerstop": dict(color=viz.SERIES[2], marker="X", name="時限停止（200で発火を止める）"),
     }
@@ -119,8 +132,8 @@ def plot(items, path):
     for ax, (xk, yk, xt, yt) in zip(axes, views):
         ax.set_facecolor(viz.SURFACE)
         # 同じモデルの「ずれなし」と「ずれあり」を細い線でつなぐ（ずれでどれだけ動くか）
-        for it in [i for i in items if i["group"] == "step1"]:
-            for jt in [j for j in items if j["group"] == "step1_jitter" and j.get("model") == it["model"]]:
+        for it in [i for i in items if i["group"] in ("step1", "ckpt")]:
+            for jt in [j for j in items if j["group"] == it["group"] + "_jitter" and j.get("model") == it["model"]]:
                 a, b = metrics(it["s"]), metrics(jt["s"])
                 ax.plot([a[xk], b[xk]], [a[yk], b[yk]], color=viz.AXIS, linewidth=0.8, zorder=0)
         for g, st in style.items():
@@ -132,11 +145,11 @@ def plot(items, path):
             if g == "dice" and len(pts) > 1:
                 ax.plot(xs, ys, color=st["color"], linewidth=1.5, zorder=1)
             face = viz.SURFACE if st.get("hollow") else st["color"]
-            ax.scatter(xs, ys, s=48, marker=st["marker"], facecolor=face, edgecolor=st["color"],
+            ax.scatter(xs, ys, s=st.get("size", 48), marker=st["marker"], facecolor=face, edgecolor=st["color"],
                        linewidth=1.5, zorder=3, label=st["name"])
             for x, y, it in zip(xs, ys, pts):
                 ax.annotate(it.get("short", it["label"]), (x, y), xytext=(5, 4), textcoords="offset points",
-                            fontsize=7 if g == "step1_jitter" else 8, color=viz.INK_2)
+                            fontsize=7 if g.endswith("_jitter") else 8, color=viz.INK_2)
         ax.set_yscale("log")
         ax.set_xlabel(xt, color=viz.INK_2, fontsize=9)
         ax.set_title(yt, loc="left", fontsize=10, color=viz.INK)

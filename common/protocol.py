@@ -128,6 +128,12 @@ def summarize(rows, proto=Protocol()):
     if birth is not None:
         s["birth_fires_total"] = int(birth.sum())
         s["birth_share"] = float(birth.sum() / max(fires.sum(), 1))
+    # 成長後（維持＋回復）の平均ロス
+    s["after_loss"] = float(loss[proto.grow_end:].mean())
+    # 治った割合：（傷の直後の最悪 − 最後）÷（傷の直後の最悪 − 傷の前）。時限停止（治さない）は0、元祖は約0.96
+    pre = s["maintain"]["loss_mean"]
+    peak = s["damage_loss_peak"]
+    s["heal_fraction"] = float((peak - loss[-1]) / max(peak - pre, 1e-9))
     # 成長：ロスが初めて τ 以下になったステップ数と、そこまでの総発火数
     s["grow_first_hit"] = {str(tau): _first_hit(loss, fires, 0, proto.damage_at, tau)
                            for tau in proto.thresholds}

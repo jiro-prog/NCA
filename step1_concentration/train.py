@@ -15,10 +15,13 @@ Step 1：濃度発火の花を学習して、3期のプロトコル（成長・�
     eval_j0/     タイミングのずれなしの評価（steps.csv, summary.json, sheet.png, curves.png, eval.gif）
     eval_j0.1/   発火が確率0.1で1ステップ遅れる環境での評価
     eval_j0.3/   同じく確率0.3
+    best/        良い重み（--val-every ごとに検証。BestKeeper を参照）：iterN/、front.json、history.csv
+    checkpoints/ --save-every ごとの途中の重み
 """
 import argparse
 import json
 import random
+import shutil
 import subprocess
 import sys
 import time
@@ -95,6 +98,7 @@ def train(args, run, dev):
               "x_absmax,c_max,d_mean,jitter,birth_fires,hardness,seconds\n")
     if args.save_every:
         (run / "checkpoints").mkdir(exist_ok=True)
+    keeper = BestKeeper(run, args.val_jitter, args.keep_max_loss, args.keep_min_heal) if args.val_every else None
     t0 = time.time()
     for i in range(args.iters):
         idx = random.sample(range(POOL_SIZE), BATCH)
@@ -138,11 +142,18 @@ def train(args, run, dev):
                   f"{time.time() - t0:.1f}\n")
         if args.save_every and (i + 1) % args.save_every == 0:
             torch.save(model.state_dict(), run / "checkpoints" / f"iter{i + 1}.pt")
+        if keeper and (i + 1) % args.val_every == 0:
+            rec, passed, on_front = keeper.offer(i + 1, model, h, w, dev)
+            print(f"  検証 iter{i + 1}：成長後ロス {rec['after_loss']:.4f}  総発火 {rec['total_fires']:,}  "
+                  f"維持期 {rec['maint_fps']:.1f}/ステップ  治った割合 {rec['heal']:.2f}  "
+                  f"{'残す' if on_front else ('下限を満たす' if passed else '下限に届かず')}", flush=True)
         if i % 100 == 0 or i == args.iters - 1:
             log.flush()
             print(f"iter {i:5d}  rgba {rgba_loss.item():.5f}  発火率 {nf / max(na, 1):.3f}  "
                   f"({time.time() - t0:.0f}秒)", flush=True)
     log.close()
+    if keeper:
+        keeper.close()
     return model, h, w
 
 
@@ -190,6 +201,68 @@ def evaluate(model, h, w, dev, out_dir, title, jitter_p, eval_seed=1000, picture
     return summary
 
 
+class BestKeeper:
+    """良い重みを残す。検証のロールアウト（3期プロトコル、ずれ jitter）で測り、
+    質の下限（成長後の平均ロス ≤ max_loss、かつ、治った割合 ≥ min_heal）を満たすものの中から、
+    「成長後の平均ロス」と「総発火」のどちらでも負けていないもの（パレートの前線）を全部残す。
+    1つの重みづけの点数では選ばない（λ次第で「起きている良いモデル」か「眠っている良いモデル」の片方しか残らないため）。
+    寝ているだけで傷を治さないモデル（治った割合≈0）や、形が崩れたモデルは、下限で落ちる。
+    検証は全体の乱数を使わない（学習の道筋を変えない）。
+
+    出力（run/best/）：iterN/（model.pt, summary.json, sheet.png, curves.png）、front.json、history.csv"""
+
+    def __init__(self, run, jitter, max_loss, min_heal, gen_seed=1000):
+        self.dir = run / "best"
+        self.dir.mkdir(exist_ok=True)
+        self.jitter, self.max_loss, self.min_heal, self.gen_seed = jitter, max_loss, min_heal, gen_seed
+        self.front = []
+        self.hist = open(self.dir / "history.csv", "w", encoding="utf-8", newline="")
+        self.hist.write("iter,after_loss,total_fires,maint_fires_per_step,heal_fraction,passed,on_front\n")
+
+    @staticmethod
+    def _dominates(a, b):
+        return (a["after_loss"] <= b["after_loss"] and a["total_fires"] <= b["total_fires"]
+                and (a["after_loss"] < b["after_loss"] or a["total_fires"] < b["total_fires"]))
+
+    @torch.no_grad()
+    def offer(self, it, model, h, w, dev):
+        proto = Protocol()
+        rows, frames = run_protocol(Step1Adapter(model, h, w, dev, self.jitter, self.gen_seed),
+                                    make_target().to(dev), proto)
+        s = summarize(rows, proto)
+        s["jitter_p"] = self.jitter
+        rec = dict(iter=it, after_loss=s["after_loss"], total_fires=s["total_fires"],
+                   maint_fps=s["maintain"]["fires_per_step"], heal=s["heal_fraction"])
+        passed = rec["after_loss"] <= self.max_loss and rec["heal"] >= self.min_heal
+        on_front = False
+        if passed:
+            cand = self.front + [rec]
+            front = [a for a in cand if not any(self._dominates(b, a) for b in cand if b is not a)]
+            for a in self.front:                    # 前線から落ちた重みは消す
+                if a not in front:
+                    shutil.rmtree(self.dir / f"iter{a['iter']}", ignore_errors=True)
+            if rec in front:
+                on_front = True
+                d = self.dir / f"iter{it}"
+                d.mkdir(exist_ok=True)
+                torch.save(model.state_dict(), d / "model.pt")
+                (d / "summary.json").write_text(json.dumps(s, ensure_ascii=False, indent=2), encoding="utf-8")
+                title = f"残した重み iter{it}（ずれ{self.jitter:g}）"
+                viz.save_sheet(frames, SHEET_STEPS, d / "sheet.png", title=title)
+                viz.save_curves(rows, proto, d / "curves.png", title=title)
+            self.front = front
+            (self.dir / "front.json").write_text(
+                json.dumps(sorted(front, key=lambda a: a["total_fires"]), ensure_ascii=False, indent=2),
+                encoding="utf-8")
+        self.hist.write(f"{it},{rec['after_loss']:.6g},{rec['total_fires']},{rec['maint_fps']:.2f},"
+                        f"{rec['heal']:.3f},{int(passed)},{int(on_front)}\n")
+        self.hist.flush()
+        return rec, passed, on_front
+
+    def close(self):
+        self.hist.close()
+
+
 def brief(s):
     g, m, r = s["grow"], s["maintain"], s["recover"]
     return (f"成長 ロス末{g['loss_end']:.4f} 発火{g['fires_total']} | "
@@ -204,7 +277,14 @@ def main():
     ap.add_argument("--lam", type=float, default=0.01, help="発火のコストの重み λ")
     ap.add_argument("--checkpoint", type=int, default=1, help="1 なら勾配チェックポイントでVRAMを節約する")
     ap.add_argument("--save-every", type=int, default=0, help="N回ごとに途中の重みを checkpoints/ に保存する")
-    ap.add_argument("--see-c", type=int, default=0, help="1 なら濃度もルールのネットの入力に入れる（古い設定）")
+    ap.add_argument("--see-c", type=int, default=1, help="1 なら濃度もルールのネットの入力に入れる（既定）。0 なら入れない")
+    ap.add_argument("--coupling", choices=["sum", "mean", "cap"], default=None,
+                    help="近所の変化イベントのまとめ方（合計／平均／合計に上限）。既定は Physio の値（sum）")
+    ap.add_argument("--coupling-cap", type=float, default=None, help="--coupling cap のときの、合計の上限")
+    ap.add_argument("--val-every", type=int, default=250, help="N回ごとに検証して、良い重みを best/ に残す（0 で使わない）")
+    ap.add_argument("--val-jitter", type=float, default=0.1, help="検証のときのタイミングのずれ")
+    ap.add_argument("--keep-max-loss", type=float, default=0.04, help="残す重みの下限：成長後の平均ロスがこれ以下")
+    ap.add_argument("--keep-min-heal", type=float, default=0.2, help="残す重みの下限：治った割合がこれ以上")
     ap.add_argument("--anneal-iters", type=int, default=0,
                     help="学習の初期に発火をなめらかな量として扱い、この回数かけて 0/1 に近づける（0 なら最初から 0/1）")
     ap.add_argument("--d-bias", type=float, default=None,
@@ -232,9 +312,16 @@ def main():
         run.mkdir(parents=True, exist_ok=True)
         if args.d_bias is not None:
             Physio.d_bias = args.d_bias
+        if args.coupling is not None:
+            Physio.coupling = args.coupling
+        if args.coupling_cap is not None:
+            Physio.coupling_cap = args.coupling_cap
+        if Physio.coupling == "cap" and Physio.coupling_cap is None:
+            ap.error("--coupling cap には --coupling-cap が要る")
         cfg = dict(seed=args.seed, iters=args.iters, lam=args.lam, checkpoint=bool(args.checkpoint),
                    save_every=args.save_every, train_jitter=args.train_jitter, see_c=bool(args.see_c),
-                   anneal_iters=args.anneal_iters,
+                   anneal_iters=args.anneal_iters, val_every=args.val_every, val_jitter=args.val_jitter,
+                   keep_max_loss=args.keep_max_loss, keep_min_heal=args.keep_min_heal,
                    physio=Physio.to_dict(), git=git_commit(), torch=torch.__version__,
                    device=torch.cuda.get_device_name(0) if dev == "cuda" else "cpu")
         seed_everything(args.seed)

@@ -20,7 +20,11 @@ Step 1：濃度発火の花。
 - 誕生（固定のルール）：生死判定で新しく「生きている」側に入ったセルは、しきい値ぶんの一押しをもらう。
   生まれて最初の発火は「誕生の発火」として別枠で数える
 - 結合は、近所1つのイベント（上限1）だけではしきい値に届かない強さにする（興奮性媒質の暴走を防ぐ）
-- 濃度をネットの入力に入れるか（see_c）：既定は入れない（2026-09-28 の判断。EXPERIMENTS.md）
+- 近所のイベントのまとめ方（Physio.coupling）：
+    sum  … 合計（8つそろうと 0.4×8＝3.2 で、しきい値の3倍。眠ったところで連鎖が起きた）
+    mean … 平均（8つそろっても 0.4。起きるには、時間をかけて溜まるか、自分の目覚ましが要る）
+    cap  … 合計に上限（coupling_cap）をかける
+- 濃度をネットの入力に入れるか（see_c）：既定は入れる（2026-09-28 に一度外したが、外す必要はなかったので戻した）
 - タイミングのずれ（評価・学習用の環境のゆらぎ）：発火が確率 p でちょうど1ステップ遅れる。
   遅れた発火は、次のステップで濃度に関係なく必ず起きる（持ち越し）。持ち越しをさらに遅らせることはない
 """
@@ -44,6 +48,8 @@ class Physio:
     refractory = 1      # 発火後に休むステップ数（発火は最大で2ステップに1回）
     beta = 5.0          # サロゲート勾配の鋭さ
     d_bias = 2.0        # 目覚ましの初期値 sigmoid(0+2)=0.88 → はじめは2ステップに1回くらい発火する
+    coupling = "sum"    # 近所8つの変化イベントのまとめ方：sum（合計）／mean（平均）／cap（合計に上限）
+    coupling_cap = None # coupling="cap" のときの、合計の上限
 
     @classmethod
     def to_dict(cls):
@@ -85,7 +91,7 @@ def damage_state(s, hole, j=0):
 
 
 class ConcentrationNCA(nn.Module):
-    def __init__(self, see_c=False):
+    def __init__(self, see_c=True):
         super().__init__()
         self.see_c = see_c
         n_in = CHANNELS + (1 if see_c else 0)      # see_c なら状態＋濃度、でなければ状態だけ（元祖と同じ48次元）
@@ -128,7 +134,13 @@ class ConcentrationNCA(nn.Module):
         # ---- 毎ステップの安い計算（固定の式、全セル） ----
         newborn = pre & ~was
         fresh = (fresh | newborn) & pre
-        nbr = F.conv2d(e, self.nbr8, padding=1)
+        nbr = F.conv2d(e, self.nbr8, padding=1)        # 近所8つの変化イベントの合計
+        if P.coupling == "mean":
+            nbr = nbr / 8
+        elif P.coupling == "cap":
+            nbr = nbr.clamp(max=P.coupling_cap)
+        elif P.coupling != "sum":
+            raise ValueError(f"coupling が不明：{P.coupling}")
         c = (P.leak * c + d + P.kappa * nbr + P.theta * newborn.float()) * pre_f
         can = pre & (r <= 0)
         u = c - P.theta

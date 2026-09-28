@@ -120,9 +120,30 @@ def test_birth_counted_once_per_life():
 
 
 def test_see_c_switch():
-    """濃度を入力に入れないモデルの知覚は、元祖と同じ48次元"""
+    """濃度を入力に入れないモデルの知覚は、元祖と同じ48次元。既定は入れる"""
     assert ConcentrationNCA(see_c=False).kernel.shape[0] == CHANNELS * 3
     assert ConcentrationNCA(see_c=True).kernel.shape[0] == (CHANNELS + 1) * 3
+    assert ConcentrationNCA().see_c
+
+
+def test_coupling_modes():
+    """近所8つがそろって上限の変化をしたとき：合計なら発火、平均（0.4）や上限2の合計（0.8）なら発火しない"""
+    m = busy_model()
+    s = all_alive_state()
+    e = torch.zeros(1, 1, H, W)
+    e[0, 0, 9:12, 9:12] = Physio.e_max
+    e[0, 0, 10, 10] = 0                               # 真ん中のセルの近所8つだけが変化した
+    s = s._replace(e=e)
+    saved = (Physio.coupling, Physio.coupling_cap)
+    try:
+        for mode, cap, fires in [("sum", None, True), ("mean", None, False), ("cap", 2.0, False)]:
+            Physio.coupling, Physio.coupling_cap = mode, cap
+            with torch.no_grad():
+                new, _, hard, _, _ = m.step(s)
+            assert bool(hard[0, 0, 10, 10]) == fires, mode
+            assert abs(float(new.c[0, 0, 10, 10]) - (0.0 if fires else Physio.kappa * {"mean": 1.0, "cap": 2.0}[mode])) < 1e-6
+    finally:
+        Physio.coupling, Physio.coupling_cap = saved
 
 
 def test_hardness_one_is_unchanged():
