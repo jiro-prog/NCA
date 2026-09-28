@@ -117,7 +117,10 @@ def save_curves(rows, proto, path, title=""):
         for x0, lab in [(proto.grow_end, "成長→維持"), (proto.damage_at, "傷")]:
             ax.axvline(x0, color=MUTED, linewidth=0.8, linestyle="--")
         if ax is axes[0]:
-            ax.set_yscale("log")
+            if np.any(np.isfinite(y) & (y > 0)):        # 数値が壊れた（nan）実行でも止まらないように
+                ax.set_yscale("log")
+            else:
+                ax.set_title(name + "：数値が壊れていて描けない", loc="left", fontsize=10, color=INK)
             ymax = ax.get_ylim()[1]
             for x0, lab in [(proto.grow_end, "成長→維持"), (proto.damage_at, "傷")]:
                 ax.text(x0 + 4, ymax, lab, va="top", fontsize=8, color=INK_2)

@@ -1,0 +1,109 @@
+iter     0  rgba 0.08257  発火率 0.314  (1秒)
+iter   100  rgba 0.06476  発火率 0.158  (42秒)
+iter   200  rgba 0.06026  発火率 0.035  (82秒)
+  検証 iter250：成長後ロス 0.0722  総発火 27,632  維持期 67.3/ステップ  治った割合 0.68  下限に届かず
+iter   300  rgba 0.05777  発火率 0.041  (124秒)
+iter   400  rgba 0.16497  発火率 0.060  (164秒)
+  検証 iter500：成長後ロス 1.3910  総発火 13,323  維持期 0.0/ステップ  治った割合 -1682758.33  下限に届かず
+iter   500  rgba 0.87019  発火率 0.019  (207秒)
+iter   600  rgba nan  発火率 0.055  (247秒)
+iter   700  rgba nan  発火率 0.018  (287秒)
+  検証 iter750：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter   800  rgba nan  発火率 0.389  (330秒)
+iter   900  rgba nan  発火率 1.000  (371秒)
+  検証 iter1000：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  1000  rgba nan  発火率 0.889  (414秒)
+iter  1100  rgba nan  発火率 0.667  (454秒)
+iter  1200  rgba nan  発火率 0.889  (494秒)
+  検証 iter1250：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  1300  rgba nan  発火率 0.778  (536秒)
+iter  1400  rgba nan  発火率 0.889  (577秒)
+  検証 iter1500：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  1500  rgba nan  発火率 1.000  (620秒)
+iter  1600  rgba nan  発火率 1.000  (660秒)
+iter  1700  rgba nan  発火率 1.000  (701秒)
+  検証 iter1750：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  1800  rgba nan  発火率 0.444  (743秒)
+iter  1900  rgba nan  発火率 0.778  (784秒)
+  検証 iter2000：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  2000  rgba nan  発火率 0.889  (827秒)
+iter  2100  rgba nan  発火率 0.889  (867秒)
+iter  2200  rgba nan  発火率 1.000  (908秒)
+  検証 iter2250：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  2300  rgba nan  発火率 0.778  (951秒)
+iter  2400  rgba nan  発火率 1.000  (992秒)
+  検証 iter2500：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  2500  rgba nan  発火率 0.556  (1035秒)
+iter  2600  rgba nan  発火率 1.000  (1075秒)
+iter  2700  rgba nan  発火率 0.889  (1115秒)
+  検証 iter2750：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  2800  rgba nan  発火率 0.778  (1157秒)
+iter  2900  rgba nan  発火率 0.778  (1198秒)
+  検証 iter3000：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  3000  rgba nan  発火率 0.778  (1241秒)
+iter  3100  rgba nan  発火率 1.000  (1281秒)
+iter  3200  rgba nan  発火率 0.889  (1321秒)
+  検証 iter3250：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  3300  rgba nan  発火率 0.889  (1363秒)
+iter  3400  rgba nan  発火率 1.000  (1404秒)
+  検証 iter3500：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  3500  rgba nan  発火率 1.000  (1446秒)
+iter  3600  rgba nan  発火率 0.778  (1487秒)
+iter  3700  rgba nan  発火率 0.667  (1528秒)
+  検証 iter3750：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  3800  rgba nan  発火率 1.000  (1570秒)
+iter  3900  rgba nan  発火率 0.778  (1611秒)
+  検証 iter4000：成長後ロス nan  総発火 9  維持期 0.0/ステップ  治った割合 nan  下限に届かず
+iter  3999  rgba nan  発火率 1.000  (1654秒)
+学習 1653.8 秒, VRAM最大 1030 MB
+Traceback (most recent call last):
+  File "C:\Users\sojir\projects\NCA\step1_concentration\train.py", line 376, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\sojir\projects\NCA\step1_concentration\train.py", line 370, in main
+    s = evaluate(model, h, w, dev, run / f"eval{tag}_j{jp:g}", title, jp, args.eval_seed)
+  File "C:\Users\sojir\projects\NCA\step1_concentration\train.py", line 212, in evaluate
+    viz.save_curves(rows, proto, out_dir / "curves.png", title=title)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sojir\projects\NCA\common\viz.py", line 128, in save_curves
+    fig.tight_layout()
+    ~~~~~~~~~~~~~~~~^^
+  File "C:\Users\sojir\projects\NCA\.venv\Lib\site-packages\matplotlib\figure.py", line 3665, in tight_layout
+    engine.execute(self)
+    ~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\sojir\projects\NCA\.venv\Lib\site-packages\matplotlib\layout_engine.py", line 188, in execute
+    kwargs = get_tight_layout_figure(
+        fig, fig.axes, get_subplotspec_list(fig.axes), renderer,
+        pad=info['pad'], h_pad=info['h_pad'], w_pad=info['w_pad'],
+        rect=info['rect'])
+  File "C:\Users\sojir\projects\NCA\.venv\Lib\site-packages\matplotlib\_tight_layout.py", line 266, in get_tight_layout_figure
+    kwargs = _auto_adjust_subplotpars(fig, renderer,
+                                      shape=(max_nrows, max_ncols),
+    ...<2 lines>...
+                                      ax_bbox_list=ax_bbox_list,
+                                      pad=pad, h_pad=h_pad, w_pad=w_pad)
+  File "C:\Users\sojir\projects\NCA\.venv\Lib\site-packages\matplotlib\_tight_layout.py", line 82, in _auto_adjust_subplotpars
+    bb += [martist._get_tightbbox_for_layout_only(ax, renderer)]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\sojir\projects\NCA\.venv\Lib\site-packages\matplotlib\artist.py", line 1485, in _get_tightbbox_for_layout_only
+    return obj.get_tightbbox(*args, **{**kwargs, "for_layout_only": True})
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sojir\projects\NCA\.venv\Lib\site-packages\matplotlib\axes\_base.py", line 4763, in get_tightbbox
+    ba = martist._get_tightbbox_for_layout_only(axis, renderer)
+  File "C:\Users\sojir\projects\NCA\.venv\Lib\site-packages\matplotlib\artist.py", line 1485, in _get_tightbbox_for_layout_only
+    return obj.get_tightbbox(*args, **{**kwargs, "for_layout_only": True})
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sojir\projects\NCA\.venv\Lib\site-packages\matplotlib\axis.py", line 1425, in get_tightbbox
+    ticks_to_draw = self._update_ticks()
+  File "C:\Users\sojir\projects\NCA\.venv\Lib\site-packages\matplotlib\axis.py", line 1344, in _update_ticks
+    major_locs = self.get_majorticklocs()
+  File "C:\Users\sojir\projects\NCA\.venv\Lib\site-packages\matplotlib\axis.py", line 1673, in get_majorticklocs
+    return self.major.locator()
+           ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\sojir\projects\NCA\.venv\Lib\site-packages\matplotlib\ticker.py", line 2470, in __call__
+    return self.tick_values(vmin, vmax)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\sojir\projects\NCA\.venv\Lib\site-packages\matplotlib\ticker.py", line 2492, in tick_values
+    raise ValueError(
+        "Data cannot be log-scaled because all values are <= 0.")
+ValueError: Data cannot be log-scaled because all values are <= 0.
