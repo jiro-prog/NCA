@@ -1,0 +1,6 @@
+iter,after_loss,total_fires,maint_fires_per_step,heal_fraction,passed,on_front
+250,nan,9,0.00,nan,0,0
+500,nan,9,0.00,nan,0,0
+750,nan,9,0.00,nan,0,0
+1000,nan,9,0.00,nan,0,0
+1250,nan,9,0.00,nan,0,0

@@ -25,6 +25,19 @@ def load(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+# EXPERIMENTS.md で使っている Run の呼び名（図のラベルを短くするため）
+RUN_NAMES = {
+    "seed0_lam0_it2000": "λ0 ずれなし学習",
+    "seed0_lam0_tj0.3_noc_it2000": "Run A",
+    "seed0_lam0.01_noc": "Run B",
+    "seed0_lam0.01_tj0.3_db0": "Run C",
+    "seed0_lam0_tj0.3_seec_it2000": "Run D",
+    "seed0_lam0.01_tj0.3_db0_mean": "Run E",
+    "seed1_lam0_tj0.3_noc_it2000": "Run A（シード1）",
+    "seed1_lam0_tj0.3_seec_it2000": "Run D（シード1）",
+}
+
+
 def collect():
     items = []
     for d in sorted((ROOT / "baseline" / "runs").iterdir()):
@@ -67,8 +80,12 @@ def collect():
                          + (f" @{ckpt}" if ckpt else "")
                          + (f" 評価ずれ{jp:g}" if jp else ""))
                 group = ("ckpt" if ckpt else "step1") + ("_jitter" if jp else "")
-                items.append(dict(group=group, label=label,
-                                  short=label.replace("濃度 ", "").split(" 評価ずれ")[0] if jp == 0 else f"ずれ{jp:g}",
+                name = RUN_NAMES.get(d.name)
+                if name:
+                    label = f"{name}：{label}"
+                short = ((name or label.replace("濃度 ", "").split(" 評価ずれ")[0]) + (f" @{ckpt}" if ckpt and name else "")
+                         if jp == 0 else f"ずれ{jp:g}")
+                items.append(dict(group=group, label=label, short=short,
                                   key=cfg["lam"], run=f"{d.name}/{ev.name}", model=d.name + (ckpt or ""), s=s))
     return items
 
@@ -158,8 +175,53 @@ def plot(items, path):
         ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v / 1000:g}k"))
         for s in ax.spines.values():
             s.set_color(viz.AXIS)
-    axes[0].legend(fontsize=8, frameon=False, loc="best")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=4, fontsize=8, frameon=False)
     fig.suptitle("Step 1：ロス vs 発火数（左下ほど良い）", x=0.01, ha="left", fontsize=11, color=viz.INK)
+    fig.tight_layout(rect=(0, 0.1, 1, 1))
+    fig.savefig(path, dpi=110, facecolor=viz.SURFACE)
+    plt.close(fig)
+
+
+def plot_low_end(items, path, max_fires=200_000):
+    """低発火の端だけを拡大した図。花にならなかったもの（成長後ロス ≥ FAILED_LOSS）も × で載せる"""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    plt.rcParams["font.family"] = ["Meiryo", "Yu Gothic", "MS Gothic", "sans-serif"]
+    pts = [it for it in items if metrics(it["s"])["total_fires"] <= max_fires
+           and it["group"] in ("dice", "timerstop", "ckpt", "ckpt_jitter", "step1", "step1_jitter")]
+    fig, ax = plt.subplots(figsize=(8, 5), facecolor=viz.SURFACE)
+    ax.set_facecolor(viz.SURFACE)
+    dice = sorted([it for it in pts if it["group"] == "dice" and metrics(it["s"])["after_loss"] < FAILED_LOSS],
+                  key=lambda it: metrics(it["s"])["total_fires"])
+    if len(dice) > 1:
+        ax.plot([metrics(it["s"])["total_fires"] for it in dice], [metrics(it["s"])["after_loss"] for it in dice],
+                color=viz.SERIES[0], linewidth=1.5, zorder=1)
+    for it in pts:
+        k = metrics(it["s"])
+        failed = k["after_loss"] >= FAILED_LOSS
+        g = it["group"]
+        color = viz.SERIES[0] if g == "dice" else (viz.SERIES[2] if g == "timerstop" else viz.SERIES[1])
+        marker = "x" if failed else {"dice": "o", "timerstop": "X", "ckpt": "*", "ckpt_jitter": "*",
+                                     "step1": "D", "step1_jitter": "D"}[g]
+        hollow = g.endswith("_jitter") and not failed
+        ax.scatter([k["total_fires"]], [k["after_loss"]], s=110 if marker == "*" else 48, marker=marker,
+                   facecolor=viz.SURFACE if hollow else color, edgecolor=color, color=color, linewidth=1.5, zorder=3)
+        text = it.get("short", it["label"]) + ("（花にならず）" if failed else "") + f"  治った割合 {k['heal']:.2f}"
+        ax.annotate(text, (k["total_fires"], k["after_loss"]), xytext=(6, 3), textcoords="offset points",
+                    fontsize=7.5, color=viz.INK_2)
+    ax.set_yscale("log")
+    ax.set_xlim(0, max_fires)
+    ax.set_xlabel("総発火数（800ステップ）", color=viz.INK_2, fontsize=9)
+    ax.set_title("低発火の端：成長後（200〜800）の平均ロス（左下ほど良い。× は花にならなかったもの）",
+                 loc="left", fontsize=10, color=viz.INK)
+    ax.grid(True, color=viz.GRID, linewidth=0.8)
+    ax.tick_params(which="both", colors=viz.MUTED, labelsize=8)
+    ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v / 1000:g}k"))
+    for s in ax.spines.values():
+        s.set_color(viz.AXIS)
     fig.tight_layout()
     fig.savefig(path, dpi=110, facecolor=viz.SURFACE)
     plt.close(fig)
@@ -176,6 +238,7 @@ def main():
           table(items), ""]
     (out / "compare.md").write_text("\n".join(md), encoding="utf-8")
     plot(items, out / "pareto.png")
+    plot_low_end(items, out / "low_fire_end.png")
     print("\n".join(md))
     print("図:", out / "pareto.png")
 
