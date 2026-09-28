@@ -1,0 +1,30 @@
+{
+  "seed": 1,
+  "iters": 2000,
+  "lam": 0.0,
+  "checkpoint": true,
+  "save_every": 0,
+  "train_jitter": 0.3,
+  "see_c": false,
+  "anneal_iters": 0,
+  "val_every": 250,
+  "val_jitter": 0.1,
+  "keep_max_loss": 0.04,
+  "keep_min_heal": 0.2,
+  "physio": {
+    "leak": 0.9,
+    "theta": 1.0,
+    "kappa": 0.4,
+    "e_max": 1.0,
+    "refractory": 1,
+    "beta": 5.0,
+    "d_bias": 2.0,
+    "coupling": "sum",
+    "coupling_cap": null
+  },
+  "git": "c3bcdb5+未コミットの変更あり",
+  "torch": "2.11.0+cu128",
+  "device": "NVIDIA GeForce RTX 4060 Ti",
+  "train_seconds": 856.9,
+  "peak_vram_mb": 1023
+}
