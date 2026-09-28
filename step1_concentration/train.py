@@ -96,14 +96,16 @@ def train(args, run, dev):
 
     log = open(run / "train_log.csv", "w", encoding="utf-8", newline="")
     log.write("iter,steps,loss,rgba_loss,fire_cost,fires,alive_cell_steps,fire_rate,"
-              "x_absmax,c_max,d_mean,jitter,birth_fires,hardness,lam,seconds\n")
+              "x_absmax,c_max,d_mean,jitter,birth_fires,hardness,lam,skipped,pool_skip,lr,seconds\n")
     if args.save_every:
         (run / "checkpoints").mkdir(exist_ok=True)
     keeper = BestKeeper(run, args.val_jitter, args.keep_max_loss, args.keep_min_heal) if args.val_every else None
     # λ のウォームアップ（既定はオフ）：見た目のロスの直近 window 回の平均が lam_warmup_loss を下回ったら
     # （花が育つようになったら）、そこから lam_warmup_iters 回かけて λ を 0 から args.lam まで上げる。それまでは λ=0
     recent = collections.deque(maxlen=args.lam_warmup_window)
-    info = dict(lam_warmup_trigger=None)
+    d_recent = collections.deque(maxlen=20)             # 眠り始めの判定（criteria.py と同じ：目覚ましの直近20回の平均 < 0.1）
+    debug_nan = {int(v) for v in args.debug_nan_iters.split(",") if v.strip()}
+    info = dict(lam_warmup_trigger=None, skipped_updates=0, pool_skips=0, lr_drop_on_sleep_iter=None)
     t0 = time.time()
     for i in range(args.iters):
         idx = random.sample(range(POOL_SIZE), BATCH)
@@ -123,6 +125,10 @@ def train(args, run, dev):
         hardness = min(1.0, i / args.anneal_iters) if args.anneal_iters > 0 else 1.0
         out, fire_sum, n_fire, n_alive, n_birth = model(s, steps, jitter_p=jp, generator=gen_mask,
                                                         hardness=hardness)
+        if i in debug_nan:                      # テスト用：出力の1画素にわざと nan を混ぜて、守りが働くかを確かめる
+            bad = torch.zeros_like(out.x)
+            bad[0, 0, 0, 0] = float("nan")
+            out = out._replace(x=out.x + bad)
         rgba_loss = ((out.x[:, :4] - target) ** 2).mean()
         fire_cost = fire_sum.sum() / (BATCH * h * w * steps)
         if args.lam_warmup_loss > 0:
@@ -138,11 +144,23 @@ def train(args, run, dev):
 
         opt.zero_grad()
         loss.backward()
-        for p in model.parameters():            # 勾配を正規化して学習を安定させる（元祖と同じ）
-            p.grad /= p.grad.norm() + 1e-8
-        opt.step()
+        # 守り：勾配に無限大や nan が混ざった回は、更新を飛ばす。正規化の前の生の勾配で調べる
+        # （norm が無限大だと、正規化で nan に化けるため）。飛ばした回数は必ず記録する
+        grads_ok = all(bool(torch.isfinite(p.grad).all()) for p in model.parameters())
+        if grads_ok:
+            for p in model.parameters():        # 勾配を正規化して学習を安定させる（元祖と同じ）
+                p.grad /= p.grad.norm() + 1e-8
+            opt.step()
+        else:
+            info["skipped_updates"] += 1
         sched.step()
-        pool_store(pool, idx, out)
+        # 出力の状態そのものに無限大や nan があるときは、プールに戻さない（1回の壊れた結果がプールを汚さないように）。
+        # 出力が有限なら、勾配が壊れていても戻す（これまでと同じ）
+        out_ok = all(bool(torch.isfinite(t).all()) for t in out if t.dtype.is_floating_point)
+        if out_ok:
+            pool_store(pool, idx, out)
+        else:
+            info["pool_skips"] += 1
         recent.append(float(rgba_loss.item()))
 
         nf, na = int(n_fire.item()), int(n_alive.item())
@@ -151,10 +169,18 @@ def train(args, run, dev):
             x_absmax = out.x.abs().max().item()
             c_max = out.c.max().item()
             d_mean = ((out.d * live).sum() / live.sum().clamp(min=1)).item()
+        # 眠り始めたら学習率を下げる（既定はオフ）：目覚ましの直近20回の平均が0.1を下回った最初の回に、学習率を1/10にする
+        d_recent.append(d_mean)
+        if (args.lr_drop_on_sleep and info["lr_drop_on_sleep_iter"] is None and len(d_recent) == d_recent.maxlen
+                and sum(d_recent) / len(d_recent) < 0.1):
+            for g in opt.param_groups:
+                g["lr"] *= 0.1
+            info["lr_drop_on_sleep_iter"] = i
+            print(f"  眠り始めたので学習率を1/10に：iter {i}（目覚ましの直近20回の平均 {sum(d_recent) / 20:.4f}）", flush=True)
         log.write(f"{i},{steps},{loss.item():.6g},{rgba_loss.item():.6g},{fire_cost.item():.6g},"
                   f"{nf},{na},{nf / max(na, 1):.6f},{x_absmax:.4g},{c_max:.4g},{d_mean:.4f},{jp:.3f},"
-                  f"{int(n_birth.item())},{hardness:.3f},{lam:.6g},"
-                  f"{time.time() - t0:.1f}\n")
+                  f"{int(n_birth.item())},{hardness:.3f},{lam:.6g},{int(not grads_ok)},{int(not out_ok)},"
+                  f"{opt.param_groups[0]['lr']:.3g},{time.time() - t0:.1f}\n")
         if args.save_every and (i + 1) % args.save_every == 0:
             torch.save(model.state_dict(), run / "checkpoints" / f"iter{i + 1}.pt")
         if keeper and (i + 1) % args.val_every == 0:
@@ -165,6 +191,7 @@ def train(args, run, dev):
         if i % 100 == 0 or i == args.iters - 1:
             log.flush()
             print(f"iter {i:5d}  rgba {rgba_loss.item():.5f}  発火率 {nf / max(na, 1):.3f}  "
+                  f"更新を飛ばした回数 {info['skipped_updates']}  プールに戻さなかった回数 {info['pool_skips']}  "
                   f"({time.time() - t0:.0f}秒)", flush=True)
     log.close()
     if keeper:
@@ -310,6 +337,10 @@ def main():
                     help="λ のウォームアップ：見た目のロスの直近平均がこれを下回るまで λ=0（0 で使わない）")
     ap.add_argument("--lam-warmup-iters", type=int, default=500, help="ウォームアップ開始から、この回数かけて λ を上げる")
     ap.add_argument("--lam-warmup-window", type=int, default=50, help="ウォームアップの判定に使う直近の回数")
+    ap.add_argument("--lr-drop-on-sleep", type=int, default=0,
+                    help="1 なら、眠り始めた（目覚ましの直近20回の平均 < 0.1）最初の回に学習率を1/10にする（既定オフ）")
+    ap.add_argument("--debug-nan-iters", default="",
+                    help="テスト用：この回（カンマ区切り）の出力に nan を混ぜて、更新を飛ばす守りを確かめる")
     ap.add_argument("--train-jitter", type=float, default=0.0,
                     help="学習時のタイミングのずれ。毎回、発火が1ステップ遅れる確率を 0〜この値 から選ぶ")
     ap.add_argument("--name", default=None)
@@ -346,7 +377,8 @@ def main():
                    anneal_iters=args.anneal_iters, val_every=args.val_every, val_jitter=args.val_jitter,
                    keep_max_loss=args.keep_max_loss, keep_min_heal=args.keep_min_heal,
                    lam_warmup_loss=args.lam_warmup_loss, lam_warmup_iters=args.lam_warmup_iters,
-                   lam_warmup_window=args.lam_warmup_window,
+                   lam_warmup_window=args.lam_warmup_window, lr_drop_on_sleep=bool(args.lr_drop_on_sleep),
+                   nonfinite_guard=True, **({"debug_nan_iters": args.debug_nan_iters} if args.debug_nan_iters else {}),
                    physio=Physio.to_dict(), git=git_commit(), torch=torch.__version__,
                    device=torch.cuda.get_device_name(0) if dev == "cuda" else "cpu", status="training")
         # 設定は学習の最初にも書き出す（学習中でも途中の重みを --eval-only で評価でき、設定の食い違いも確かめられる）
@@ -362,7 +394,8 @@ def main():
         cfg["peak_vram_mb"] = round(torch.cuda.max_memory_allocated() / 2**20) if dev == "cuda" else None
         (run / "config.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
         torch.save(model.state_dict(), run / "model.pt")
-        print(f"学習 {cfg['train_seconds']} 秒, VRAM最大 {cfg['peak_vram_mb']} MB")
+        print(f"学習 {cfg['train_seconds']} 秒, VRAM最大 {cfg['peak_vram_mb']} MB, "
+              f"更新を飛ばした回数 {cfg['skipped_updates']}, プールに戻さなかった回数 {cfg['pool_skips']}")
 
     tag = f"_{args.ckpt}" if args.ckpt else ""
     for jp in JITTERS:
