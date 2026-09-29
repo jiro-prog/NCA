@@ -135,3 +135,4 @@
 - 09-28：グラフ描きが nan で止まらないようにした（道具のバグ、Run H）
 - 09-29：Step 2 の世界（world.py、テスト15件）、GPU の列（tools/gpu_queue.py。Windows で起動できなかったバグを直した）
 - 09-29：--target・--kappa・--birth-push（既定はレシピのまま。花の道筋は1ビットも変わらないことを30回の試運転で確かめた）
+- 09-29：`step2_attention/dnaless_curves.py`（DNA なしの驚き駆動・時計・サイコロの曲線と 7.5 の比べ。評価の乱数1000 で候補A の確かめの DNA なしの点と完全に一致）、`step2_attention/precheck/precheck_b.py`（候補B の模擬。元の設計の引き金で回すと run_period と完全に一致）
