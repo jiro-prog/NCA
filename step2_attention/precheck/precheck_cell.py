@@ -148,7 +148,7 @@ def visibility(n, smin, P1, P2, seed=0):
 
 
 def simulate_sigma(P1, P2, sigma, dense=False, n=0.005, smin=0.005, eta=1.0, T=2600, tc=2000, theta=4.0,
-                   gR=0.9, eps=1e-3, noise_zone=False, seed=0, init="zero"):
+                   gR=0.9, eps=1e-3, noise_zone=False, seed=0, init="zero", forget=1.0):
     """
     σ の追いかけ方の2案を比べる模擬（2026-09-29、そうの判断3）。書き換えはどちらも (b)：最小二乗の解へ η で近づける。
     sigma：("uniform", 窓) なら全員一律の窓。("learn", 遅い窓, 速い窓, 直近) なら (c)「学んでいる間はゆっくり」：
@@ -204,6 +204,9 @@ def simulate_sigma(P1, P2, sigma, dense=False, n=0.005, smin=0.005, eta=1.0, T=2
         if write.any():
             wls = np.linalg.solve(R[write] + eps * I3, r[write][:, :, None])[:, :, 0]
             w[write] = w[write] + np.tanh(eta * (wls - w[write]))
+        if forget != 1.0 and trig.any():   # 驚いたら古い痕跡を忘れる（2026-09-29、最後の枠）：引き金の回の書き換えのあとで
+            R[trig] *= forget
+            r[trig] *= forget
         c[trig] = 0
         ref = trig
         since = np.where(trig, 1, since + 1)
@@ -217,7 +220,7 @@ def simulate_sigma(P1, P2, sigma, dense=False, n=0.005, smin=0.005, eta=1.0, T=2
 
 
 def simulate_window(P1, P2, stop, K=20, delta=0.5, n=0.005, smin=0.005, T=2600, tc=2000, theta=4.0,
-                    gR=0.9, eps=1e-3, tau=100, noise_zone=False, seed=0, init="zero", trace=None):
+                    gR=0.9, eps=1e-3, tau=100, noise_zone=False, seed=0, init="zero", trace=None, forget=1.0):
     """
     学習の窓（2026-09-29、そうの判断3）。引き金で窓が開き、窓が開いている間は毎ステップ発火して
     （最小二乗の解を求め、止まる条件を確かめ、止まらなければ書き換える）、止まる条件か上限 K 回で閉じる。
@@ -295,6 +298,10 @@ def simulate_window(P1, P2, stop, K=20, delta=0.5, n=0.005, smin=0.005, T=2600, 
             closing[idx[close]] = True
             lengths.extend(count[idx[close]].tolist())
             capped.extend((~done[close] & (count[idx[close]] >= K)).tolist())
+        if forget != 1.0 and newly.any():  # 驚いたら古い痕跡を忘れる：窓が開いた回（引き金の回）だけ、その回の書き換えのあとで
+            R[newly] *= forget
+            r[newly] *= forget
+            mass[newly] *= forget
         open_ = open_ & ~closing
         c[closing] = 0
         ref = closing
@@ -355,12 +362,12 @@ def windowed(a, k):
     return np.convolve(m, np.ones(k) / k, mode="valid")
 
 
-def judge_sigma(sigma, dense=False, tc=2000):
+def judge_sigma(sigma, dense=False, tc=2000, **kw):
     """σ の案1つについて、事前に決めた指標をすべて出す（EXPERIMENTS.md 2026-09-29「σ の2案の比べ方」）"""
     out = dict(changes={})
     base = None
     for a, b in [(12, 24), (12, 20), (12, 36), (24, 12)]:
-        F, E2, S, Z = simulate_sigma(a, b, sigma, dense=dense, tc=tc)
+        F, E2, S, Z = simulate_sigma(a, b, sigma, dense=dense, tc=tc, **kw)
         pre = np.sqrt(E2[tc - 400:tc].mean(0))
         post = np.sqrt(E2[tc + 250:tc + 300].mean(0))
         out["changes"][f"{a}→{b}"] = dict(
@@ -378,7 +385,7 @@ def judge_sigma(sigma, dense=False, tc=2000):
                 t_calib_wave=settle_time(windowed(Z, 100), lambda x: (x >= 0.5) & (x <= 1.5), tc - 100),
                 learn_fires=F[:400].sum(0).mean())
     out.update(base)
-    F, E2, S, Z = simulate_sigma(12, 12, sigma, dense=dense, tc=tc, noise_zone=True)
+    F, E2, S, Z = simulate_sigma(12, 12, sigma, dense=dense, tc=tc, noise_zone=True, **kw)
     out.update(noise_rate=F[tc - 400:tc].mean(), noise_z2=Z[tc - 400:tc].mean(), noise_sigma=np.median(S[tc - 1]),
                noise_early_rate=F[400:800].mean(),
                t_quiet_noise=settle_time(windowed(F, 50), lambda x: x <= 0.01, tc - 50))
@@ -604,6 +611,52 @@ def main():
     else:
         wv = "どちらも「効かない」→ **止めて報告する**"
     out += ["", f"**事前に決めた決め方による判定（学習の窓）**：{wv}"]
+
+    # ---- 2026-09-29（続き）最後の1枠：驚いたら古い痕跡を忘れる（そうの判断）。本命は元の設計＋忘れる、参考は忘れる＋候補3 ----
+    KF = 1 - 0.9                                      # κ_f = 1 − γ_R
+    same_orig = judge_sigma(("uniform", 100), forget=1.0)
+    same_c3 = judge_window("surprise", forget=1.0)
+    keys = ["wave_rate", "wave_z2", "err_ratio", "noise_rate", "noise_z2", "learn_fires"]
+    assert all(same_orig[k] == res[arms[0][0]][k] for k in keys), "忘れる=1 で元の設計の数字が変わった"
+    assert all(same_c3[k] == wres[wins[0][0]][k] for k in keys), "忘れる=1 で候補3の数字が変わった"
+    forig = judge_sigma(("uniform", 100), forget=KF)
+    fc3 = judge_window("surprise", forget=KF)
+    frows = [("参照：元の設計（忘れない）", res[arms[0][0]]), ("参照：候補3（忘れない）", wres[wins[0][0]]),
+             ("本命：元の設計＋忘れる", forig), ("参考：忘れる＋候補3", fc3)]
+    out += ["", "## 表15：最後の1枠「驚いたら古い痕跡を忘れる」（κ_f = 0.1、引き金の回の書き換えのあとで）。周期の変化ごと", "",
+            "忘れる割合を1にすると、参照の2行（表7・表11）とまったく同じ数字になることを確かめてから回した。", "",
+            "| 案 | 変化 | 10歩以内の反応 | 誤差が戻った | あきらめ | 学び直し後の発火率 | 学び直しの発火/セル |",
+            "|---|---|---:|---:|---:|---:|---:|"]
+    for name, o in frows:
+        for ch, cm in o["changes"].items():
+            out.append(f"| {name} | {ch} | {cm['react']:.2f} | {cm['back']:.2f} | {cm['gaveup']:.2f} | {cm['after']:.4f} | {cm['relearn']:.1f} |")
+    out += ["", "## 表16：最後の1枠：変える前の落ち着いた様子（1600〜2000）と学び始め", "",
+            "| 案 | 0〜400 の発火/セル（波） | 波の発火率 | 波の z² | 誤差÷当てられない誤差 | ノイズの発火率 | ノイズの z² | ノイズの σ | 効く |",
+            "|---|---:|---:|---:|---:|---:|---:|---:|---|"]
+    for name, o in frows:
+        out.append(f"| {name} | {o['learn_fires']:.1f} | {o['wave_rate']:.4f} | {o['wave_z2']:.2f} | {o['err_ratio']:.2f} | "
+                   f"{o['noise_rate']:.4f} | {o['noise_z2']:.2f} | {o['noise_sigma']:.3f} | {'○' if o['works'] else '×'} |")
+    out += ["", "（「0〜400 の発火」は、元の設計の行は最初の400ステップ、候補3の行は最初の2000ステップの発火/セル（表12と同じ数え方））"]
+    # 診断（判定には使わない）：学び終えた状態から始めたら
+    out += ["", "## 表17（診断。判定には使わない）：最後の1枠を、学び終えた状態から始める（400 で周期を変える）", "",
+            "| 案 | 変化 | 10歩以内の反応 | 誤差が戻った | あきらめ | 学び直し後の発火率 | 学び直しの発火/セル |", "|---|---|---:|---:|---:|---:|---:|"]
+    for name, fn in [("本命：元の設計＋忘れる", lambda a_, b_: simulate_sigma(a_, b_, ("uniform", 100), T=1000, tc=400, init="trained", forget=KF)),
+                     ("参考：忘れる＋候補3", lambda a_, b_: simulate_window(a_, b_, "surprise", T=1000, tc=400, init="trained", forget=KF)[:4])]:
+        for a_, b_ in [(12, 24), (12, 20), (12, 36), (24, 12)]:
+            F, E2, S, Z = fn(a_, b_)
+            pre = np.sqrt(E2[200:400].mean(0))
+            post = np.sqrt(E2[650:700].mean(0))
+            out.append(f"| {name} | {a_}→{b_} | {F[400:410].any(0).mean():.2f} | {(post <= 2 * pre).mean():.2f} | "
+                       f"{(S[699] > 2 * S[399]).mean():.2f} | {F[600:700].mean():.4f} | {F[400:700].sum(0).mean():.1f} |")
+    if forig["works"] and fc3["works"]:
+        fv = "両方合格 → **「元の設計＋忘れる」を採る**（組み合わせは参考）"
+    elif forig["works"]:
+        fv = "「元の設計＋忘れる」だけ合格 → **採る**（2つ目、最後の枠）"
+    elif fc3["works"]:
+        fv = "組み合わせ（忘れる＋候補3）だけ合格 → **枠を超えるサイン。足すのをやめて、前提の見直しへ**"
+    else:
+        fv = "どちらも不合格 → **足すのをやめて、前提の見直しへ**"
+    out += ["", f"**事前に決めた決め方による判定（最後の1枠）**：{fv}"]
 
     out += ["", f"（計算 {time.time() - t0:.0f} 秒）", ""]
     (HERE / "results.md").write_text("\n".join(out), encoding="utf-8")
