@@ -1,0 +1,971 @@
+{
+  "world": {
+    "size": 32,
+    "v": 0.25,
+    "amp": 0.4,
+    "mean": 0.5,
+    "noise": 0.02,
+    "zone": 24
+  },
+  "sigma_min": 0.02,
+  "k_ahead": 4,
+  "seeds": {
+    "1000": {
+      "controls": [
+        {
+          "family": "時計",
+          "policy": "時計 k=2",
+          "period": "grow",
+          "fires": 200.0,
+          "noise_fire_rate": 0.5,
+          "quality": -1.2091872692108154,
+          "wave_fire_rate": 0.5,
+          "err_ratio_end": 1.0709599126676652
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=2",
+          "period": "adult",
+          "fires": 500.0,
+          "noise_fire_rate": 0.5,
+          "quality": -2.5107327029109,
+          "steady_fire_rate_wave": 0.5,
+          "steady_fire_rate_noise": 0.5,
+          "steady_nll_wave": -2.5380892753601074,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=4",
+          "period": "grow",
+          "fires": 100.0,
+          "noise_fire_rate": 0.25,
+          "quality": -1.1731356382369995,
+          "wave_fire_rate": 0.25,
+          "err_ratio_end": 1.0557291697831628
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=4",
+          "period": "adult",
+          "fires": 250.0,
+          "noise_fire_rate": 0.25,
+          "quality": -2.4950873628258705,
+          "steady_fire_rate_wave": 0.25,
+          "steady_fire_rate_noise": 0.25,
+          "steady_nll_wave": -2.5525667667388916,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=10",
+          "period": "grow",
+          "fires": 40.0,
+          "noise_fire_rate": 0.09999999403953552,
+          "quality": -1.0226746797561646,
+          "wave_fire_rate": 0.10000000149011612,
+          "err_ratio_end": 1.0390087725796113
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=10",
+          "period": "adult",
+          "fires": 100.0,
+          "noise_fire_rate": 0.10000000149011612,
+          "quality": -2.470120146870613,
+          "steady_fire_rate_wave": 0.10000000149011612,
+          "steady_fire_rate_noise": 0.09999999403953552,
+          "steady_nll_wave": -2.5633294582366943,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=30",
+          "period": "grow",
+          "fires": 14.0,
+          "noise_fire_rate": 0.03500000014901161,
+          "quality": -0.6636496782302856,
+          "wave_fire_rate": 0.03500000014901161,
+          "err_ratio_end": 1.0216175602873556
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=30",
+          "period": "adult",
+          "fires": 34.0,
+          "noise_fire_rate": 0.03400000184774399,
+          "quality": -2.4919487833976746,
+          "steady_fire_rate_wave": 0.03500000014901161,
+          "steady_fire_rate_noise": 0.03500000014901161,
+          "steady_nll_wave": -2.544250726699829,
+          "react_cols": 0.3125,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=100",
+          "period": "grow",
+          "fires": 4.0,
+          "noise_fire_rate": 0.009999999776482582,
+          "quality": 0.02093086764216423,
+          "wave_fire_rate": 0.009999999776482582,
+          "err_ratio_end": 1.015933833088488
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=100",
+          "period": "adult",
+          "fires": 10.0,
+          "noise_fire_rate": 0.010000000707805157,
+          "quality": -2.4258330538868904,
+          "steady_fire_rate_wave": 0.009999999776482582,
+          "steady_fire_rate_noise": 0.009999999776482582,
+          "steady_nll_wave": -2.349966526031494,
+          "react_cols": 0.125,
+          "err_back": 0.99993896484375,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=300",
+          "period": "grow",
+          "fires": 2.0,
+          "noise_fire_rate": 0.004999999888241291,
+          "quality": 0.6647643446922302,
+          "wave_fire_rate": 0.004999999888241291,
+          "err_ratio_end": 4.759815318165568
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=300",
+          "period": "adult",
+          "fires": 4.0,
+          "noise_fire_rate": 0.004000000189989805,
+          "quality": -2.1972285583615303,
+          "steady_fire_rate_wave": 0.004999999888241291,
+          "steady_fire_rate_noise": 0.004999999888241291,
+          "steady_nll_wave": -1.433336853981018,
+          "react_cols": 0.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.003",
+          "period": "grow",
+          "fires": 1.19439697265625,
+          "noise_fire_rate": 0.0028564452659338713,
+          "quality": 1.1462210416793823,
+          "wave_fire_rate": 0.002994628855958581,
+          "err_ratio_end": 8.861643751235345
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.003",
+          "period": "adult",
+          "fires": 3.0003662109375,
+          "noise_fire_rate": 0.0029707031790167093,
+          "quality": -2.2098061963915825,
+          "steady_fire_rate_wave": 0.003004231723025441,
+          "steady_fire_rate_noise": 0.002768554724752903,
+          "steady_nll_wave": -2.578407049179077,
+          "react_cols": 0.58203125,
+          "err_back": 0.9773152749985456,
+          "gaveup": 0.009033203197759576,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.01",
+          "period": "grow",
+          "fires": 4.02716064453125,
+          "noise_fire_rate": 0.010046386159956455,
+          "quality": 0.5026826858520508,
+          "wave_fire_rate": 0.01006933581084013,
+          "err_ratio_end": 3.464378668951205
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.01",
+          "period": "adult",
+          "fires": 10.04925537109375,
+          "noise_fire_rate": 0.010089844465255737,
+          "quality": -2.360155425965786,
+          "steady_fire_rate_wave": 0.010089843533933163,
+          "steady_fire_rate_noise": 0.010214843787252903,
+          "steady_nll_wave": -2.576641798019409,
+          "react_cols": 0.95703125,
+          "err_back": 0.9957275427877903,
+          "gaveup": 0.0018920898583019152,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.03",
+          "period": "grow",
+          "fires": 12.04840087890625,
+          "noise_fire_rate": 0.030029296875,
+          "quality": -0.19905033707618713,
+          "wave_fire_rate": 0.030127115547657013,
+          "err_ratio_end": 1.0345865409356103
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.03",
+          "period": "adult",
+          "fires": 30.06402587890625,
+          "noise_fire_rate": 0.02994628995656967,
+          "quality": -2.4582747519016266,
+          "steady_fire_rate_wave": 0.030205728486180305,
+          "steady_fire_rate_noise": 0.030170897021889687,
+          "steady_nll_wave": -2.579080820083618,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.1",
+          "period": "grow",
+          "fires": 40.0662841796875,
+          "noise_fire_rate": 0.10012206435203552,
+          "quality": -0.7289456129074097,
+          "wave_fire_rate": 0.1001686155796051,
+          "err_ratio_end": 1.0324249053275287
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.1",
+          "period": "adult",
+          "fires": 100.077880859375,
+          "noise_fire_rate": 0.10008984804153442,
+          "quality": -2.4817220121622086,
+          "steady_fire_rate_wave": 0.1003125011920929,
+          "steady_fire_rate_noise": 0.10025390237569809,
+          "steady_nll_wave": -2.5687053203582764,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.3",
+          "period": "grow",
+          "fires": 120.03607177734375,
+          "noise_fire_rate": 0.30010008811950684,
+          "quality": -1.0166664123535156,
+          "wave_fire_rate": 0.3000895082950592,
+          "err_ratio_end": 1.0604390364080776
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.3",
+          "period": "adult",
+          "fires": 300.18902587890625,
+          "noise_fire_rate": 0.2999189496040344,
+          "quality": -2.4867750108242035,
+          "steady_fire_rate_wave": 0.300334632396698,
+          "steady_fire_rate_noise": 0.29964354634284973,
+          "steady_nll_wave": -2.5454630851745605,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.5",
+          "period": "grow",
+          "fires": 199.92059326171875,
+          "noise_fire_rate": 0.5004419088363647,
+          "quality": -1.1198170185089111,
+          "wave_fire_rate": 0.499758780002594,
+          "err_ratio_end": 1.0814428874165911
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.5",
+          "period": "adult",
+          "fires": 500.0238037109375,
+          "noise_fire_rate": 0.49970412254333496,
+          "quality": -2.4921969398856163,
+          "steady_fire_rate_wave": 0.49974772334098816,
+          "steady_fire_rate_noise": 0.49925291538238525,
+          "steady_nll_wave": -2.527343511581421,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        }
+      ],
+      "B_grow": {
+        "period": "grow",
+        "surprise": "z4",
+        "fires": 4.31195068359375,
+        "noise_fire_rate": 0.00960693322122097,
+        "quality": -0.7793588638305664,
+        "wave_fire_rate": 0.010858072899281979,
+        "err_ratio_end": 2.3741206398548598
+      },
+      "ref_grow": {
+        "period": "grow",
+        "surprise": "z1",
+        "fires": 3.11956787109375,
+        "noise_fire_rate": 0.010729980655014515,
+        "quality": -0.4499038755893707,
+        "wave_fire_rate": 0.007603515405207872,
+        "err_ratio_end": 2.9322684484652997
+      },
+      "B_adult": {
+        "period": "adult",
+        "surprise": "z4",
+        "fires": 2.86614990234375,
+        "noise_fire_rate": 0.003156250109896064,
+        "quality": -2.4854618161916733,
+        "steady_fire_rate_wave": 1.1718750101863407e-05,
+        "steady_fire_rate_noise": 0.0,
+        "steady_nll_wave": -2.590794086456299,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0,
+        "visibility": {
+          "12→24": {
+            "z4": 13.591733872890472,
+            "z1": 1.9085127003490925
+          },
+          "12→20": {
+            "z4": 11.918612599372864,
+            "z1": 1.7150353267788887
+          },
+          "12→36": {
+            "z4": 16.047509133815765,
+            "z1": 2.1332488134503365
+          },
+          "24→12": {
+            "z4": 5.71038381755352,
+            "z1": 1.6676549203693867
+          }
+        }
+      },
+      "ref_adult": {
+        "period": "adult",
+        "surprise": "z1",
+        "fires": 0.27288818359375,
+        "noise_fire_rate": 0.0036699220072478056,
+        "quality": -2.0807917043566704,
+        "steady_fire_rate_wave": 3.8736980059184134e-05,
+        "steady_fire_rate_noise": 0.0,
+        "steady_nll_wave": -2.5893850326538086,
+        "react_cols": 0.3359375,
+        "err_back": 0.9575195368379354,
+        "gaveup": 0.013732910272665322,
+        "visibility": {
+          "12→24": {
+            "z4": 14.880874633789062,
+            "z1": 2.4949799329042435
+          },
+          "12→20": {
+            "z4": 12.753960728645325,
+            "z1": 2.0541726015508175
+          },
+          "12→36": {
+            "z4": 17.115471363067627,
+            "z1": 2.7928559631109238
+          },
+          "24→12": {
+            "z4": 8.425950199365616,
+            "z1": 2.2339332699775696
+          }
+        }
+      },
+      "static_adult": {
+        "period": "adult",
+        "surprise": "z4",
+        "fires": 0.0,
+        "noise_fire_rate": 0.0,
+        "quality": -1.7848368659615517,
+        "steady_fire_rate_wave": 0.0,
+        "steady_fire_rate_noise": 0.0,
+        "steady_nll_wave": -2.5908374786376953,
+        "react_cols": 0.0,
+        "err_back": 0.9519856814295053,
+        "gaveup": 0.0,
+        "visibility": {
+          "12→24": {
+            "z4": 57.16744816303253,
+            "z1": 2.817870132625103
+          },
+          "12→20": {
+            "z4": 39.86689829826355,
+            "z1": 2.227828860282898
+          },
+          "12→36": {
+            "z4": 72.73187232017517,
+            "z1": 3.254460670053959
+          },
+          "24→12": {
+            "z4": 16.95914626121521,
+            "z1": 2.444597639143467
+          }
+        }
+      },
+      "verdicts": {
+        "B_grow_時計": {
+          "verdict": "上回る",
+          "fires": 4.31195068359375,
+          "nll": -0.7793588638305664,
+          "control_nll": -0.020105853752548357
+        },
+        "ref_grow_時計": {
+          "verdict": "上回る",
+          "fires": 3.11956787109375,
+          "nll": -0.4499038755893707,
+          "control_nll": 0.25184419212656806
+        },
+        "B_grow_サイコロ": {
+          "verdict": "上回る",
+          "fires": 4.31195068359375,
+          "nll": -0.7793588638305664,
+          "control_nll": 0.4589287956128635
+        },
+        "ref_grow_サイコロ": {
+          "verdict": "上回る",
+          "fires": 3.11956787109375,
+          "nll": -0.4499038755893707,
+          "control_nll": 0.6378939659990037
+        },
+        "B_adult_時計": {
+          "verdict": "上回る",
+          "fires": 2.86614990234375,
+          "nll": -2.4854618161916733,
+          "control_nll": -2.1972285583615303
+        },
+        "ref_adult_時計": {
+          "verdict": "決められない",
+          "fires": 0.27288818359375,
+          "nll": -2.0807917043566704,
+          "control_nll": -2.1972285583615303
+        },
+        "B_adult_サイコロ": {
+          "verdict": "上回る",
+          "fires": 2.86614990234375,
+          "nll": -2.4854618161916733,
+          "control_nll": -2.2098061963915825
+        },
+        "ref_adult_サイコロ": {
+          "verdict": "決められない",
+          "fires": 0.27288818359375,
+          "nll": -2.0807917043566704,
+          "control_nll": -2.2098061963915825
+        }
+      },
+      "promising": true
+    },
+    "1001": {
+      "controls": [
+        {
+          "family": "時計",
+          "policy": "時計 k=2",
+          "period": "grow",
+          "fires": 200.0,
+          "noise_fire_rate": 0.5,
+          "quality": -1.192429542541504,
+          "wave_fire_rate": 0.5,
+          "err_ratio_end": 1.0696687623044567
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=2",
+          "period": "adult",
+          "fires": 500.0,
+          "noise_fire_rate": 0.5,
+          "quality": -2.5123531371355057,
+          "steady_fire_rate_wave": 0.5,
+          "steady_fire_rate_noise": 0.5,
+          "steady_nll_wave": -2.537482500076294,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=4",
+          "period": "grow",
+          "fires": 100.0,
+          "noise_fire_rate": 0.25,
+          "quality": -1.1700564622879028,
+          "wave_fire_rate": 0.25,
+          "err_ratio_end": 1.0547577249098894
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=4",
+          "period": "adult",
+          "fires": 250.0,
+          "noise_fire_rate": 0.25,
+          "quality": -2.4971589371562004,
+          "steady_fire_rate_wave": 0.25,
+          "steady_fire_rate_noise": 0.25,
+          "steady_nll_wave": -2.551608085632324,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=10",
+          "period": "grow",
+          "fires": 40.0,
+          "noise_fire_rate": 0.09999999403953552,
+          "quality": -1.0290290117263794,
+          "wave_fire_rate": 0.10000000149011612,
+          "err_ratio_end": 1.038183186047369
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=10",
+          "period": "adult",
+          "fires": 100.0,
+          "noise_fire_rate": 0.10000000149011612,
+          "quality": -2.4719268530607224,
+          "steady_fire_rate_wave": 0.10000000149011612,
+          "steady_fire_rate_noise": 0.09999999403953552,
+          "steady_nll_wave": -2.5619635581970215,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=30",
+          "period": "grow",
+          "fires": 14.0,
+          "noise_fire_rate": 0.03500000014901161,
+          "quality": -0.6669565439224243,
+          "wave_fire_rate": 0.03500000014901161,
+          "err_ratio_end": 1.020834706667134
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=30",
+          "period": "adult",
+          "fires": 34.0,
+          "noise_fire_rate": 0.03400000184774399,
+          "quality": -2.492790438234806,
+          "steady_fire_rate_wave": 0.03500000014901161,
+          "steady_fire_rate_noise": 0.03500000014901161,
+          "steady_nll_wave": -2.541929006576538,
+          "react_cols": 0.3125,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=100",
+          "period": "grow",
+          "fires": 4.0,
+          "noise_fire_rate": 0.009999999776482582,
+          "quality": 0.016707560047507286,
+          "wave_fire_rate": 0.009999999776482582,
+          "err_ratio_end": 1.0155184158716284
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=100",
+          "period": "adult",
+          "fires": 10.0,
+          "noise_fire_rate": 0.010000000707805157,
+          "quality": -2.426460586488247,
+          "steady_fire_rate_wave": 0.009999999776482582,
+          "steady_fire_rate_noise": 0.009999999776482582,
+          "steady_nll_wave": -2.3494279384613037,
+          "react_cols": 0.125,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=300",
+          "period": "grow",
+          "fires": 2.0,
+          "noise_fire_rate": 0.004999999888241291,
+          "quality": 0.6598916053771973,
+          "wave_fire_rate": 0.004999999888241291,
+          "err_ratio_end": 4.772455596921358
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=300",
+          "period": "adult",
+          "fires": 4.0,
+          "noise_fire_rate": 0.004000000189989805,
+          "quality": -2.1962333247065544,
+          "steady_fire_rate_wave": 0.004999999888241291,
+          "steady_fire_rate_noise": 0.004999999888241291,
+          "steady_nll_wave": -1.4432374238967896,
+          "react_cols": 0.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.003",
+          "period": "grow",
+          "fires": 1.192138671875,
+          "noise_fire_rate": 0.0030883788131177425,
+          "quality": 1.1429657936096191,
+          "wave_fire_rate": 0.00297314440831542,
+          "err_ratio_end": 8.851266567516179
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.003",
+          "period": "adult",
+          "fires": 2.9962158203125,
+          "noise_fire_rate": 0.003095703199505806,
+          "quality": -2.2084314972162247,
+          "steady_fire_rate_wave": 0.002963216044008732,
+          "steady_fire_rate_noise": 0.0031103515066206455,
+          "steady_nll_wave": -2.5800726413726807,
+          "react_cols": 0.5703125,
+          "err_back": 0.9802856482565403,
+          "gaveup": 0.009602864643966313,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.01",
+          "period": "grow",
+          "fires": 4.002197265625,
+          "noise_fire_rate": 0.010031738318502903,
+          "quality": 0.49465712904930115,
+          "wave_fire_rate": 0.010003743693232536,
+          "err_ratio_end": 3.4718889990639075
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.01",
+          "period": "adult",
+          "fires": 10.0201416015625,
+          "noise_fire_rate": 0.010065429843962193,
+          "quality": -2.359075903892517,
+          "steady_fire_rate_wave": 0.00990690104663372,
+          "steady_fire_rate_noise": 0.010004882700741291,
+          "steady_nll_wave": -2.5768494606018066,
+          "react_cols": 0.94921875,
+          "err_back": 0.9972534235566854,
+          "gaveup": 0.0014648437572759576,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.03",
+          "period": "grow",
+          "fires": 11.985107421875,
+          "noise_fire_rate": 0.02993164025247097,
+          "quality": -0.20276662707328796,
+          "wave_fire_rate": 0.02996484376490116,
+          "err_ratio_end": 1.0279493616685305
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.03",
+          "period": "adult",
+          "fires": 29.96905517578125,
+          "noise_fire_rate": 0.0298613291233778,
+          "quality": -2.4582263231277466,
+          "steady_fire_rate_wave": 0.029952799901366234,
+          "steady_fire_rate_noise": 0.030043944716453552,
+          "steady_nll_wave": -2.577100992202759,
+          "react_cols": 1.0,
+          "err_back": 0.99993896484375,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.1",
+          "period": "grow",
+          "fires": 39.9752197265625,
+          "noise_fire_rate": 0.09985839575529099,
+          "quality": -0.7301072478294373,
+          "wave_fire_rate": 0.09994335472583771,
+          "err_ratio_end": 1.0311564125706938
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.1",
+          "period": "adult",
+          "fires": 100.05267333984375,
+          "noise_fire_rate": 0.09978711605072021,
+          "quality": -2.4830057248473167,
+          "steady_fire_rate_wave": 0.09983756393194199,
+          "steady_fire_rate_noise": 0.10055175423622131,
+          "steady_nll_wave": -2.5675981044769287,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.3",
+          "period": "grow",
+          "fires": 119.93487548828125,
+          "noise_fire_rate": 0.3003808557987213,
+          "quality": -1.0127158164978027,
+          "wave_fire_rate": 0.29980093240737915,
+          "err_ratio_end": 1.0591667951501882
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.3",
+          "period": "adult",
+          "fires": 300.01123046875,
+          "noise_fire_rate": 0.2998955249786377,
+          "quality": -2.4883728101849556,
+          "steady_fire_rate_wave": 0.2999931573867798,
+          "steady_fire_rate_noise": 0.3010546863079071,
+          "steady_nll_wave": -2.5444774627685547,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.5",
+          "period": "grow",
+          "fires": 200.07427978515625,
+          "noise_fire_rate": 0.4998095631599426,
+          "quality": -1.1110548973083496,
+          "wave_fire_rate": 0.5002107620239258,
+          "err_ratio_end": 1.0800939268371201
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.5",
+          "period": "adult",
+          "fires": 500.1322021484375,
+          "noise_fire_rate": 0.500119149684906,
+          "quality": -2.493864856660366,
+          "steady_fire_rate_wave": 0.5003958344459534,
+          "steady_fire_rate_noise": 0.5008153915405273,
+          "steady_nll_wave": -2.5264599323272705,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        }
+      ],
+      "B_grow": {
+        "period": "grow",
+        "surprise": "z4",
+        "fires": 4.30364990234375,
+        "noise_fire_rate": 0.00963622983545065,
+        "quality": -0.7611082196235657,
+        "wave_fire_rate": 0.01083398424088955,
+        "err_ratio_end": 2.5217249493768676
+      },
+      "ref_grow": {
+        "period": "grow",
+        "surprise": "z1",
+        "fires": 3.133544921875,
+        "noise_fire_rate": 0.010751953348517418,
+        "quality": -0.4345839321613312,
+        "wave_fire_rate": 0.007639322895556688,
+        "err_ratio_end": 2.9603768751723747
+      },
+      "B_adult": {
+        "period": "adult",
+        "surprise": "z4",
+        "fires": 3.04498291015625,
+        "noise_fire_rate": 0.0031416018027812243,
+        "quality": -2.4854124784469604,
+        "steady_fire_rate_wave": 9.11458300834056e-06,
+        "steady_fire_rate_noise": 0.0,
+        "steady_nll_wave": -2.5902223587036133,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0,
+        "visibility": {
+          "12→24": {
+            "z4": 13.598662316799164,
+            "z1": 1.8553867377340794
+          },
+          "12→20": {
+            "z4": 11.679611891508102,
+            "z1": 1.6939975135028362
+          },
+          "12→36": {
+            "z4": 14.330405622720718,
+            "z1": 2.0341659858822823
+          },
+          "24→12": {
+            "z4": 5.584216326475143,
+            "z1": 1.6219474598765373
+          }
+        }
+      },
+      "ref_adult": {
+        "period": "adult",
+        "surprise": "z1",
+        "fires": 0.2694091796875,
+        "noise_fire_rate": 0.0035791017580777407,
+        "quality": -2.0825381353497505,
+        "steady_fire_rate_wave": 3.4505206713220105e-05,
+        "steady_fire_rate_noise": 0.0,
+        "steady_nll_wave": -2.588930368423462,
+        "react_cols": 0.29296875,
+        "err_back": 0.9651896227151155,
+        "gaveup": 0.013692220163648017,
+        "visibility": {
+          "12→24": {
+            "z4": 14.910272002220154,
+            "z1": 2.478607252240181
+          },
+          "12→20": {
+            "z4": 12.44429275393486,
+            "z1": 2.0253124460577965
+          },
+          "12→36": {
+            "z4": 17.087045073509216,
+            "z1": 2.8533850386738777
+          },
+          "24→12": {
+            "z4": 8.143884122371674,
+            "z1": 2.211777202785015
+          }
+        }
+      },
+      "static_adult": {
+        "period": "adult",
+        "surprise": "z4",
+        "fires": 0.0,
+        "noise_fire_rate": 0.0,
+        "quality": -1.7858254313468933,
+        "steady_fire_rate_wave": 0.0,
+        "steady_fire_rate_noise": 0.0,
+        "steady_nll_wave": -2.5903501510620117,
+        "react_cols": 0.0,
+        "err_back": 0.9591674841940403,
+        "gaveup": 0.0,
+        "visibility": {
+          "12→24": {
+            "z4": 57.092549204826355,
+            "z1": 2.79256284981966
+          },
+          "12→20": {
+            "z4": 38.19388937950134,
+            "z1": 2.188261680305004
+          },
+          "12→36": {
+            "z4": 79.14966368675232,
+            "z1": 3.348140947520733
+          },
+          "24→12": {
+            "z4": 16.098012566566467,
+            "z1": 2.4178363010287285
+          }
+        }
+      },
+      "verdicts": {
+        "B_grow_時計": {
+          "verdict": "上回る",
+          "fires": 4.30364990234375,
+          "nll": -0.7611082196235657,
+          "control_nll": -0.023222657729496388
+        },
+        "ref_grow_時計": {
+          "verdict": "上回る",
+          "fires": 3.133544921875,
+          "nll": -0.4345839321613312,
+          "control_nll": 0.243239762285967
+        },
+        "B_grow_サイコロ": {
+          "verdict": "上回る",
+          "fires": 4.30364990234375,
+          "nll": -0.7611082196235657,
+          "control_nll": 0.4484810761033331
+        },
+        "ref_grow_サイコロ": {
+          "verdict": "上回る",
+          "fires": 3.133544921875,
+          "nll": -0.4345839321613312,
+          "control_nll": 0.6256355453058998
+        },
+        "B_adult_時計": {
+          "verdict": "上回る",
+          "fires": 3.04498291015625,
+          "nll": -2.4854124784469604,
+          "control_nll": -2.1962333247065544
+        },
+        "ref_adult_時計": {
+          "verdict": "決められない",
+          "fires": 0.2694091796875,
+          "nll": -2.0825381353497505,
+          "control_nll": -2.1962333247065544
+        },
+        "B_adult_サイコロ": {
+          "verdict": "上回る",
+          "fires": 3.04498291015625,
+          "nll": -2.4854124784469604,
+          "control_nll": -2.2104461489281926
+        },
+        "ref_adult_サイコロ": {
+          "verdict": "決められない",
+          "fires": 0.2694091796875,
+          "nll": -2.0825381353497505,
+          "control_nll": -2.2084314972162247
+        }
+      },
+      "promising": true
+    }
+  },
+  "consistency": {
+    "grow": {
+      "run_period": [
+        3.11956787109375,
+        -0.4499038755893707
+      ],
+      "precheck": [
+        3.11956787109375,
+        -0.4499038755893707
+      ],
+      "same": true
+    },
+    "adult": {
+      "run_period": [
+        0.27288818359375,
+        -2.0807917043566704
+      ],
+      "precheck": [
+        0.27288818359375,
+        -2.0807917043566704
+      ],
+      "same": true
+    }
+  },
+  "final": "見込みあり"
+}
