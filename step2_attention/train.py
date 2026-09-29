@@ -10,6 +10,8 @@ Step 2 の学習と評価（DESIGN.md 5章・6章）。いまは 2a（全員が�
 - 守り（Step 1 から持ち越し）：勾配に無限大や nan が混ざった回は更新を飛ばし、回数を記録する。勾配はパラメータごとに正規化する
 - 評価：DNA ありと、DNA なし（η=1、g=1、Δw=0 の密な最小二乗）を、同じ世界で並べる。周期の変化は 12→24・12→20・12→36・24→12
 - 封印テストのシード（9000以上）は拒む（sealed.py）
+- 2026-09-29（DESIGN.md 14章）：--ahead（驚きの信号の先。B は4）、--sigma-min、--visible-only（0 で学習の変化を見える組に絞らない）、
+  --pairs original（大人の時期の組を元の 12→24・12→20・24→36・24→12 に）。--eval-only ではどれも config.json から戻す
 """
 import argparse
 import csv
@@ -31,7 +33,7 @@ import torch  # noqa: E402
 
 import world as W  # noqa: E402
 from model import AttentionCell, Physio2, State2, init_state, nll  # noqa: E402
-from protocol import Protocol2, hide_neighbors, judge_2a, run_period, run_protocol2  # noqa: E402
+from protocol import PAIRS, PAIRS_ORIGINAL, Protocol2, hide_neighbors, judge_2a, run_period, run_protocol2  # noqa: E402
 from sealed import check_dev_seed  # noqa: E402
 
 EVAL_CHANGES = ((12.0, 24.0), (12.0, 20.0), (12.0, 36.0), (24.0, 12.0))
@@ -107,7 +109,10 @@ def train(args, run, dev):
         # 周期を途中で変えるサンプル：変える時刻と行き先（見える組だけ）
         change_j = list(range(args.fresh_per_batch, args.fresh_per_batch + args.change_per_batch))
         change_t = {j: int(torch.randint(1, T, (1,), generator=gen_cpu)) for j in change_j}
-        change_P = {j: float(W.sample_visible_change(world.P[j:j + 1].cpu(), gen_cpu)[0]) for j in change_j}
+        if args.visible_only:
+            change_P = {j: float(W.sample_visible_change(world.P[j:j + 1].cpu(), gen_cpu)[0]) for j in change_j}
+        else:                                                       # S2-11 を外す：学習の周期の分布からそのまま（DESIGN.md 14章）
+            change_P = {j: float(W.sample_periods(1, gen_cpu)[0]) for j in change_j}
         loss = 0.0
         fire_cost = 0.0
         acc = dict(nll_wave=0.0, nll_noise=0.0, z2_wave=0.0, z2_noise=0.0, trig_wave=0.0, trig_noise=0.0,
@@ -177,14 +182,18 @@ def firing_policy(args):
     return pol
 
 
-def evaluate_b(model, policy, wcfg, out_dir, eval_seed, dev):
-    """2b 以降の評価（DESIGN.md 7.5）：育つ時期と大人の時期、それぞれ近所を隠す診断つき。対照との比べは small_check.py"""
+def eval_pairs(args):
+    return PAIRS_ORIGINAL if getattr(args, "pairs", "patched") == "original" else PAIRS
+
+
+def evaluate_b(model, policy, wcfg, out_dir, eval_seed, dev, pairs=PAIRS):
+    """2b 以降の評価（DESIGN.md 7.5）：育つ時期と大人の時期、それぞれ近所を隠す診断つき。対照との比べは small_check.py・verify_b.py"""
     out_dir.mkdir(parents=True, exist_ok=True)
     res = {}
     for period in ("grow", "adult"):
-        res[period] = run_period(model, policy, wcfg, period, eval_seed=eval_seed, device=dev)
+        res[period] = run_period(model, policy, wcfg, period, eval_seed=eval_seed, device=dev, pairs=pairs)
         with hide_neighbors():
-            res[period + "_hide_nbr"] = run_period(model, policy, wcfg, period, eval_seed=eval_seed, device=dev)
+            res[period + "_hide_nbr"] = run_period(model, policy, wcfg, period, eval_seed=eval_seed, device=dev, pairs=pairs)
     (out_dir / "summary.json").write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
     return res
 
@@ -300,6 +309,11 @@ def main():
     ap.add_argument("--lam", type=float, default=0.0, help="発火のコストの重み λ（全セル×ステップで割った発火に掛ける）")
     ap.add_argument("--cand3-cap", type=int, default=20, help="候補3 の1回の窓の発火の上限")
     ap.add_argument("--noise", type=float, default=W.WorldConfig().noise)
+    ap.add_argument("--sigma-min", type=float, default=Physio2.sigma_min, help="σ の下限（センサーのノイズと同じにする）")
+    ap.add_argument("--ahead", type=int, default=1, help="驚きの信号の先（1 はこれまでどおり、B は4。DESIGN.md 14章）")
+    ap.add_argument("--visible-only", type=int, default=1, help="1 なら学習の周期の変化を見える組に絞る（S2-11）。0 で絞らない")
+    ap.add_argument("--pairs", choices=["patched", "original"], default="patched",
+                    help="大人の時期の組。patched は 12→36（S2-8 のあと）、original は元の 24→36")
     ap.add_argument("--checkpoint", type=int, default=1)
     ap.add_argument("--save-every", type=int, default=250)
     ap.add_argument("--name", default=None)
@@ -315,15 +329,20 @@ def main():
         run = Path(args.eval_only)
         cfg = json.loads((run / "config.json").read_text(encoding="utf-8"))
         wcfg = W.WorldConfig(**cfg["world"])
+        phys = cfg.get("physio", {})
+        Physio2.sigma_min = phys.get("sigma_min", Physio2.sigma_min)         # 古い config にない数字は、いまの既定のまま
+        Physio2.surprise_ahead = phys.get("surprise_ahead", 1)
         model = AttentionCell(dna=True, alarm=cfg.get("firing") == "alarm").to(dev)
         model.load_state_dict(torch.load(run / "model.pt", map_location=dev))
-        for k in ("firing", "lam", "cand3_cap"):
+        for k in ("firing", "lam", "cand3_cap", "pairs"):
             if k in cfg:
                 setattr(args, k, cfg[k])
         args.dense = cfg.get("dense", 1)
     else:
         run = HERE / "runs" / (args.name or f"2a_seed{args.seed}")
         run.mkdir(parents=True, exist_ok=True)
+        Physio2.sigma_min = args.sigma_min
+        Physio2.surprise_ahead = args.ahead
         wcfg = W.WorldConfig(noise=args.noise)
         args.firing = args.firing or ("dense" if args.dense else "trigger")
         cfg = dict(vars(args), stage="2a" if args.firing == "dense" else "2b", physio=Physio2.to_dict(), world=wcfg.to_dict(),
@@ -346,7 +365,7 @@ def main():
     model.eval()
     policy = firing_policy(args)
     if policy["kind"] != "dense":
-        res = evaluate_b(model, policy, wcfg, run / "eval_b", args.eval_seed, dev)
+        res = evaluate_b(model, policy, wcfg, run / "eval_b", args.eval_seed, dev, pairs=eval_pairs(args))
         print(f"{policy['kind']}：", brief_b(res), flush=True)
         print("出力:", run)
         return

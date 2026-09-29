@@ -1,0 +1,44 @@
+{
+  "a_one_step_unchanged": {
+    "same": true,
+    "n": 36,
+    "diffs": []
+  },
+  "b_four_step_matches_precheck": {
+    "grow": {
+      "real_cell": [
+        4.31195068359375,
+        -0.7793588638305664
+      ],
+      "precheck": [
+        4.31195068359375,
+        -0.7793588638305664
+      ],
+      "same": true,
+      "close": true
+    },
+    "adult": {
+      "real_cell": [
+        2.86614990234375,
+        -2.4854618161916733
+      ],
+      "precheck": [
+        2.86614990234375,
+        -2.4854618161916733
+      ],
+      "same": true,
+      "close": true,
+      "real": {
+        "react": 1.0,
+        "back": 1.0,
+        "gaveup": 0.0
+      },
+      "pre": {
+        "react": 1.0,
+        "back": 1.0,
+        "gaveup": 0.0
+      }
+    }
+  },
+  "passed": true
+}

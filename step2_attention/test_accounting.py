@@ -296,6 +296,75 @@ def test_2a_weights_still_load():
     assert m.rule[-1].weight.shape[0] == AttentionCell.N_OUT
 
 
+def test_one_step_surprise_is_unchanged():
+    """驚きの信号が1歩先（k=1、これまでどおり）なら、覚えている予測と σ_k は1歩先の予測と σ にぴったり重なり、濃度に溜めるのも z²"""
+    assert Physio2.surprise_ahead == 1
+    cfg = W.WorldConfig(size=H, zone=H, noise=0.01)
+    g = torch.Generator().manual_seed(3)
+    ws = W.reset(cfg, 12.0, n=2, generator=g)
+    m = busy_dna()
+    st = init_state(2, H, Wd)
+    assert st.buf.shape[1] == 1
+    with torch.no_grad():
+        for _ in range(30):
+            st, rec = m.step(st, W.sense(ws, cfg, g), dense=False)
+            assert torch.equal(rec["zk2"], rec["z2"])
+            assert torch.equal(st.buf[:, 0:1], st.mu) and torch.equal(st.vk, st.v)
+            ws = W.advance(ws)
+
+
+def ahead4(fn):
+    """驚きの信号を4歩先にして回し、終わったら元に戻す"""
+    def wrapped():
+        old = Physio2.surprise_ahead
+        Physio2.surprise_ahead = 4
+        try:
+            fn()
+        finally:
+            Physio2.surprise_ahead = old
+    wrapped.__name__ = fn.__name__
+    return wrapped
+
+
+@ahead4
+def test_four_step_non_firing_cells_keep_their_coefficients():
+    """4歩先の驚きでも、発火の会計は同じ：引き金を引かなかったセルは、係数も隠れの状態も1ビットも変えない"""
+    m = busy_dna()
+    st = init_state(1, H, Wd)
+    assert st.buf.shape[1] == 4
+    st = st._replace(w=torch.randn(1, 3, H, Wd), h=torch.randn(1, HIDDEN_CH, H, Wd),
+                     vk=torch.full((1, 1, H, Wd), 1.0))                      # σ₄ が大きいので z₄² は小さく、引き金は引かれない
+    with torch.no_grad():
+        new, rec = m.step(st, torch.rand(1, 1, H, Wd), dense=False)
+    assert (~rec["write"]).all()
+    assert torch.equal(new.w, st.w) and torch.equal(new.h, st.h)
+
+
+@ahead4
+def test_four_step_cheap_updates_every_step():
+    """4歩先の予測と σ₄ は、発火しないセルも毎ステップ更新する安い式：覚えている予測は1つずれて、いちばん新しいものは係数を4回まわした予測"""
+    m = AttentionCell(dna=False)
+    cfg = W.WorldConfig(size=H, zone=H, noise=0.01)
+    g = torch.Generator().manual_seed(4)
+    ws = W.reset(cfg, 12.0, n=1, generator=g)
+    st = init_state(1, H, Wd)._replace(v=torch.full((1, 1, H, Wd), 1.0), vk=torch.full((1, 1, H, Wd), 1.0))
+    with torch.no_grad():
+        for _ in range(6):
+            sense = W.sense(ws, cfg, g)
+            new, rec = m.step(st, sense, dense=False)
+            assert torch.equal(new.buf[:, :3], st.buf[:, 1:])
+            w, x0, x1 = new.w, sense, st.hist[:, 0:1]
+            p = x0
+            q = x1
+            for _ in range(4):
+                p, q = w[:, 0:1] * p + w[:, 1:2] * q + w[:, 2:3], p
+            assert torch.allclose(new.buf[:, 3:4], p)
+            assert not torch.equal(new.vk, st.vk)                           # σ₄ は全員が毎ステップ動く
+            assert torch.allclose(rec["zk2"], rec["ek"] ** 2 / torch.clamp(st.vk, min=Physio2.sigma_min ** 2), rtol=1e-5)
+            st = new
+            ws = W.advance(ws)
+
+
 if __name__ == "__main__":
     tests = [v for k, v in dict(globals()).items() if k.startswith("test_")]
     for t in tests:

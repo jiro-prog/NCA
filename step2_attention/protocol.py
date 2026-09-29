@@ -154,15 +154,27 @@ import math  # noqa: E402
 
 import torch.nn.functional as F  # noqa: E402
 
-from model import N_HIST, AttentionCell  # noqa: E402
+from model import N_HIST, AttentionCell, Physio2, ahead  # noqa: E402
 
-PAIRS = ((12.0, 24.0), (12.0, 20.0), (12.0, 36.0), (24.0, 12.0))   # 周期の変化4つ（大人の時期）
+PAIRS = ((12.0, 24.0), (12.0, 20.0), (12.0, 36.0), (24.0, 12.0))   # 周期の変化4つ（大人の時期）。12→36 はパッチ S2-8 のあと
+PAIRS_ORIGINAL = ((12.0, 24.0), (12.0, 20.0), (24.0, 36.0), (24.0, 12.0))   # パッチを外した元の組（外側のテストは 24→36。DESIGN.md 14章）
 CH_HIST0 = 3 + 1 + 1 + 4                                             # 近所のチャンネルのうち、最近の値が始まる番号
 
 
 def exact_w(P):
     c = math.cos(2 * math.pi / P)
     return (2 * c, -1.0, 1 - c)
+
+
+def noise_gain(P, k):
+    """学び終えた係数を k 回まわしたとき、入力のノイズ n(t)、n(t−1) に掛かる係数 (α_k, β_k)（k 歩先の外れの定常の大きさ σ_n²(1＋α_k²＋β_k²) のため）"""
+    w1, w2, _ = exact_w(P)
+    al = [0.0, 1.0]      # α_{−1}, α_0
+    be = [1.0, 0.0]      # β_{−1}, β_0
+    for _ in range(k):
+        al.append(w1 * al[-1] + w2 * al[-2])
+        be.append(w1 * be[-1] + w2 * be[-2])
+    return al[-1], be[-1]
 
 
 @contextlib.contextmanager
@@ -210,7 +222,20 @@ def run_period(cell, policy, wcfg, period, eval_seed=1000, device="cpu", pairs=P
         irr = torch.tensor([irreducible(wcfg.noise, float(p)) for p in P1], device=device, dtype=torch.float32)
         v = (irr ** 2).clamp(min=Physio_sigma_min() ** 2).view(B, 1, 1, 1).expand(B, 1, H, Wd).clone()
         mu = wv[:, 0:1] * hist[:, 0:1] + wv[:, 1:2] * hist[:, 1:2] + wv[:, 2:3]
-        st = st._replace(w=wv, v=v, hist=hist, mu=mu)
+        # 驚きの信号の分（k 歩先）：σ_k は学び終えた予測器での k 歩先の外れの定常の大きさ、覚えている k 個の予測は最近の値から学び終えた係数で出す。
+        # 覚えている予測 i（0 がいちばん古い）は、時刻 t＋1＋i の値を t＋1＋i−k に出したもの。その時刻の値が最近の値にないときは、t−2 に出した予測で代える
+        k = st.buf.shape[1]
+        if k == 1:
+            vk = v.clone()
+        else:
+            gk = torch.tensor([1 + sum(x * x for x in noise_gain(float(p), k)) for p in P1], device=device, dtype=torch.float32)
+            vk = (wcfg.noise ** 2 * gk).clamp(min=Physio_sigma_min() ** 2).view(B, 1, 1, 1).expand(B, 1, H, Wd).clone()
+        hs = [hist[:, i:i + 1] for i in range(N_HIST)]
+        slots = []
+        for i in range(k):
+            j = k - 1 - i
+            slots.append(ahead(wv, hs[j], hs[j + 1], k) if j + 1 <= N_HIST - 1 else ahead(wv, hs[N_HIST - 2], hs[N_HIST - 1], i + N_HIST - 1))
+        st = st._replace(w=wv, v=v, hist=hist, mu=mu, vk=vk, buf=torch.cat(slots, 1))
     T = T_grow if period == "grow" else T_adult
     NL = torch.zeros(T, B, H, Wd, device=device)
     FI = torch.zeros(T, B, H, Wd, dtype=torch.bool, device=device)
@@ -234,13 +259,18 @@ def run_period(cell, policy, wcfg, period, eval_seed=1000, device="cpu", pairs=P
     cells = B * H * Wd
     out = dict(period=period, policy=policy["kind"], fires=float(FI.sum()) / cells,
                noise_fire_rate=float(FI[:, :, zone].float().mean()))
+    pair_sl = [slice(i * n_per, (i + 1) * n_per) for i in range(len(pairs))]
+    pair_name = [f"{a:g}→{b:g}" for a, b in pairs]
     if period == "grow":
         out["quality"] = float(NL[:, :, wave].mean())
         out["wave_fire_rate"] = float(FI[:, :, wave].float().mean())
         out["err_ratio_end"] = float(E2[T - 100:][:, :, wave].mean().sqrt()) / irreducible(wcfg.noise, 12.0)
+        out["per_pair"] = {pair_name[i]: dict(fires=float(FI[:, sl].sum()) / (n_per * H * Wd), quality=float(NL[:, sl][:, :, wave].mean()))
+                           for i, sl in enumerate(pair_sl)}
         return out
     lag = wcfg.lag
     q, react, back, gave = [], [], [], []
+    pp = {n: dict(q=[], react=[], back=[], gave=[]) for n in pair_name}
     for x in range(Wd):
         rows = wave[:, x]
         if not bool(rows.any()):
@@ -255,6 +285,15 @@ def run_period(cell, policy, wcfg, period, eval_seed=1000, device="cpu", pairs=P
         post = col(E2[a0 + relearn - 50:a0 + relearn]).mean(0).sqrt()
         back.append(float((post <= 2 * pre).float().mean()))
         gave.append(float((col(SG[a0 + relearn - 1]) > 2 * col(SG[change_at - 1])).float().mean()))
+        for i, sl in enumerate(pair_sl):                    # 組ごと（同じ回し方の中で、組の世界だけを取り出す）
+            d = pp[pair_name[i]]
+            d["q"].append(float(col(NL[a0:a0 + relearn])[:, sl].mean()))
+            d["react"].append(float(col(FI[a0:a0 + 10])[:, sl].any(0).any(-1).float().mean()))
+            d["back"].append(float((post[sl] <= 2 * pre[sl]).float().mean()))
+            d["gave"].append(float((col(SG[a0 + relearn - 1])[sl] > 2 * col(SG[change_at - 1])[sl]).float().mean()))
+    out["per_pair"] = {n: dict(fires=float(FI[:, pair_sl[i]].sum()) / (n_per * H * Wd), quality=float(np.mean(d["q"])),
+                               react_cols=float(np.mean(d["react"])), err_back=float(np.mean(d["back"])), gaveup=float(np.mean(d["gave"])))
+                       for i, (n, d) in enumerate(pp.items())}
     out["quality"] = float(np.mean(q))
     out["steady_fire_rate_wave"] = float(FI[200:change_at][:, :, wave].float().mean())
     out["steady_fire_rate_noise"] = float(FI[200:change_at][:, :, zone].float().mean())

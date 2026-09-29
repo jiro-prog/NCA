@@ -10,6 +10,11 @@ Step 2 のセル（DESIGN.md 2章・3章。2026-09-29 の決定を反映）。
     驚きの濃度 c ← 0.9·c ＋ 0.1·z²、自信度 v ← (1−a)·v ＋ a·e²、σ = max(σ_min, √v)（a = 1/σ の窓。窓100）
     引き金：c > θ かつ不応期でない（引いたら c を0に戻し、1ステップ休む）
 
+驚きの信号（2026-09-29、前提の見直しの P3＝候補B。CLAUDE.md「驚きは、少し先の予測の外れで測る」。DESIGN.md 13・14章）：
+    Physio2.surprise_ahead = k。k=1 なら上の z²（これまでと1ビットも変わらない）。k>1 なら、k ステップ前にそのときの係数を k 回まわして出した
+    k 歩先の予測 μ_k の外れ e_k = s(t) − μ_k(t) で、z_k² = e_k²/σ_k²（σ_k は e_k² の移動平均、窓と下限は σ と同じ）を濃度に溜める。
+    k 歩先の予測（係数を k 回まわす読み出し）と σ_k は、全員が毎ステップ更新する安い式。学習の損失は1歩先のまま
+
 書き換えるセル（2a は全員が毎ステップ、2b は引き金を引いたセル。2a でも引き金は数える）：
     最小二乗の解 w_ls = (R ＋ εI)⁻¹ r（3×3 の連立方程式。データだけで決まるので勾配は流さない）
     3×3 の近所の生の値を知覚（近所の係数・log σ・濃度・隠れの状態・最近のセンサーの値。近所の R・r は読まない）＋ 自分の w_ls − w
@@ -45,6 +50,8 @@ class Physio2:
     # 目覚まし（2026-09-29、前提の見直しの候補A。DESIGN 12章）：c ← 0.9c ＋ 0.1z² ＋ d、d = θ·sigmoid(a ＋ d_bias)
     d_bias = 0.0            # Step 1 のレシピと同じ「ずらしなし」（d は θ/2 から始まる）
     alarm_beta = 5.0        # 目覚ましのときの STE の鋭さ（Step 1 と同じ。u = (c − θ)/θ）
+    # 驚きの信号（2026-09-29、P3＝候補B）：何歩先の予測の外れで驚くか。1 はこれまでどおり。B は4（train.py の --ahead）
+    surprise_ahead = 1
 
     @classmethod
     def to_dict(cls):
@@ -64,14 +71,25 @@ class State2(NamedTuple):
     mu: torch.Tensor     # (B,1,H,W) 次のステップの予測
     d: torch.Tensor      # (B,1,H,W) 目覚まし（目覚ましのときだけ使う。発火したときに DNA が書き、毎ステップ濃度に足される）
     win: torch.Tensor    # (B,1,H,W) 候補3の窓の中の何回目か（0 は窓が閉じている）
+    buf: torch.Tensor    # (B,k,H,W) 覚えている k 歩先の予測。buf[:,0] が次のステップの値の予測（いちばん古い）。k = Physio2.surprise_ahead
+    vk: torch.Tensor     # (B,1,H,W) k 歩先の誤差の2乗の移動平均（σ_k² のもと）
 
 
 def init_state(n, h, w, device="cpu"):
-    """予測器は0、σ は下限、痕跡・濃度・隠れの状態・目覚ましは0、最近の値は0.5（センサーの真ん中）から始める"""
+    """予測器は0、σ・σ_k は下限、痕跡・濃度・隠れの状態・目覚まし・覚えている予測は0、最近の値は0.5（センサーの真ん中）から始める"""
     z = lambda c: torch.zeros(n, c, h, w, device=device)
     v = torch.full((n, 1, h, w), Physio2.sigma_min ** 2, device=device)
     hist = torch.full((n, N_HIST, h, w), 0.5, device=device)
-    return State2(z(3), z(6), z(3), v, z(1), z(1), z(HIDDEN_CH), hist, z(1), z(1), z(1))
+    return State2(z(3), z(6), z(3), v, z(1), z(1), z(HIDDEN_CH), hist, z(1), z(1), z(1),
+                  z(Physio2.surprise_ahead), v.clone())
+
+
+def ahead(w, x0, x1, k):
+    """係数 w = [w₁, w₂, b] を k 回まわした k 歩先の予測（x0 = s(t)、x1 = s(t−1)）。k=1 は1歩先の予測と同じ式"""
+    a, b = x0, x1
+    for _ in range(k):
+        a, b = w[:, 0:1] * a + w[:, 1:2] * b + w[:, 2:3], a
+    return a
 
 
 def _sym(R6):
@@ -159,16 +177,22 @@ class AttentionCell(nn.Module):
         e_d = e.detach()
         sigma = torch.clamp(s.v, min=P.sigma_min ** 2).sqrt()   # この回の σ（前のステップまでの誤差から）
         z2 = e_d ** 2 / sigma ** 2
+        k = s.buf.shape[1]                                     # 驚きの信号の先（Physio2.surprise_ahead）
+        ek = (sense - s.buf[:, 0:1]).detach()                  # k 歩先の外れ（k ステップ前に出した予測）
+        sigk = torch.clamp(s.vk, min=P.sigma_min ** 2).sqrt()
+        zk2 = ek ** 2 / sigk ** 2
+        zt = z2 if k == 1 else zk2                             # 濃度に溜める驚き（k=1 はこれまでと同じ z²）
 
         # ---- 毎ステップの安い計算（固定の式、全セル。勾配は流さない） ----
         one = torch.ones_like(f1)
         R = P.gamma_R * s.R + torch.cat([f1 * f1, f1 * f2, f1 * one, f2 * f2, f2 * one, one], 1)
         r = P.gamma_R * s.r + sense * torch.cat([f1, f2, one], 1)
-        c = P.c_decay * s.c + (1 - P.c_decay) * z2
+        c = P.c_decay * s.c + (1 - P.c_decay) * zt
         if kind == "alarm":
             c = c + s.d                                           # 目覚まし：DNA が前の発火で書いた「続ける」合図
         a = 1.0 / P.sigma_window
         v = (1 - a) * s.v + a * e_d ** 2
+        vk = (1 - a) * s.vk + a * ek ** 2
         can = s.ref <= 0
         win = s.win
         if kind == "cand3":
@@ -225,8 +249,10 @@ class AttentionCell(nn.Module):
             d_new = s.d
 
         mu = (w_new[:, 0:1] * sense + w_new[:, 1:2] * s.hist[:, 0:1] + w_new[:, 2:3])
-        new = State2(w_new, R, r, v, c, ref, h_new, hist, mu, d_new, win)
-        rec = dict(e=e, sigma=sigma, z2=z2, trig=trig, write=write, fire=fire, hard=hard, eta=eta, g=g)
+        # k 歩先の予測を出して覚える（毎ステップの安い読み出し。驚きにだけ使うので勾配は流さない）
+        buf = torch.cat([s.buf[:, 1:], ahead(w_new.detach(), sense, s.hist[:, 0:1], k)], 1)
+        new = State2(w_new, R, r, v, c, ref, h_new, hist, mu, d_new, win, buf, vk)
+        rec = dict(e=e, sigma=sigma, z2=z2, zk2=zk2, ek=ek, trig=trig, write=write, fire=fire, hard=hard, eta=eta, g=g)
         return new, rec
 
 
