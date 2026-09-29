@@ -54,6 +54,8 @@ class Physio:
     coupling = "sum"    # 近所8つの変化イベントのまとめ方：sum（合計）／mean（平均）／cap（合計に上限）
     coupling_cap = None # coupling="cap" のときの、合計の上限
     dx_bound = None     # 1回の書き換えの大きさの上限：None（上限なし）／"tanh"
+    birth_push = "all"  # 誕生の一押し：all（新しく生きたセルすべて。レシピ）／seed（種から始めた最初の1ステップだけ）／none（なし）
+                        # seed と none は、パッチ寄りの部品を外す試験（2026-09-29）のためのもの
 
     @classmethod
     def to_dict(cls):
@@ -145,7 +147,15 @@ class ConcentrationNCA(nn.Module):
             nbr = nbr.clamp(max=P.coupling_cap)
         elif P.coupling != "sum":
             raise ValueError(f"coupling が不明：{P.coupling}")
-        c = (P.leak * c + d + P.kappa * nbr + P.theta * newborn.float()) * pre_f
+        if P.birth_push == "all":
+            push = newborn
+        elif P.birth_push == "seed":                    # 前のステップで誰も生きていなかったサンプル（種から始めた最初）だけ
+            push = newborn & ~was.flatten(1).any(1).view(-1, 1, 1, 1)
+        elif P.birth_push == "none":
+            push = torch.zeros_like(newborn)
+        else:
+            raise ValueError(f"birth_push が不明：{P.birth_push}")
+        c = (P.leak * c + d + P.kappa * nbr + P.theta * push.float()) * pre_f
         can = pre & (r <= 0)
         u = c - P.theta
         due = ((u >= 0) | pend) & can                  # しきい値を超えた、または前のステップから持ち越した発火

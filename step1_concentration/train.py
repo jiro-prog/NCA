@@ -36,14 +36,16 @@ for p in (ROOT, ROOT / "baseline", HERE):
 from common.seeding import seed_everything  # noqa: E402
 import torch  # noqa: E402
 
-from nca import PAD, make_target  # noqa: E402  目標の絵は元祖と同じものを使う
+from nca import PAD, make_target as flower_target  # noqa: E402  目標の絵は元祖と同じものを使う（既定）
 from common import viz  # noqa: E402
+from common.targets import target_fn  # noqa: E402
 from common.protocol import SHEET_STEPS, Protocol, damage_hole, run_protocol, summarize, write_rows_csv  # noqa: E402
 from model import ConcentrationNCA, Physio, State, damage_state, seed_state  # noqa: E402
 
 POOL_SIZE = 1024
 BATCH = 8
 JITTERS = (0.0, 0.1, 0.3)
+make_target = flower_target     # --target で差し替える（既定は元祖の花。レシピは変えない）
 
 
 def git_commit():
@@ -343,18 +345,26 @@ def main():
                     help="テスト用：この回（カンマ区切り）の出力に nan を混ぜて、更新を飛ばす守りを確かめる")
     ap.add_argument("--train-jitter", type=float, default=0.0,
                     help="学習時のタイミングのずれ。毎回、発火が1ステップ遅れる確率を 0〜この値 から選ぶ")
+    ap.add_argument("--target", default="flower",
+                    help="目標の絵：flower（元祖の花、既定）／gecko（トカゲ。花に特化していないかの確かめ、2026-09-29）")
+    ap.add_argument("--kappa", type=float, default=None,
+                    help="近所の変化イベントの結合の強さ。既定は Physio の値（0.4）。0 で近所のイベントを受け取らない（外す試験）")
+    ap.add_argument("--birth-push", choices=["all", "seed", "none"], default=None,
+                    help="誕生の一押し。既定は Physio の値（all）。seed は種から始めた最初の1ステップだけ（外す試験）")
     ap.add_argument("--name", default=None)
     ap.add_argument("--eval-only", default=None)
     ap.add_argument("--ckpt", default=None, help="--eval-only と一緒に使う。checkpoints/ の途中の重みを評価する（例 iter1300）")
     ap.add_argument("--eval-seed", type=int, default=1000)
     args = ap.parse_args()
     dev = "cuda" if torch.cuda.is_available() else "cpu"
+    global make_target
 
     if args.eval_only:
         run = Path(args.eval_only)
         cfg = json.loads((run / "config.json").read_text(encoding="utf-8"))
         for k, v in cfg.get("physio", {}).items():      # 学習したときの固定の定数（d_bias など）に戻す
             setattr(Physio, k, v)
+        make_target = target_fn(cfg.get("target", "flower"), flower_target)   # 古い run は花
         model = ConcentrationNCA(see_c=cfg.get("see_c", True)).to(dev)     # 古い run は濃度を入力に入れていた
         weights = run / "checkpoints" / f"{args.ckpt}.pt" if args.ckpt else run / "model.pt"
         model.load_state_dict(torch.load(weights, map_location=dev))
@@ -372,6 +382,11 @@ def main():
             ap.error("--coupling cap には --coupling-cap が要る")
         if args.dx_bound is not None:
             Physio.dx_bound = None if args.dx_bound == "none" else args.dx_bound
+        if args.kappa is not None:
+            Physio.kappa = args.kappa
+        if args.birth_push is not None:
+            Physio.birth_push = args.birth_push
+        make_target = target_fn(args.target, flower_target)
         cfg = dict(seed=args.seed, iters=args.iters, lam=args.lam, checkpoint=bool(args.checkpoint),
                    save_every=args.save_every, train_jitter=args.train_jitter, see_c=bool(args.see_c),
                    anneal_iters=args.anneal_iters, val_every=args.val_every, val_jitter=args.val_jitter,
@@ -379,6 +394,7 @@ def main():
                    lam_warmup_loss=args.lam_warmup_loss, lam_warmup_iters=args.lam_warmup_iters,
                    lam_warmup_window=args.lam_warmup_window, lr_drop_on_sleep=bool(args.lr_drop_on_sleep),
                    nonfinite_guard=True, **({"debug_nan_iters": args.debug_nan_iters} if args.debug_nan_iters else {}),
+                   **({"target": args.target} if args.target != "flower" else {}),
                    physio=Physio.to_dict(), git=git_commit(), torch=torch.__version__,
                    device=torch.cuda.get_device_name(0) if dev == "cuda" else "cpu", status="training")
         # 設定は学習の最初にも書き出す（学習中でも途中の重みを --eval-only で評価でき、設定の食い違いも確かめられる）

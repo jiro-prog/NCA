@@ -6,3 +6,4 @@ __pycache__/
 */runs/**/*.gif
 # 試運転の出力は入れない
 */runs/smoke*/
+/queue/

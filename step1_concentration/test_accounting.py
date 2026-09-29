@@ -146,6 +146,58 @@ def test_coupling_modes():
         Physio.coupling, Physio.coupling_cap = saved
 
 
+def test_birth_push_modes():
+    """誕生の一押し（パッチ寄りの部品を外す試験、2026-09-29）：
+    none なら、種から始めても誰も発火しない（最終層がゼロ初期化で、濃度も目覚ましも0なので、何も始まらない。仕組みの上で要る）。
+    seed なら、種の最初の1ステップだけ一押しして9セルが発火し、あとで新しく生きたセルには一押ししない"""
+    saved = Physio.birth_push
+    try:
+        m = ConcentrationNCA()
+        Physio.birth_push = "none"
+        s = seed_state(H, W)
+        with torch.no_grad():
+            for _ in range(20):
+                s, _, hard, _, _ = m.step(s)
+                assert hard.sum() == 0
+        Physio.birth_push = "seed"
+        s = seed_state(H, W)
+        with torch.no_grad():
+            s1, _, hard, pre, birth = m.step(s)
+        assert torch.equal(hard, pre) and hard.sum() == 9 and torch.equal(birth, hard)
+        # 生きているセルがいる状態で新しく生きたセル：all なら一押しで発火、seed なら一押しなし
+        x = torch.zeros(1, CHANNELS, H, W)
+        x[:, 3, 10, 10] = 1.0
+        z = torch.zeros(1, 1, H, W)
+        was = torch.zeros(1, 1, H, W, dtype=torch.bool)
+        was[0, 0, 10, 10] = True                       # 真ん中だけ前から生きていて、近所の8つは新しく生きた
+        s = State(x, z.clone(), z.clone(), z.clone(), z.clone(), was, torch.zeros_like(was), torch.zeros_like(was))
+        for mode, n_fire in [("all", 8), ("seed", 0)]:
+            Physio.birth_push = mode
+            with torch.no_grad():
+                _, _, hard, _, _ = m.step(s)
+            assert int(hard.sum()) == n_fire, mode
+    finally:
+        Physio.birth_push = saved
+
+
+def test_kappa_zero_ignores_neighbor_events():
+    """κ=0（近所の結合を外す試験、2026-09-29）なら、近所8つがそろって上限の変化をしても濃度は上がらない"""
+    m = busy_model()
+    s = all_alive_state()
+    e = torch.zeros(1, 1, H, W)
+    e[0, 0, 9:12, 9:12] = Physio.e_max
+    e[0, 0, 10, 10] = 0
+    s = s._replace(e=e)
+    saved = Physio.kappa
+    try:
+        Physio.kappa = 0.0
+        with torch.no_grad():
+            new, _, hard, _, _ = m.step(s)
+        assert not bool(hard[0, 0, 10, 10]) and float(new.c[0, 0, 10, 10]) == 0.0
+    finally:
+        Physio.kappa = saved
+
+
 def test_dx_bound_tanh():
     """重みが大きいモデルでも、tanh の上限をつけると、1回の発火で各チャンネルが変わる量は1以内。上限なしなら1を超える"""
     torch.manual_seed(0)

@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import torch  # noqa: E402
 
 from world import (TWO_PI, WorldConfig, advance, clean_wave, column_period, reset, sample_periods,  # noqa: E402
-                   sense, set_period, zone_mask)
+                   sample_visible_change, sense, set_period, visible, zone_mask)
 
 CFG = WorldConfig()
 QUIET = replace(CFG, noise=0.0)
@@ -142,6 +142,24 @@ def test_sample_periods_skip_hole():
     assert P.min().item() >= 10.0 and P.max().item() <= 30.0
     assert not ((P > 18.0) & (P < 22.0)).any()
     assert abs((P < 18.0).float().mean().item() - 0.5) < 0.02
+
+
+def test_visible_changes_only():
+    """学習に混ぜる周期の変化は、この予測器に見える組だけ（|cos ω の差| ≥ 0.06）。行き先も学習の周期の分布の中"""
+    g = torch.Generator().manual_seed(0)
+    P1 = sample_periods(5000, g)
+    P2 = sample_visible_change(P1, g)
+    assert torch.isfinite(P2).all()
+    assert visible(P1, P2).all()
+    assert P2.min().item() >= 10.0 and P2.max().item() <= 30.0 and not ((P2 > 18.0) & (P2 < 22.0)).any()
+    # 評価の変化は見える組、24→36 と 24→30 は見えない組（DESIGN.md 2.5、表6）
+    assert visible(12.0, 24.0) and visible(12.0, 20.0) and visible(12.0, 36.0) and visible(24.0, 12.0)
+    assert not visible(24.0, 36.0) and not visible(24.0, 30.0)
+
+
+def test_default_noise_is_decided_value():
+    """世界のノイズの既定は、そうの判断の0.005（設計書とコードの食い違いを防ぐ）"""
+    assert WorldConfig().noise == 0.005
 
 
 def test_v_must_divide():

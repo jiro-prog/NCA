@@ -33,7 +33,7 @@ class WorldConfig:
     v: float = 0.25         # 波の速さ（列/ステップ）。1/v は整数
     amp: float = 0.4        # 波の振幅
     mean: float = 0.5       # 波の平均
-    noise: float = 0.02     # センサーのノイズ（標準偏差）。DESIGN.md 2.5 で 0.005 を検討中（未決定）
+    noise: float = 0.005    # センサーのノイズ（標準偏差）。2026-09-29 に0.02から変更（DESIGN.md 2.5、そうの判断）
     zone: int = 24          # ノイズの区域は x ≥ zone かつ y ≥ zone。size 以上なら区域なし
 
     def __post_init__(self):
@@ -142,6 +142,31 @@ def sample_periods(n, generator=None, lo=10.0, hi=30.0, hole=(18.0, 22.0), devic
     left, right = a - lo, hi - b
     u = torch.rand(n, generator=generator, device=device, dtype=torch.float64) * (left + right)
     return torch.where(u < left, lo + u, b + (u - left))
+
+
+def visible(P1, P2, min_dcos=0.06):
+    """周期の変化がこの予測器（2つ前までの線形予測）に見えるか：|cos(2π/P₂) − cos(2π/P₁)| ≥ min_dcos（DESIGN.md 1章）"""
+    P1 = torch.as_tensor(P1, dtype=torch.float64)
+    P2 = torch.as_tensor(P2, dtype=torch.float64)
+    return (torch.cos(TWO_PI / P2) - torch.cos(TWO_PI / P1)).abs() >= min_dcos
+
+
+def sample_visible_change(P1, generator=None, min_dcos=0.06, max_tries=1000, **kw) -> torch.Tensor:
+    """学習に混ぜる周期の変化の行き先 P₂ を引く。学習の周期の分布（sample_periods）から引き直して、
+    この予測器に見える組（visible）になるまで選び直す（2026-09-29、そうの判断：見えない変化は学習に混ぜない）"""
+    P1 = torch.as_tensor(P1, dtype=torch.float64)
+    P2 = torch.full_like(P1, float("nan"))
+    todo = torch.ones_like(P1, dtype=torch.bool)
+    for _ in range(max_tries):
+        n = int(todo.sum())
+        if n == 0:
+            return P2
+        cand = sample_periods(n, generator, device=P1.device, **kw)
+        ok = visible(P1[todo], cand, min_dcos)
+        idx = torch.nonzero(todo).flatten()
+        P2[idx[ok]] = cand[ok]
+        todo[idx[ok]] = False
+    raise RuntimeError("見える周期の変化が引けなかった（min_dcos が大きすぎる）")
 
 
 def preview(out_dir, cfg=WorldConfig(), P1=12.0, P2=24.0, t_change=200, T=400, seed=0):

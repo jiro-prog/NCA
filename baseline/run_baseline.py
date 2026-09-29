@@ -37,8 +37,10 @@ import torch  # noqa: E402
 import nca  # noqa: E402
 from common import viz  # noqa: E402
 from common.protocol import SHEET_STEPS, Protocol, run_protocol, summarize, write_rows_csv  # noqa: E402
+from common.targets import target_fn  # noqa: E402
 
 ORIG_FIRE_MASK = nca.NCA.fire_mask
+ORIG_MAKE_TARGET = nca.make_target      # 元祖の花。--target のときだけ外から差し替える（nca.py は改造しない）
 ORIG_FORWARD = nca.NCA.forward
 
 
@@ -193,6 +195,8 @@ def main():
     ap.add_argument("--name", default=None)
     ap.add_argument("--eval-only", default=None, help="学習済みの run フォルダを評価だけする")
     ap.add_argument("--eval-seed", type=int, default=1000)
+    ap.add_argument("--target", default="flower",
+                    help="目標の絵：flower（元祖の花、既定）／gecko（トカゲ。2026-09-29）。nca.make_target を外から差し替える")
     args = ap.parse_args()
 
     dev = "cuda" if torch.cuda.is_available() else "cpu"
@@ -205,11 +209,13 @@ def main():
         model.load_state_dict(torch.load(run / "nca.pt", map_location=dev))
         args.fire_rate, args.period = cfg["fire_rate"], cfg["period"]
         policy_name = cfg["policy"]
+        nca.make_target = target_fn(cfg.get("target", "flower"), ORIG_MAKE_TARGET)   # 古い run は花
         h, w = nca.make_target().shape[-2:]
     else:
         run = ROOT / "baseline" / "runs" / (args.name or f"seed{args.seed}_{policy_name}")
         run.mkdir(parents=True, exist_ok=True)
         commit = git_commit()
+        nca.make_target = target_fn(args.target, ORIG_MAKE_TARGET)   # nca.train も評価も、実行時にこれを読む
         seed_everything(args.seed)
         nca.FIRE_RATE = args.fire_rate
         if dev == "cuda":
@@ -226,6 +232,7 @@ def main():
             policy=policy_name, device=torch.cuda.get_device_name(0) if dev == "cuda" else "cpu",
             torch=torch.__version__, git=commit, train_seconds=round(time.time() - t0, 1),
             peak_vram_mb=round(torch.cuda.max_memory_allocated() / 2**20) if dev == "cuda" else None,
+            **({"target": args.target} if args.target != "flower" else {}),
         )
         (run / "config.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
         torch.save(model.state_dict(), run / "nca.pt")
