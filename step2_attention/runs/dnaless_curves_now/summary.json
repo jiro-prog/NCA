@@ -1,0 +1,1261 @@
+{
+  "world": {
+    "size": 32,
+    "v": 0.25,
+    "amp": 0.4,
+    "mean": 0.5,
+    "noise": 0.005,
+    "zone": 24
+  },
+  "sigma_min": 0.005,
+  "seeds": {
+    "1000": {
+      "points": [
+        {
+          "family": "驚き駆動",
+          "policy": "元の引き金",
+          "period": "grow",
+          "fires": 3.240478515625,
+          "noise_fire_rate": 0.011052246205508709,
+          "quality": 14.96007251739502,
+          "wave_fire_rate": 0.007904459722340107,
+          "err_ratio_end": 11.389797463220663
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "元の引き金",
+          "period": "adult",
+          "fires": 2.63287353515625,
+          "noise_fire_rate": 0.004260742571204901,
+          "quality": -2.986242890357971,
+          "steady_fire_rate_wave": 3.9062499126885086e-05,
+          "steady_fire_rate_noise": 0.0,
+          "steady_nll_wave": -3.9759418964385986,
+          "react_cols": 1.0,
+          "err_back": 0.5929972380399704,
+          "gaveup": 0.3949584988877177,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=2",
+          "period": "grow",
+          "fires": 4.7821044921875,
+          "noise_fire_rate": 0.017119139432907104,
+          "quality": 14.823569297790527,
+          "wave_fire_rate": 0.011611002497375011,
+          "err_ratio_end": 10.465763631284215
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=2",
+          "period": "adult",
+          "fires": 4.4183349609375,
+          "noise_fire_rate": 0.0066914064809679985,
+          "quality": -2.994929388165474,
+          "steady_fire_rate_wave": 7.779947918606922e-05,
+          "steady_fire_rate_noise": 0.0,
+          "steady_nll_wave": -3.9761581420898438,
+          "react_cols": 1.0,
+          "err_back": 0.5478515662252903,
+          "gaveup": 0.4390055350959301,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=5",
+          "period": "grow",
+          "fires": 7.912353515625,
+          "noise_fire_rate": 0.025764159858226776,
+          "quality": 14.430582046508789,
+          "wave_fire_rate": 0.019381998106837273,
+          "err_ratio_end": 7.948986703299258
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=5",
+          "period": "adult",
+          "fires": 7.15997314453125,
+          "noise_fire_rate": 0.01044921949505806,
+          "quality": -3.08901397138834,
+          "steady_fire_rate_wave": 0.00013769531506113708,
+          "steady_fire_rate_noise": 0.0,
+          "steady_nll_wave": -3.9762959480285645,
+          "react_cols": 1.0,
+          "err_back": 0.6919759176671505,
+          "gaveup": 0.2965698270127177,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=10",
+          "period": "grow",
+          "fires": 10.3599853515625,
+          "noise_fire_rate": 0.03466796875,
+          "quality": 14.13265323638916,
+          "wave_fire_rate": 0.025315430015325546,
+          "err_ratio_end": 4.715486044495469
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=10",
+          "period": "adult",
+          "fires": 11.004638671875,
+          "noise_fire_rate": 0.013831055723130703,
+          "quality": -3.023905038833618,
+          "steady_fire_rate_wave": 0.00014941405970603228,
+          "steady_fire_rate_noise": 0.0,
+          "steady_nll_wave": -3.976302146911621,
+          "react_cols": 1.0,
+          "err_back": 0.4798584012314677,
+          "gaveup": 0.4966837605461478,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=20",
+          "period": "grow",
+          "fires": 20.05828857421875,
+          "noise_fire_rate": 0.05233154073357582,
+          "quality": 13.568787574768066,
+          "wave_fire_rate": 0.05000000074505806,
+          "err_ratio_end": 1.7857185959337156
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=20",
+          "period": "adult",
+          "fires": 16.59283447265625,
+          "noise_fire_rate": 0.02100781351327896,
+          "quality": -3.2996990233659744,
+          "steady_fire_rate_wave": 0.00014941405970603228,
+          "steady_fire_rate_noise": 0.0,
+          "steady_nll_wave": -3.976302146911621,
+          "react_cols": 1.0,
+          "err_back": 0.8817749060690403,
+          "gaveup": 0.0964152030646801,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=40",
+          "period": "grow",
+          "fires": 38.92132568359375,
+          "noise_fire_rate": 0.10026855021715164,
+          "quality": 13.411877632141113,
+          "wave_fire_rate": 0.09710562974214554,
+          "err_ratio_end": 1.1216915428387875
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=40",
+          "period": "adult",
+          "fires": 17.7982177734375,
+          "noise_fire_rate": 0.04006640985608101,
+          "quality": -3.29970570653677,
+          "steady_fire_rate_wave": 0.00014941405970603228,
+          "steady_fire_rate_noise": 0.0,
+          "steady_nll_wave": -3.976302146911621,
+          "react_cols": 1.0,
+          "err_back": 0.8817138709127903,
+          "gaveup": 0.0965983085334301,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.003",
+          "period": "grow",
+          "fires": 1.19439697265625,
+          "noise_fire_rate": 0.0028564452659338713,
+          "quality": 16.712926864624023,
+          "wave_fire_rate": 0.002994628855958581,
+          "err_ratio_end": 35.89260997841379
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.003",
+          "period": "adult",
+          "fires": 3.0003662109375,
+          "noise_fire_rate": 0.0029707031790167093,
+          "quality": -2.3793007507920265,
+          "steady_fire_rate_wave": 0.003004231723025441,
+          "steady_fire_rate_noise": 0.002768554724752903,
+          "steady_nll_wave": -3.9208405017852783,
+          "react_cols": 0.58203125,
+          "err_back": 0.5318196658045053,
+          "gaveup": 0.7103068064898252,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.01",
+          "period": "grow",
+          "fires": 4.02716064453125,
+          "noise_fire_rate": 0.010046386159956455,
+          "quality": 16.03782081604004,
+          "wave_fire_rate": 0.01006933581084013,
+          "err_ratio_end": 13.873041800172697
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.01",
+          "period": "adult",
+          "fires": 10.04925537109375,
+          "noise_fire_rate": 0.010089844465255737,
+          "quality": -2.819596618413925,
+          "steady_fire_rate_wave": 0.010089843533933163,
+          "steady_fire_rate_noise": 0.010214843787252903,
+          "steady_nll_wave": -3.8827688694000244,
+          "react_cols": 0.95703125,
+          "err_back": 0.9162394236773252,
+          "gaveup": 0.32059733383357525,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.03",
+          "period": "grow",
+          "fires": 12.04840087890625,
+          "noise_fire_rate": 0.030029296875,
+          "quality": 15.219595909118652,
+          "wave_fire_rate": 0.030127115547657013,
+          "err_ratio_end": 1.3293244315472068
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.03",
+          "period": "adult",
+          "fires": 30.06402587890625,
+          "noise_fire_rate": 0.02994628995656967,
+          "quality": -3.1939817070961,
+          "steady_fire_rate_wave": 0.030205728486180305,
+          "steady_fire_rate_noise": 0.030170897021889687,
+          "steady_nll_wave": -3.862122058868408,
+          "react_cols": 1.0,
+          "err_back": 0.9977620486170053,
+          "gaveup": 0.045308431261219084,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.1",
+          "period": "grow",
+          "fires": 40.0662841796875,
+          "noise_fire_rate": 0.10012206435203552,
+          "quality": 14.48812484741211,
+          "wave_fire_rate": 0.1001686155796051,
+          "err_ratio_end": 1.0858482924558588
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.1",
+          "period": "adult",
+          "fires": 100.077880859375,
+          "noise_fire_rate": 0.10008984804153442,
+          "quality": -3.4073227494955063,
+          "steady_fire_rate_wave": 0.1003125011920929,
+          "steady_fire_rate_noise": 0.10025390237569809,
+          "steady_nll_wave": -3.823984384536743,
+          "react_cols": 1.0,
+          "err_back": 0.9966430719941854,
+          "gaveup": 0.0014038086010259576,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.3",
+          "period": "grow",
+          "fires": 120.03607177734375,
+          "noise_fire_rate": 0.30010008811950684,
+          "quality": 13.986370086669922,
+          "wave_fire_rate": 0.3000895082950592,
+          "err_ratio_end": 1.1172203307810078
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.3",
+          "period": "adult",
+          "fires": 300.18902587890625,
+          "noise_fire_rate": 0.2999189496040344,
+          "quality": -3.507292255759239,
+          "steady_fire_rate_wave": 0.300334632396698,
+          "steady_fire_rate_noise": 0.29964354634284973,
+          "steady_nll_wave": -3.801755905151367,
+          "react_cols": 1.0,
+          "err_back": 0.9993896503001451,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.5",
+          "period": "grow",
+          "fires": 199.92059326171875,
+          "noise_fire_rate": 0.5004419088363647,
+          "quality": 13.767119407653809,
+          "wave_fire_rate": 0.499758780002594,
+          "err_ratio_end": 1.1397748950257467
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.5",
+          "period": "adult",
+          "fires": 500.0238037109375,
+          "noise_fire_rate": 0.49970412254333496,
+          "quality": -3.5485606268048286,
+          "steady_fire_rate_wave": 0.49974772334098816,
+          "steady_fire_rate_noise": 0.49925291538238525,
+          "steady_nll_wave": -3.811398983001709,
+          "react_cols": 1.0,
+          "err_back": 0.99993896484375,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=2",
+          "period": "grow",
+          "fires": 200.0,
+          "noise_fire_rate": 0.5,
+          "quality": 13.608494758605957,
+          "wave_fire_rate": 0.5,
+          "err_ratio_end": 1.1273614422337654
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=2",
+          "period": "adult",
+          "fires": 500.0,
+          "noise_fire_rate": 0.5,
+          "quality": -3.5723772570490837,
+          "steady_fire_rate_wave": 0.5,
+          "steady_fire_rate_noise": 0.5,
+          "steady_nll_wave": -3.8382019996643066,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=4",
+          "period": "grow",
+          "fires": 100.0,
+          "noise_fire_rate": 0.25,
+          "quality": 13.723858833312988,
+          "wave_fire_rate": 0.25,
+          "err_ratio_end": 1.1119019574849165
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=4",
+          "period": "adult",
+          "fires": 250.0,
+          "noise_fire_rate": 0.25,
+          "quality": -3.5031676217913628,
+          "steady_fire_rate_wave": 0.25,
+          "steady_fire_rate_noise": 0.25,
+          "steady_nll_wave": -3.807561159133911,
+          "react_cols": 1.0,
+          "err_back": 0.9998779296875,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=10",
+          "period": "grow",
+          "fires": 40.0,
+          "noise_fire_rate": 0.09999999403953552,
+          "quality": 14.045655250549316,
+          "wave_fire_rate": 0.10000000149011612,
+          "err_ratio_end": 1.094721410951922
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=10",
+          "period": "adult",
+          "fires": 100.0,
+          "noise_fire_rate": 0.10000000149011612,
+          "quality": -3.459361545741558,
+          "steady_fire_rate_wave": 0.10000000149011612,
+          "steady_fire_rate_noise": 0.09999999403953552,
+          "steady_nll_wave": -3.6750874519348145,
+          "react_cols": 1.0,
+          "err_back": 0.9951985720545053,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=30",
+          "period": "grow",
+          "fires": 14.0,
+          "noise_fire_rate": 0.03500000014901161,
+          "quality": 14.653912544250488,
+          "wave_fire_rate": 0.03500000014901161,
+          "err_ratio_end": 1.0736709952303096
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=30",
+          "period": "adult",
+          "fires": 34.0,
+          "noise_fire_rate": 0.03400000184774399,
+          "quality": -3.4194357693195343,
+          "steady_fire_rate_wave": 0.03500000014901161,
+          "steady_fire_rate_noise": 0.03500000014901161,
+          "steady_nll_wave": -3.3790879249572754,
+          "react_cols": 0.3125,
+          "err_back": 0.9992268905043602,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=100",
+          "period": "grow",
+          "fires": 4.0,
+          "noise_fire_rate": 0.009999999776482582,
+          "quality": 15.540840148925781,
+          "wave_fire_rate": 0.009999999776482582,
+          "err_ratio_end": 1.1490852553448088
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=100",
+          "period": "adult",
+          "fires": 10.0,
+          "noise_fire_rate": 0.010000000707805157,
+          "quality": -3.1390110477805138,
+          "steady_fire_rate_wave": 0.009999999776482582,
+          "steady_fire_rate_noise": 0.009999999776482582,
+          "steady_nll_wave": -2.726776361465454,
+          "react_cols": 0.125,
+          "err_back": 0.999755859375,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=300",
+          "period": "grow",
+          "fires": 2.0,
+          "noise_fire_rate": 0.004999999888241291,
+          "quality": 16.216554641723633,
+          "wave_fire_rate": 0.004999999888241291,
+          "err_ratio_end": 19.914139427570923
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=300",
+          "period": "adult",
+          "fires": 4.0,
+          "noise_fire_rate": 0.004000000189989805,
+          "quality": -2.510562241077423,
+          "steady_fire_rate_wave": 0.004999999888241291,
+          "steady_fire_rate_noise": 0.004999999888241291,
+          "steady_nll_wave": -1.4696646928787231,
+          "react_cols": 0.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        }
+      ],
+      "verdicts": [
+        {
+          "period": "grow",
+          "policy": "元の引き金",
+          "fires": 3.240478515625,
+          "quality": 14.96007251739502,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": 15.74611757034215
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": 16.158542798926877
+          }
+        },
+        {
+          "period": "grow",
+          "policy": "候補3 K=2",
+          "fires": 4.7821044921875,
+          "quality": 14.823569297790527,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": 15.414405080645773
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": 15.909533101286174
+          }
+        },
+        {
+          "period": "grow",
+          "policy": "候補3 K=5",
+          "fires": 7.912353515625,
+          "quality": 14.430582046508789,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": 15.057907022639277
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": 15.533564640987843
+          }
+        },
+        {
+          "period": "grow",
+          "policy": "候補3 K=10",
+          "fires": 10.3599853515625,
+          "quality": 14.13265323638916,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": 14.867089082414022
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": 15.332325039333458
+          }
+        },
+        {
+          "period": "grow",
+          "policy": "候補3 K=20",
+          "fires": 20.05828857421875,
+          "quality": 13.568787574768066,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": 14.445572221333888
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": 14.909311714199172
+          }
+        },
+        {
+          "period": "grow",
+          "policy": "候補3 K=40",
+          "fires": 38.92132568359375,
+          "quality": 13.411877632141113,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": 14.061494135767184
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": 14.505774137657152
+          }
+        },
+        {
+          "period": "adult",
+          "policy": "元の引き金",
+          "fires": 2.63287353515625,
+          "quality": -2.986242890357971,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": -2.510562241077423
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": -2.3793007507920265
+          }
+        },
+        {
+          "period": "adult",
+          "policy": "候補3 K=2",
+          "fires": 4.4183349609375,
+          "quality": -2.994929388165474,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": -2.5787839251032882
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": -2.5202770312157745
+          }
+        },
+        {
+          "period": "adult",
+          "policy": "候補3 K=5",
+          "fires": 7.15997314453125,
+          "quality": -3.08901397138834,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": -2.909879119056179
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": -2.696117684828848
+          }
+        },
+        {
+          "period": "adult",
+          "policy": "候補3 K=10",
+          "fires": 11.004638671875,
+          "quality": -3.023905038833618,
+          "時計": {
+            "verdict": "負け",
+            "control_nll": -3.1609477196559874
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": -2.850624249818519
+          }
+        },
+        {
+          "period": "adult",
+          "policy": "候補3 K=20",
+          "fires": 16.59283447265625,
+          "quality": -3.2996990233659744,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": -3.255047950925957
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": -2.9909221522463456
+          }
+        },
+        {
+          "period": "adult",
+          "policy": "候補3 K=40",
+          "fires": 17.7982177734375,
+          "quality": -3.29970570653677,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": -3.2711174449082496
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": -3.0148808212991787
+          }
+        }
+      ]
+    },
+    "1001": {
+      "points": [
+        {
+          "family": "驚き駆動",
+          "policy": "元の引き金",
+          "period": "grow",
+          "fires": 3.33709716796875,
+          "noise_fire_rate": 0.011149901896715164,
+          "quality": 14.780102729797363,
+          "wave_fire_rate": 0.008155599236488342,
+          "err_ratio_end": 11.109811423658854
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "元の引き金",
+          "period": "adult",
+          "fires": 2.551513671875,
+          "noise_fire_rate": 0.004126953426748514,
+          "quality": -2.9279261231422424,
+          "steady_fire_rate_wave": 3.4505206713220105e-05,
+          "steady_fire_rate_noise": 0.0,
+          "steady_nll_wave": -3.975442886352539,
+          "react_cols": 1.0,
+          "err_back": 0.4142862977460027,
+          "gaveup": 0.5749104879796505,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=2",
+          "period": "grow",
+          "fires": 4.87841796875,
+          "noise_fire_rate": 0.01726074144244194,
+          "quality": 14.721953392028809,
+          "wave_fire_rate": 0.011858398094773293,
+          "err_ratio_end": 10.80017124215515
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=2",
+          "period": "adult",
+          "fires": 4.595947265625,
+          "noise_fire_rate": 0.006554687861353159,
+          "quality": -2.9602583944797516,
+          "steady_fire_rate_wave": 6.933593977009878e-05,
+          "steady_fire_rate_noise": 0.0,
+          "steady_nll_wave": -3.975689172744751,
+          "react_cols": 1.0,
+          "err_back": 0.4107259139418602,
+          "gaveup": 0.5751342810690403,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=5",
+          "period": "grow",
+          "fires": 7.9012451171875,
+          "noise_fire_rate": 0.026364745572209358,
+          "quality": 14.371578216552734,
+          "wave_fire_rate": 0.019312337040901184,
+          "err_ratio_end": 8.378783503403763
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=5",
+          "period": "adult",
+          "fires": 7.24456787109375,
+          "noise_fire_rate": 0.010132812894880772,
+          "quality": -3.039705865085125,
+          "steady_fire_rate_wave": 0.00012304687697906047,
+          "steady_fire_rate_noise": 0.0,
+          "steady_nll_wave": -3.9757943153381348,
+          "react_cols": 1.0,
+          "err_back": 0.5393473356962204,
+          "gaveup": 0.44773356430232525,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=10",
+          "period": "grow",
+          "fires": 10.32318115234375,
+          "noise_fire_rate": 0.03440673649311066,
+          "quality": 14.037727355957031,
+          "wave_fire_rate": 0.025234701111912727,
+          "err_ratio_end": 4.847842784528241
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=10",
+          "period": "adult",
+          "fires": 10.8326416015625,
+          "noise_fire_rate": 0.013652344234287739,
+          "quality": -3.0392979085445404,
+          "steady_fire_rate_wave": 0.00013736978871747851,
+          "steady_fire_rate_noise": 0.0,
+          "steady_nll_wave": -3.9758121967315674,
+          "react_cols": 1.0,
+          "err_back": 0.4362589539960027,
+          "gaveup": 0.5269368523731828,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=20",
+          "period": "grow",
+          "fires": 20.05810546875,
+          "noise_fire_rate": 0.052324216812849045,
+          "quality": 13.469161033630371,
+          "wave_fire_rate": 0.05000000074505806,
+          "err_ratio_end": 1.7710169747980584
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=20",
+          "period": "adult",
+          "fires": 16.1368408203125,
+          "noise_fire_rate": 0.02086816541850567,
+          "quality": -3.227404162287712,
+          "steady_fire_rate_wave": 0.00013736978871747851,
+          "steady_fire_rate_noise": 0.0,
+          "steady_nll_wave": -3.9758121967315674,
+          "react_cols": 1.0,
+          "err_back": 0.7185262087732553,
+          "gaveup": 0.26367187686264515,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=40",
+          "period": "grow",
+          "fires": 38.97259521484375,
+          "noise_fire_rate": 0.10021728277206421,
+          "quality": 13.312169075012207,
+          "wave_fire_rate": 0.09724576771259308,
+          "err_ratio_end": 1.1259173530275342
+        },
+        {
+          "family": "驚き駆動",
+          "policy": "候補3 K=40",
+          "period": "adult",
+          "fires": 17.39508056640625,
+          "noise_fire_rate": 0.04008789360523224,
+          "quality": -3.2296791821718216,
+          "steady_fire_rate_wave": 0.00013736978871747851,
+          "steady_fire_rate_noise": 0.0,
+          "steady_nll_wave": -3.9758121967315674,
+          "react_cols": 1.0,
+          "err_back": 0.7216186560690403,
+          "gaveup": 0.2609456395730376,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.003",
+          "period": "grow",
+          "fires": 1.192138671875,
+          "noise_fire_rate": 0.0030883788131177425,
+          "quality": 16.571125030517578,
+          "wave_fire_rate": 0.00297314440831542,
+          "err_ratio_end": 35.85657638747731
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.003",
+          "period": "adult",
+          "fires": 2.9962158203125,
+          "noise_fire_rate": 0.003095703199505806,
+          "quality": -2.37219575047493,
+          "steady_fire_rate_wave": 0.002963216044008732,
+          "steady_fire_rate_noise": 0.0031103515066206455,
+          "steady_nll_wave": -3.9246978759765625,
+          "react_cols": 0.5703125,
+          "err_back": 0.5242716511711478,
+          "gaveup": 0.7189534548670053,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.01",
+          "period": "grow",
+          "fires": 4.002197265625,
+          "noise_fire_rate": 0.010031738318502903,
+          "quality": 15.891653060913086,
+          "wave_fire_rate": 0.010003743693232536,
+          "err_ratio_end": 13.910386866678095
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.01",
+          "period": "adult",
+          "fires": 10.0201416015625,
+          "noise_fire_rate": 0.010065429843962193,
+          "quality": -2.8110615611076355,
+          "steady_fire_rate_wave": 0.00990690104663372,
+          "steady_fire_rate_noise": 0.010004882700741291,
+          "steady_nll_wave": -3.884591817855835,
+          "react_cols": 0.94921875,
+          "err_back": 0.9108276404440403,
+          "gaveup": 0.3343912782147527,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.03",
+          "period": "grow",
+          "fires": 11.985107421875,
+          "noise_fire_rate": 0.02993164025247097,
+          "quality": 15.078142166137695,
+          "wave_fire_rate": 0.02996484376490116,
+          "err_ratio_end": 1.2488382829059541
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.03",
+          "period": "adult",
+          "fires": 29.96905517578125,
+          "noise_fire_rate": 0.0298613291233778,
+          "quality": -3.1896697506308556,
+          "steady_fire_rate_wave": 0.029952799901366234,
+          "steady_fire_rate_noise": 0.030043944716453552,
+          "steady_nll_wave": -3.857198476791382,
+          "react_cols": 1.0,
+          "err_back": 0.9978637751191854,
+          "gaveup": 0.04882812546566129,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.1",
+          "period": "grow",
+          "fires": 39.9752197265625,
+          "noise_fire_rate": 0.09985839575529099,
+          "quality": 14.349380493164062,
+          "wave_fire_rate": 0.09994335472583771,
+          "err_ratio_end": 1.0846034569056788
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.1",
+          "period": "adult",
+          "fires": 100.05267333984375,
+          "noise_fire_rate": 0.09978711605072021,
+          "quality": -3.411280818283558,
+          "steady_fire_rate_wave": 0.09983756393194199,
+          "steady_fire_rate_noise": 0.10055175423622131,
+          "steady_nll_wave": -3.818166732788086,
+          "react_cols": 1.0,
+          "err_back": 0.9969482477754354,
+          "gaveup": 0.001566569015267305,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.3",
+          "period": "grow",
+          "fires": 119.93487548828125,
+          "noise_fire_rate": 0.3003808557987213,
+          "quality": 13.856890678405762,
+          "wave_fire_rate": 0.29980093240737915,
+          "err_ratio_end": 1.1159764115310855
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.3",
+          "period": "adult",
+          "fires": 300.01123046875,
+          "noise_fire_rate": 0.2998955249786377,
+          "quality": -3.5128836408257484,
+          "steady_fire_rate_wave": 0.2999931573867798,
+          "steady_fire_rate_noise": 0.3010546863079071,
+          "steady_nll_wave": -3.7966222763061523,
+          "react_cols": 1.0,
+          "err_back": 0.99981689453125,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.5",
+          "period": "grow",
+          "fires": 200.07427978515625,
+          "noise_fire_rate": 0.4998095631599426,
+          "quality": 13.647668838500977,
+          "wave_fire_rate": 0.5002107620239258,
+          "err_ratio_end": 1.1384189372443072
+        },
+        {
+          "family": "サイコロ",
+          "policy": "サイコロ p=0.5",
+          "period": "adult",
+          "fires": 500.1322021484375,
+          "noise_fire_rate": 0.500119149684906,
+          "quality": -3.5537295192480087,
+          "steady_fire_rate_wave": 0.5003958344459534,
+          "steady_fire_rate_noise": 0.5008153915405273,
+          "steady_nll_wave": -3.8057141304016113,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=2",
+          "period": "grow",
+          "fires": 200.0,
+          "noise_fire_rate": 0.5,
+          "quality": 13.506758689880371,
+          "wave_fire_rate": 0.5,
+          "err_ratio_end": 1.1261579234952082
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=2",
+          "period": "adult",
+          "fires": 500.0,
+          "noise_fire_rate": 0.5,
+          "quality": -3.578837737441063,
+          "steady_fire_rate_wave": 0.5,
+          "steady_fire_rate_noise": 0.5,
+          "steady_nll_wave": -3.8389127254486084,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=4",
+          "period": "grow",
+          "fires": 100.0,
+          "noise_fire_rate": 0.25,
+          "quality": 13.593098640441895,
+          "wave_fire_rate": 0.25,
+          "err_ratio_end": 1.1109500048171261
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=4",
+          "period": "adult",
+          "fires": 250.0,
+          "noise_fire_rate": 0.25,
+          "quality": -3.5208397433161736,
+          "steady_fire_rate_wave": 0.25,
+          "steady_fire_rate_noise": 0.25,
+          "steady_nll_wave": -3.8011555671691895,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=10",
+          "period": "grow",
+          "fires": 40.0,
+          "noise_fire_rate": 0.09999999403953552,
+          "quality": 13.89468765258789,
+          "wave_fire_rate": 0.10000000149011612,
+          "err_ratio_end": 1.093952718335684
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=10",
+          "period": "adult",
+          "fires": 100.0,
+          "noise_fire_rate": 0.10000000149011612,
+          "quality": -3.4650100842118263,
+          "steady_fire_rate_wave": 0.10000000149011612,
+          "steady_fire_rate_noise": 0.09999999403953552,
+          "steady_nll_wave": -3.6759817600250244,
+          "react_cols": 1.0,
+          "err_back": 0.9948323629796505,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=30",
+          "period": "grow",
+          "fires": 14.0,
+          "noise_fire_rate": 0.03500000014901161,
+          "quality": 14.50722885131836,
+          "wave_fire_rate": 0.03500000014901161,
+          "err_ratio_end": 1.0727840998808205
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=30",
+          "period": "adult",
+          "fires": 34.0,
+          "noise_fire_rate": 0.03400000184774399,
+          "quality": -3.419874392449856,
+          "steady_fire_rate_wave": 0.03500000014901161,
+          "steady_fire_rate_noise": 0.03500000014901161,
+          "steady_nll_wave": -3.3817226886749268,
+          "react_cols": 0.3125,
+          "err_back": 0.99951171875,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=100",
+          "period": "grow",
+          "fires": 4.0,
+          "noise_fire_rate": 0.009999999776482582,
+          "quality": 15.391950607299805,
+          "wave_fire_rate": 0.009999999776482582,
+          "err_ratio_end": 1.148826275571956
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=100",
+          "period": "adult",
+          "fires": 10.0,
+          "noise_fire_rate": 0.010000000707805157,
+          "quality": -3.1384102031588554,
+          "steady_fire_rate_wave": 0.009999999776482582,
+          "steady_fire_rate_noise": 0.009999999776482582,
+          "steady_nll_wave": -2.7332258224487305,
+          "react_cols": 0.125,
+          "err_back": 0.9996337890625,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=300",
+          "period": "grow",
+          "fires": 2.0,
+          "noise_fire_rate": 0.004999999888241291,
+          "quality": 16.067155838012695,
+          "wave_fire_rate": 0.004999999888241291,
+          "err_ratio_end": 19.96388353596425
+        },
+        {
+          "family": "時計",
+          "policy": "時計 k=300",
+          "period": "adult",
+          "fires": 4.0,
+          "noise_fire_rate": 0.004000000189989805,
+          "quality": -2.5086280331015587,
+          "steady_fire_rate_wave": 0.004999999888241291,
+          "steady_fire_rate_noise": 0.004999999888241291,
+          "steady_nll_wave": -1.4814385175704956,
+          "react_cols": 0.0,
+          "err_back": 1.0,
+          "gaveup": 0.0,
+          "d_mean_end": 0.0
+        }
+      ],
+      "verdicts": [
+        {
+          "period": "grow",
+          "policy": "元の引き金",
+          "fires": 3.33709716796875,
+          "quality": 14.780102729797363,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": 15.568453511896768
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": 15.993617625626914
+          }
+        },
+        {
+          "period": "grow",
+          "policy": "候補3 K=2",
+          "fires": 4.87841796875,
+          "quality": 14.721953392028809,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": 15.251747852437791
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": 15.74481344808956
+          }
+        },
+        {
+          "period": "grow",
+          "policy": "候補3 K=5",
+          "fires": 7.9012451171875,
+          "quality": 14.371578216552734,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": 14.911210743967738
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": 15.387166815457554
+          }
+        },
+        {
+          "period": "grow",
+          "policy": "候補3 K=10",
+          "fires": 10.32318115234375,
+          "quality": 14.037727355957031,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": 14.722388529768056
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": 15.188857652094894
+          }
+        },
+        {
+          "period": "grow",
+          "policy": "候補3 K=20",
+          "fires": 20.05810546875,
+          "quality": 13.469161033630371,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": 14.29742653134836
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": 14.766594025871688
+          }
+        },
+        {
+          "period": "grow",
+          "policy": "候補3 K=40",
+          "fires": 38.97259521484375,
+          "quality": 13.312169075012207,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": 13.909870011572162
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": 14.364747739196167
+          }
+        },
+        {
+          "period": "adult",
+          "policy": "元の引き金",
+          "fires": 2.551513671875,
+          "quality": -2.9279261231422424,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": -2.5086280331015587
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": -2.37219575047493
+          }
+        },
+        {
+          "period": "adult",
+          "policy": "候補3 K=2",
+          "fires": 4.595947265625,
+          "quality": -2.9602583944797516,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": -2.604082974707831
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": -2.5277212161796063
+          }
+        },
+        {
+          "period": "adult",
+          "policy": "候補3 K=5",
+          "fires": 7.24456787109375,
+          "quality": -3.039705865085125,
+          "時計": {
+            "verdict": "上回る",
+            "control_nll": -2.9168651492577857
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": -2.6931535876234434
+          }
+        },
+        {
+          "period": "adult",
+          "policy": "候補3 K=10",
+          "fires": 10.8326416015625,
+          "quality": -3.0392979085445404,
+          "時計": {
+            "verdict": "負け",
+            "control_nll": -3.156805067585022
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": -2.8380054248281983
+          }
+        },
+        {
+          "period": "adult",
+          "policy": "候補3 K=20",
+          "fires": 16.1368408203125,
+          "quality": -3.227404162287712,
+          "時計": {
+            "verdict": "負け",
+            "control_nll": -3.2484681338947983
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": -2.9757338489626157
+          }
+        },
+        {
+          "period": "adult",
+          "policy": "候補3 K=40",
+          "fires": 17.39508056640625,
+          "quality": -3.2296791821718216,
+          "時計": {
+            "verdict": "負け",
+            "control_nll": -3.265736861149528
+          },
+          "サイコロ": {
+            "verdict": "上回る",
+            "control_nll": -3.0016809908961313
+          }
+        }
+      ]
+    }
+  }
+}
