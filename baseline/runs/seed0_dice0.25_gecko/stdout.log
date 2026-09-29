@@ -1,0 +1,45 @@
+iter     0  loss 0.03477
+iter   100  loss 0.01849
+iter   200  loss 0.01327
+iter   300  loss 0.00969
+iter   400  loss 0.01120
+iter   500  loss 0.00768
+iter   600  loss 0.00535
+iter   700  loss 0.00387
+iter   800  loss 0.00352
+iter   900  loss 0.00580
+iter  1000  loss 0.00331
+iter  1100  loss 0.00293
+iter  1200  loss 0.00170
+iter  1300  loss 0.00251
+iter  1400  loss 0.00223
+iter  1500  loss 0.00211
+iter  1600  loss 0.00188
+iter  1700  loss 0.00252
+iter  1800  loss 0.00159
+iter  1900  loss 0.00203
+iter  2000  loss 0.00239
+iter  2100  loss 0.00151
+iter  2200  loss 0.00160
+iter  2300  loss 0.00054
+iter  2400  loss 0.00096
+iter  2500  loss 0.00108
+iter  2600  loss 0.00055
+iter  2700  loss 0.00066
+iter  2800  loss 0.00063
+iter  2900  loss 0.00104
+iter  3000  loss 0.00047
+iter  3100  loss 0.00040
+iter  3200  loss 0.00067
+iter  3300  loss 0.00066
+iter  3400  loss 0.00034
+iter  3500  loss 0.00061
+iter  3600  loss 0.00035
+iter  3700  loss 0.00054
+iter  3800  loss 0.00025
+iter  3900  loss 0.00042
+iter  3999  loss 0.00043
+学習 626.1 秒, VRAM最大 2992 MB
+評価        : 成長 ロス末0.0003 発火30503 | 維持 ロス平均0.0002 発火/ステップ173.5 | 回復 ロス末0.0018 発火68624 | 総発火133821
+時限停止    : 成長 ロス末0.0003 発火30503 | 維持 ロス平均0.0003 発火/ステップ0.0 | 回復 ロス末0.0123 発火0 | 総発火30503
+出力: C:\Users\sojir\projects\NCA\baseline\runs\seed0_dice0.25_gecko
