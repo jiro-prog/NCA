@@ -95,6 +95,15 @@ def main():
             if v[(tc, a)] != v[(tc, b)]:
                 edges.append(dict(between=[(tc, a), (tc, b)], verdicts=[v[(tc, a)], v[(tc, b)]]))
     rep["edges_m3"] = edges
+    # 負けの内訳（BOUNDARY.md §5）：驚き駆動がその予算まで発火を使いきれない（下の包みの最大の m が予算より小さい）ときの負けは「負け（使いきれない）」
+    loss_kind = []
+    for tc, cv in grid:
+        for m in BUDGETS:
+            if verdict(results[(tc, cv)], m)[0] != "負け":
+                continue
+            m_max = [family_env(r, "驚き駆動")[-1][0] for r in results[(tc, cv)]]
+            loss_kind.append(dict(T_c=tc, cv=cv, m=m, surprise_m_max=m_max, saturated=all(x < m for x in m_max)))
+    rep["losses"] = loss_kind
     rep["counts_m3"] = {k: sum(1 for x in v.values() if x == k) for k in ("勝ち", "引き分け", "負け", "届かない")}
     (run / "report.json").write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding="utf-8")
 
@@ -120,7 +129,13 @@ def main():
           "## 負けの条件", "",
           f"- 決めた予算（1・3・10・30）で「勝ち」があった世界と予算：{len(wins)} 件 → **負けの条件に当たる：{'はい' if rep['losing_condition']['triggered'] else 'いいえ'}**",
           f"- 参考：驚き駆動が使える範囲の細かい予算で「勝ち」がある世界：{len(fine_wins)} / 24", "",
-          "## 境目（m* = 3 で、隣どうしの判定が分かれたところ）", ""]
+          "## 負けの内訳（BOUNDARY.md §5：驚き駆動がその予算を使いきれない負けは「負け（使いきれない）」）", "",
+          "| 予算 m | 負けの数 | そのうち使いきれない | 使える範囲の中での負け |", "|---:|---:|---:|---|"]
+    for m in BUDGETS:
+        ls = [x for x in loss_kind if x["m"] == m]
+        inside = [f"T_c={x['T_c']}・CV={x['cv']:g}" for x in ls if not x["saturated"]]
+        L.append(f"| {m:g} | {len(ls)} | {sum(x['saturated'] for x in ls)} | {'、'.join(inside) if inside else '—'} |")
+    L += ["", "## 境目（m* = 3 で、隣どうしの判定が分かれたところ）", ""]
     for e in edges:
         (a1, c1), (a2, c2) = e["between"]
         L.append(f"- T_c={a1}・CV={c1:g}（{e['verdicts'][0]}） ｜ T_c={a2}・CV={c2:g}（{e['verdicts'][1]}）")
