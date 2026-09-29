@@ -21,13 +21,17 @@ HERE = Path(__file__).resolve().parent
 MAX_MAINT_FPS = 10.0
 MAX_AFTER_LOSS = 0.0113
 MIN_HEAL = 0.60
+# 目標の絵ごとの基準（成長後ロス、治った割合）。トカゲは 2026-09-29 に決めた（EXPERIMENTS.md、台帳 S1-26・S1-27）：
+# 成長後ロスはトカゲでのサイコロ0.1 の値、治った割合は花と同じ（トカゲのサイコロ0.1 の1.12 は、育ちきる前の維持期が基準になったため使わない）
+THRESHOLDS = {"flower": (MAX_AFTER_LOSS, MIN_HEAL), "gecko": (0.0078, 0.60)}
 
 
-def ok(maint_fps, after_loss, heal):
+def ok(maint_fps, after_loss, heal, target="flower"):
     vals = (maint_fps, after_loss, heal)
     if any(v is None or not math.isfinite(v) for v in vals):
         return False
-    return maint_fps < MAX_MAINT_FPS and after_loss <= MAX_AFTER_LOSS and heal >= MIN_HEAL
+    max_after, min_heal = THRESHOLDS[target]
+    return maint_fps < MAX_MAINT_FPS and after_loss <= max_after and heal >= min_heal
 
 
 def final_metrics(s):
@@ -39,15 +43,15 @@ def final_metrics(s):
     return m["fires_per_step"], after, heal
 
 
-def judge_run(d):
+def judge_run(d, target="flower"):
     res = dict(final=None, front=None)
     p = d / "eval_j0.1" / "summary.json"
     if p.exists():
         fps, after, heal = final_metrics(json.loads(p.read_text(encoding="utf-8")))
-        res["final"] = dict(passed=ok(fps, after, heal), fps=fps, after=after, heal=heal)
+        res["final"] = dict(passed=ok(fps, after, heal, target), fps=fps, after=after, heal=heal)
     p = d / "best" / "front.json"
     if p.exists():
-        good = [a for a in json.loads(p.read_text(encoding="utf-8")) if ok(a["maint_fps"], a["after_loss"], a["heal"])]
+        good = [a for a in json.loads(p.read_text(encoding="utf-8")) if ok(a["maint_fps"], a["after_loss"], a["heal"], target)]
         res["front"] = dict(passed=bool(good), best=min(good, key=lambda a: a["after_loss"]) if good else None)
     return res
 
@@ -60,9 +64,9 @@ def main():
             continue
         cfg = json.loads(cfg_p.read_text(encoding="utf-8"))
         key = re.sub(r"^seed\d+_", "", d.name)
-        groups[key].append((cfg.get("seed"), d.name, judge_run(d)))
+        groups[key].append((cfg.get("seed"), d.name, judge_run(d, cfg.get("target", "flower"))))
 
-    print(f"基準（ずれ0.1）：維持期の発火 < {MAX_MAINT_FPS:g}/ステップ、成長後ロス ≤ {MAX_AFTER_LOSS}、治った割合 ≥ {MIN_HEAL}")
+    print(f"基準（ずれ0.1）：維持期の発火 < {MAX_MAINT_FPS:g}/ステップ、成長後ロス・治った割合は目標の絵ごと {THRESHOLDS}")
     for key, runs in groups.items():
         passed = [r for r in runs if (r[2]["final"] and r[2]["final"]["passed"]) or (r[2]["front"] and r[2]["front"]["passed"])]
         print(f"\n== {key}：{len(passed)}/{len(runs)} 本で得られた")
