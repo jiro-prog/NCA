@@ -415,6 +415,7 @@
   `dnaless_curves.py`（DNA なしの驚き駆動・時計・サイコロの曲線と、7.5 の比べ。`--noise`、`--sigma-min`、`--eval-seeds`）、
   `precheck/precheck_b.py`（候補B の模擬：4歩先の驚き）、`BOUNDARY.md`（問いの立て方の見直し：境目を測る設計書。実装はまだ）、
   `check_b_impl.py`（B を本物のセルに入れたときの実装の確かめ）、`verify_b.py`（B の本物のセルでの合否、14章）、`diagnose_b.py`（仮説の確かめと学び残しの物差し、15章）。
+  `boundary.py`（境目の実験。テストは `test_boundary.py`）、`sealed_select.py`（封印の周期の選び直しの計算。2026-09-30 に一度だけ）。
   セルの驚きの信号は `Physio2.surprise_ahead`（1 はこれまでどおり、B は4）。`train.py` の `--ahead`、`--sigma-min`、`--visible-only`、`--pairs`
 - `SUMMARY.md`：Step 1・Step 2 の中間まとめ（原理の発見、パッチのまま残っているもの、わかっていないこと。2026-09-29）
 - 各 run の出力は `*/runs/<名前>/`。GIFはgitに入れない（`--eval-only` で同じものを作り直せる）
