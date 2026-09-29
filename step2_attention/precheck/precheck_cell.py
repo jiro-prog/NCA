@@ -216,6 +216,130 @@ def simulate_sigma(P1, P2, sigma, dense=False, n=0.005, smin=0.005, eta=1.0, T=2
     return F, E2, S, Z
 
 
+def simulate_window(P1, P2, stop, K=20, delta=0.5, n=0.005, smin=0.005, T=2600, tc=2000, theta=4.0,
+                    gR=0.9, eps=1e-3, tau=100, noise_zone=False, seed=0, init="zero", trace=None):
+    """
+    学習の窓（2026-09-29、そうの判断3）。引き金で窓が開き、窓が開いている間は毎ステップ発火して
+    （最小二乗の解を求め、止まる条件を確かめ、止まらなければ書き換える）、止まる条件か上限 K 回で閉じる。
+    窓が開いている間は濃度を0に戻さず、閉じたら0に戻して1ステップ休む。σ は一律の窓 tau。
+    stop="surprise"：候補3（驚きが収まったら止まる：濃度 c < θ）
+    stop="learned" ：学習の窓（学び終えたら止まる：予測の違い d = √((w_ls − w)ᵀ R̄ (w_ls − w)) < delta·σ）
+    返すもの：F（発火）、E2、S、Z（どれも (T, セル)）と、閉じた窓の発火の数の一覧・上限に届いたか
+    """
+    rng = np.random.default_rng(seed)
+    phi = rng.uniform(0, 2 * np.pi, CELLS)
+    s1 = np.full(CELLS, 0.5)
+    s2 = np.full(CELLS, 0.5)
+    w = np.zeros((CELLS, 3))
+    v = np.full(CELLS, smin ** 2)
+    if init == "trained":   # 診断用：学び終えた状態（正確な係数、σ＝当てられない誤差、最初の2つの値も波）から始める
+        w = np.tile(exact_w(P1), (CELLS, 1))
+        v = np.full(CELLS, max(smin, irreducible(n, P1)) ** 2)
+        s2 = 0.5 + A * np.sin(phi - 4 * np.pi / P1)
+        s1 = 0.5 + A * np.sin(phi - 2 * np.pi / P1)
+    R = np.zeros((CELLS, 3, 3))
+    r = np.zeros((CELLS, 3))
+    mass = np.zeros(CELLS)                 # R の重みの合計（R̄ = R / mass）
+    c = np.zeros(CELLS)
+    ref = np.zeros(CELLS, bool)
+    open_ = np.zeros(CELLS, bool)
+    count = np.zeros(CELLS, int)
+    mu = (w * np.stack([s1, s2, np.ones(CELLS)], 1)).sum(1)
+    I3 = np.eye(3)
+    a = 1 / tau
+    F = np.zeros((T, CELLS), bool)
+    E2 = np.zeros((T, CELLS))
+    S = np.zeros((T, CELLS))
+    Z = np.zeros((T, CELLS))
+    lengths, capped = [], []
+    for t in range(T):
+        P = P1 if t < tc else P2
+        if noise_zone:
+            s = rng.uniform(0, 1, CELLS)
+        else:
+            s = 0.5 + A * np.sin(phi) + n * rng.standard_normal(CELLS)
+        phi = phi + 2 * np.pi / P
+        f_prev = np.stack([s1, s2, np.ones(CELLS)], 1)
+        e = s - mu
+        sigma_now = np.maximum(smin, np.sqrt(v))
+        z2 = e ** 2 / sigma_now ** 2
+        R = gR * R + f_prev[:, :, None] * f_prev[:, None, :]
+        r = gR * r + s[:, None] * f_prev
+        mass = gR * mass + 1
+        c = 0.9 * c + 0.1 * z2
+        v = (1 - a) * v + a * e ** 2
+        newly = ~open_ & (c > theta) & ~ref
+        open_ = open_ | newly
+        count[newly] = 0
+        fire = open_.copy()
+        closing = np.zeros(CELLS, bool)
+        if fire.any():
+            idx = np.nonzero(fire)[0]
+            wls = np.linalg.solve(R[idx] + eps * I3, r[idx][:, :, None])[:, :, 0]
+            diff = wls - w[idx]
+            count[idx] += 1
+            Rbar = R[idx] / mass[idx][:, None, None]
+            d = np.sqrt(np.maximum(np.einsum("ni,nij,nj->n", diff, Rbar, diff), 0))
+            if stop == "surprise":
+                done = c[idx] < theta
+            else:
+                done = d < delta * sigma_now[idx]
+            if trace is not None and t < 60:    # 診断用：最初の60ステップの、セル0の様子
+                if 0 in idx:
+                    k = int(np.nonzero(idx == 0)[0][0])
+                    trace.append((t, int(count[0]), float(np.sqrt(e[0] ** 2)), float(sigma_now[0]), float(d[k]),
+                                  float(delta * sigma_now[0]), bool(done[k]), float(np.linalg.eigvalsh(Rbar[k])[0])))
+            upd = ~done
+            w[idx[upd]] = w[idx[upd]] + np.tanh(diff[upd])
+            close = done | (count[idx] >= K)
+            closing[idx[close]] = True
+            lengths.extend(count[idx[close]].tolist())
+            capped.extend((~done[close] & (count[idx[close]] >= K)).tolist())
+        open_ = open_ & ~closing
+        c[closing] = 0
+        ref = closing
+        F[t] = fire
+        E2[t] = e ** 2
+        S[t] = np.maximum(smin, np.sqrt(v))
+        Z[t] = z2
+        s2, s1 = s1, s
+        mu = (w * np.stack([s1, s2, np.ones(CELLS)], 1)).sum(1)
+    return F, E2, S, Z, np.array(lengths), np.array(capped, bool)
+
+
+def judge_window(stop, tc=2000, **kw):
+    """学習の窓の案1つについて、事前に決めた指標をすべて出す（EXPERIMENTS.md 2026-09-29「学習の窓」）"""
+    out = dict(changes={})
+    base = None
+    for a_, b_ in [(12, 24), (12, 20), (12, 36), (24, 12)]:
+        F, E2, S, Z, L, C = simulate_window(a_, b_, stop, tc=tc, **kw)
+        pre = np.sqrt(E2[tc - 400:tc].mean(0))
+        post = np.sqrt(E2[tc + 250:tc + 300].mean(0))
+        out["changes"][f"{a_}→{b_}"] = dict(
+            react=F[tc:tc + 10].any(0).mean(), back=(post <= 2 * pre).mean(),
+            gaveup=(S[tc + 299] > 2 * S[tc - 1]).mean(), after=F[tc + 200:tc + 300].mean(),
+            relearn=F[tc:tc + 300].sum(0).mean())
+        if base is None:
+            base = dict(
+                wave_rate=F[tc - 400:tc].mean(), wave_z2=Z[tc - 400:tc].mean(),
+                err_ratio=np.sqrt(E2[tc - 400:tc].mean()) / irreducible(0.005, a_),
+                wave_sigma=np.median(S[tc - 1]), early_rate=F[400:800].mean(), early_z2=Z[400:800].mean(),
+                t_quiet_wave=settle_time(windowed(F, 50), lambda x: x <= 0.01, tc - 50),
+                t_calib_wave=settle_time(windowed(Z, 100), lambda x: (x >= 0.5) & (x <= 1.5), tc - 100),
+                learn_fires=F[:tc].sum(0).mean(), win_mean=L.mean() if len(L) else 0.0,
+                win_capped=C.mean() if len(C) else 0.0, n_windows=len(L) / CELLS)
+    out.update(base)
+    F, E2, S, Z, L, C = simulate_window(12, 12, stop, tc=tc, noise_zone=True, **kw)
+    out.update(noise_rate=F[tc - 400:tc].mean(), noise_z2=Z[tc - 400:tc].mean(), noise_sigma=np.median(S[tc - 1]),
+               noise_learn_fires=F[:tc].sum(0).mean(), noise_win_capped=C.mean() if len(C) else 0.0,
+               t_quiet_noise=settle_time(windowed(F, 50), lambda x: x <= 0.01, tc - 50))
+    ch = out["changes"].values()
+    out["works"] = (all(c_["react"] >= 0.9 and c_["back"] >= 0.95 and c_["gaveup"] <= 0.05 and c_["after"] <= 0.01 for c_ in ch)
+                    and out["wave_rate"] <= 0.01 and 0.5 <= out["wave_z2"] <= 1.5
+                    and 0.5 <= out["noise_z2"] <= 1.5 and out["noise_rate"] <= 0.01)
+    return out
+
+
 def settle_time(series, ok, end):
     """series[t]（窓の平均）が ok を満たし、それが end まで続く最初の t。最後まで満たさなければ None"""
     good = ok(series[:end])
@@ -433,6 +557,53 @@ def main():
             out.append(f"| {name} | {a}→{b} | {F[200:400].mean():.4f} | {Z[200:400].mean():.2f} | {F[400:410].any(0).mean():.2f} | "
                        f"{(post <= 2 * pre).mean():.2f} | {(S[699] > 2 * S[399]).mean():.2f} | {F[600:700].mean():.4f} | "
                        f"{F[400:700].sum(0).mean():.1f} |")
+
+    # ---- 2026-09-29（続き）学習の窓（そうの判断3）：候補3と、止まる条件の1点だけを変えて比べる ----
+    wins = [("候補3「驚きが収まったら止まる」（濃度 < θ）", "surprise"), ("学習の窓「学び終えたら止まる」（予測の違い < 0.5σ）", "learned")]
+    wres = {name: judge_window(stop) for name, stop in wins}
+    ref_name, ref = arms[0][0], res[arms[0][0]]
+    out += ["", "## 表11：学習の窓と候補3（止まる条件だけが違う。σ は窓100、1回の窓の発火は20回まで）。周期の変化ごと", "",
+            "| 案 | 変化 | 10歩以内の反応 | 誤差が戻った | あきらめ | 学び直し後の発火率 | 学び直しの発火/セル |",
+            "|---|---|---:|---:|---:|---:|---:|"]
+    for name, o in [(f"参照：窓なし（{ref_name}）", ref)] + list(wres.items()):
+        for ch, cm in o["changes"].items():
+            out.append(f"| {name} | {ch} | {cm['react']:.2f} | {cm['back']:.2f} | {cm['gaveup']:.2f} | {cm['after']:.4f} | {cm['relearn']:.1f} |")
+    out += ["", "## 表12：学習の窓と候補3：変える前の落ち着いた様子（1600〜2000）、学び始めの費用、窓の長さ、落ち着くまでの時間", "",
+            "| 案 | 0〜2000 の発火/セル（波） | 1回の窓の発火（平均） | 上限に届いた窓 | 波の発火率 | 波の z² | 誤差÷当てられない誤差 | "
+            "ノイズの発火率 | ノイズの z² | ノイズの σ | ノイズ 0〜2000 の発火/セル | ノイズが静かになる | 波が静かになる | 波の自信度が合う | 効く |",
+            "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|"]
+    for name, o in wres.items():
+        out.append(f"| {name} | {o['learn_fires']:.1f} | {o['win_mean']:.1f} | {o['win_capped']:.2f} | {o['wave_rate']:.4f} | {o['wave_z2']:.2f} | "
+                   f"{o['err_ratio']:.2f} | {o['noise_rate']:.4f} | {o['noise_z2']:.2f} | {o['noise_sigma']:.3f} | {o['noise_learn_fires']:.1f} | "
+                   f"{fmt_t(o['t_quiet_noise'])} | {fmt_t(o['t_quiet_wave'])} | {fmt_t(o['t_calib_wave'])} | {'○' if o['works'] else '×'} |")
+    # 診断（判定には使わない）：学び終えた状態から始めたら、学び直しはどうか（最初の学びを外して、止まる条件の違いだけを見る）
+    out += ["", "## 表13（診断。判定には使わない）：学習の窓と候補3を、学び終えた状態から始める（400 で周期を変える）", "",
+            "| 案 | 変化 | 変える前の発火率 | 10歩以内の反応 | 誤差が戻った | あきらめ | 学び直し後の発火率 | 学び直しの発火/セル | 上限に届いた窓 |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---:|"]
+    for name, stop in wins:
+        for a_, b_ in [(12, 24), (12, 20), (12, 36), (24, 12)]:
+            F, E2, S, Z, L, C = simulate_window(a_, b_, stop, T=1000, tc=400, init="trained")
+            pre = np.sqrt(E2[200:400].mean(0))
+            post = np.sqrt(E2[650:700].mean(0))
+            out.append(f"| {name} | {a_}→{b_} | {F[200:400].mean():.4f} | {F[400:410].any(0).mean():.2f} | {(post <= 2 * pre).mean():.2f} | "
+                       f"{(S[699] > 2 * S[399]).mean():.2f} | {F[600:700].mean():.4f} | {F[400:700].sum(0).mean():.1f} | "
+                       f"{(C.mean() if len(C) else 0):.2f} |")
+    # 診断：学習の窓の最初の学び（予測器0から）で、窓がいつ・なぜ閉じたか（セル0）
+    tr = []
+    simulate_window(12, 24, "learned", T=80, tc=2000, trace=tr)
+    out += ["", "## 表14（診断）：学習の窓の最初の学び（予測器0から、12の波、セル0）。窓が開いている間の毎ステップ", "",
+            "| ステップ | 窓の中の何回目 | 誤差の大きさ | σ | 予測の違い d | 止まる境目 0.5σ | 止まった | R̄ の一番小さい固有値 |",
+            "|---:|---:|---:|---:|---:|---:|---|---:|"]
+    for t_, k_, err_, sig_, d_, thr_, dn_, ev_ in tr:
+        out.append(f"| {t_} | {k_} | {err_:.4f} | {sig_:.4f} | {d_:.4f} | {thr_:.4f} | {'○' if dn_ else ''} | {ev_:.2e} |")
+    lw, c3 = wres[wins[1][0]], wres[wins[0][0]]
+    if lw["works"]:
+        wv = "学習の窓が「効く」→ **学習の窓を採る**（仕組みの1つ目）" + ("。候補3も「効く」" if c3["works"] else "。候補3は「効かない」")
+    elif c3["works"]:
+        wv = "候補3だけ「効く」→ **そうに報告して決めてもらう**"
+    else:
+        wv = "どちらも「効かない」→ **止めて報告する**"
+    out += ["", f"**事前に決めた決め方による判定（学習の窓）**：{wv}"]
 
     out += ["", f"（計算 {time.time() - t0:.0f} 秒）", ""]
     (HERE / "results.md").write_text("\n".join(out), encoding="utf-8")

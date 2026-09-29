@@ -65,8 +65,16 @@ def main():
         log_path.parent.mkdir(parents=True, exist_ok=True)
         start = datetime.now()
         print(f"[{start:%m-%d %H:%M}] 始める：{name}", flush=True)
+        argv = shlex.split(cmd, posix=True)
+        exe = ROOT / argv[0]
+        if exe.exists():            # Windows は相対パスの実行ファイルを cwd から探さないので、絶対パスにする
+            argv[0] = str(exe)
         with open(log_path, "w", encoding="utf-8") as f:
-            code = subprocess.run(shlex.split(cmd, posix=True), cwd=ROOT, stdout=f, stderr=subprocess.STDOUT).returncode
+            try:
+                code = subprocess.run(argv, cwd=ROOT, stdout=f, stderr=subprocess.STDOUT).returncode
+            except OSError as err:  # 起動できなかった行は、終了コード −1 として記録して次へ
+                f.write(f"起動できなかった：{err}\n")
+                code = -1
         end = datetime.now()
         secs = (end - start).total_seconds()
         with open(DONE, "a", encoding="utf-8") as f:
