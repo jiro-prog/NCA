@@ -1,0 +1,48 @@
+{
+  "grow": {
+    "period": "grow",
+    "policy": "alarm",
+    "fires": 29.251220703125,
+    "noise_fire_rate": 0.09230468422174454,
+    "quality": 13.35071849822998,
+    "wave_fire_rate": 0.07184960693120956,
+    "err_ratio_end": 1.0828838945219554
+  },
+  "grow_hide_nbr": {
+    "period": "grow",
+    "policy": "alarm",
+    "fires": 28.9237060546875,
+    "noise_fire_rate": 0.09177978336811066,
+    "quality": 13.483362197875977,
+    "wave_fire_rate": 0.07101123034954071,
+    "err_ratio_end": 1.1003544084365193
+  },
+  "adult": {
+    "period": "adult",
+    "policy": "alarm",
+    "fires": 37.539794921875,
+    "noise_fire_rate": 0.0597539097070694,
+    "quality": -3.3166778162121773,
+    "steady_fire_rate_wave": 0.002619140548631549,
+    "steady_fire_rate_noise": 0.05355468764901161,
+    "steady_nll_wave": -3.9636545181274414,
+    "react_cols": 1.0,
+    "err_back": 0.99945068359375,
+    "gaveup": 0.0052693684920086525,
+    "d_mean_end": 0.31552407145500183
+  },
+  "adult_hide_nbr": {
+    "period": "adult",
+    "policy": "alarm",
+    "fires": 37.576171875,
+    "noise_fire_rate": 0.059248048812150955,
+    "quality": -3.3397664055228233,
+    "steady_fire_rate_wave": 0.0026129556354135275,
+    "steady_fire_rate_noise": 0.05335449054837227,
+    "steady_nll_wave": -3.9668118953704834,
+    "react_cols": 1.0,
+    "err_back": 0.9935302771627903,
+    "gaveup": 0.008382161482586525,
+    "d_mean_end": 0.3153599500656128
+  }
+}

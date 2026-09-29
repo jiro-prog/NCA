@@ -1,0 +1,1108 @@
+{
+  "consistency_cand3_dnaless": 1.587414384337605,
+  "alarm_grow": {
+    "period": "grow",
+    "policy": "alarm",
+    "fires": 29.251220703125,
+    "noise_fire_rate": 0.09230468422174454,
+    "quality": 13.35071849822998,
+    "wave_fire_rate": 0.07184960693120956,
+    "err_ratio_end": 1.0828838945219554
+  },
+  "alarm_grow_hide_nbr": {
+    "period": "grow",
+    "policy": "alarm",
+    "fires": 28.9237060546875,
+    "noise_fire_rate": 0.09177978336811066,
+    "quality": 13.483362197875977,
+    "wave_fire_rate": 0.07101123034954071,
+    "err_ratio_end": 1.1003544084365193
+  },
+  "alarm_adult": {
+    "period": "adult",
+    "policy": "alarm",
+    "fires": 37.539794921875,
+    "noise_fire_rate": 0.0597539097070694,
+    "quality": -3.3166778162121773,
+    "steady_fire_rate_wave": 0.002619140548631549,
+    "steady_fire_rate_noise": 0.05355468764901161,
+    "steady_nll_wave": -3.9636545181274414,
+    "react_cols": 1.0,
+    "err_back": 0.99945068359375,
+    "gaveup": 0.0052693684920086525,
+    "d_mean_end": 0.31552407145500183
+  },
+  "alarm_adult_hide_nbr": {
+    "period": "adult",
+    "policy": "alarm",
+    "fires": 37.576171875,
+    "noise_fire_rate": 0.059248048812150955,
+    "quality": -3.3397664055228233,
+    "steady_fire_rate_wave": 0.0026129556354135275,
+    "steady_fire_rate_noise": 0.05335449054837227,
+    "steady_nll_wave": -3.9668118953704834,
+    "react_cols": 1.0,
+    "err_back": 0.9935302771627903,
+    "gaveup": 0.008382161482586525,
+    "d_mean_end": 0.3153599500656128
+  },
+  "cand3_grow": {
+    "period": "grow",
+    "policy": "cand3",
+    "fires": 20.1207275390625,
+    "noise_fire_rate": 0.05474609136581421,
+    "quality": 13.118663787841797,
+    "wave_fire_rate": 0.050005532801151276,
+    "err_ratio_end": 1.4555031420420605
+  },
+  "cand3_grow_hide_nbr": {
+    "period": "grow",
+    "policy": "cand3",
+    "fires": 20.12249755859375,
+    "noise_fire_rate": 0.054899901151657104,
+    "quality": 13.248656272888184,
+    "wave_fire_rate": 0.05000000074505806,
+    "err_ratio_end": 1.4657848639343727
+  },
+  "cand3_adult": {
+    "period": "adult",
+    "policy": "cand3",
+    "fires": 16.13720703125,
+    "noise_fire_rate": 0.021256836131215096,
+    "quality": -3.1699477955698967,
+    "steady_fire_rate_wave": 0.00038736980059184134,
+    "steady_fire_rate_noise": 0.0,
+    "steady_nll_wave": -3.9689223766326904,
+    "react_cols": 1.0,
+    "err_back": 0.6433919351547956,
+    "gaveup": 0.3252360029146075,
+    "d_mean_end": 0.0
+  },
+  "cand3_adult_hide_nbr": {
+    "period": "adult",
+    "policy": "cand3",
+    "fires": 15.6826171875,
+    "noise_fire_rate": 0.021284181624650955,
+    "quality": -3.2017716839909554,
+    "steady_fire_rate_wave": 0.00025781249860301614,
+    "steady_fire_rate_noise": 0.0,
+    "steady_nll_wave": -3.9692471027374268,
+    "react_cols": 1.0,
+    "err_back": 0.6331583708524704,
+    "gaveup": 0.34608968324027956,
+    "d_mean_end": 0.0
+  },
+  "control_points": [
+    {
+      "family": "候補3",
+      "policy": "候補3 K=1",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 3.240478515625,
+      "quality": 14.96007251739502,
+      "noise_fire_rate": 0.011052246205508709
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=1",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 2.63287353515625,
+      "quality": -2.986242890357971,
+      "noise_fire_rate": 0.004260742571204901
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=1",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 3.16748046875,
+      "quality": 14.82811164855957,
+      "noise_fire_rate": 0.01116943359375
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=1",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 2.514892578125,
+      "quality": -2.747647240757942,
+      "noise_fire_rate": 0.004265625029802322
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=1",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 3.26971435546875,
+      "quality": 14.83261489868164,
+      "noise_fire_rate": 0.011418457143008709
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=1",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 3.53436279296875,
+      "quality": -2.588849164545536,
+      "noise_fire_rate": 0.004291015677154064
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=2",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 4.7821044921875,
+      "quality": 14.823569297790527,
+      "noise_fire_rate": 0.017119139432907104
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=2",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 4.4183349609375,
+      "quality": -2.994929388165474,
+      "noise_fire_rate": 0.0066914064809679985
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=2",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 4.8514404296875,
+      "quality": 14.690361976623535,
+      "noise_fire_rate": 0.017788086086511612
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=2",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 4.2216796875,
+      "quality": -2.89715713262558,
+      "noise_fire_rate": 0.006714844144880772
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=2",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 4.9320068359375,
+      "quality": 14.75906753540039,
+      "noise_fire_rate": 0.017299804836511612
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=2",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 5.6676025390625,
+      "quality": -2.7079522386193275,
+      "noise_fire_rate": 0.006718750111758709
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=5",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 7.912353515625,
+      "quality": 14.430582046508789,
+      "noise_fire_rate": 0.025764159858226776
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=5",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 7.15997314453125,
+      "quality": -3.08901397138834,
+      "noise_fire_rate": 0.01044921949505806
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=5",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 8.4888916015625,
+      "quality": 14.103313446044922,
+      "noise_fire_rate": 0.029843749478459358
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=5",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 6.27838134765625,
+      "quality": -2.9421311244368553,
+      "noise_fire_rate": 0.010775391012430191
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=5",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 8.30755615234375,
+      "quality": 14.249483108520508,
+      "noise_fire_rate": 0.0259863268584013
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=5",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 8.3079833984375,
+      "quality": -2.769897975027561,
+      "noise_fire_rate": 0.010496093891561031
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=10",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 10.3599853515625,
+      "quality": 14.13265323638916,
+      "noise_fire_rate": 0.03466796875
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=10",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 11.004638671875,
+      "quality": -3.023905038833618,
+      "noise_fire_rate": 0.013831055723130703
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=10",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 11.31182861328125,
+      "quality": 13.64029312133789,
+      "noise_fire_rate": 0.04023437574505806
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=10",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 10.22650146484375,
+      "quality": -2.944589875638485,
+      "noise_fire_rate": 0.014661133289337158
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=10",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 10.61102294921875,
+      "quality": 13.983851432800293,
+      "noise_fire_rate": 0.03450683504343033
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=10",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 10.52301025390625,
+      "quality": -2.7911452054977417,
+      "noise_fire_rate": 0.014017579145729542
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=20",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 20.05828857421875,
+      "quality": 13.568787574768066,
+      "noise_fire_rate": 0.05233154073357582
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=20",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 16.59283447265625,
+      "quality": -3.2996990233659744,
+      "noise_fire_rate": 0.02100781351327896
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=20",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 20.1207275390625,
+      "quality": 13.118663787841797,
+      "noise_fire_rate": 0.05474609136581421
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=20",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 16.13720703125,
+      "quality": -3.1699477955698967,
+      "noise_fire_rate": 0.021256836131215096
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=20",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 20.0589599609375,
+      "quality": 13.392439842224121,
+      "noise_fire_rate": 0.05235839635133743
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=20",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 18.4893798828125,
+      "quality": -3.233874335885048,
+      "noise_fire_rate": 0.02103906311094761
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=40",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 38.92132568359375,
+      "quality": 13.411877632141113,
+      "noise_fire_rate": 0.10026855021715164
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=40",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 17.7982177734375,
+      "quality": -3.29970570653677,
+      "noise_fire_rate": 0.04006640985608101
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=40",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 38.42608642578125,
+      "quality": 13.21093463897705,
+      "noise_fire_rate": 0.10042480379343033
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=40",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 17.521728515625,
+      "quality": -3.183962419629097,
+      "noise_fire_rate": 0.040123049169778824
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=40",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 38.6824951171875,
+      "quality": 13.23678207397461,
+      "noise_fire_rate": 0.10021240264177322
+    },
+    {
+      "family": "候補3",
+      "policy": "候補3 K=40",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 20.547119140625,
+      "quality": -3.236714355647564,
+      "noise_fire_rate": 0.0400703139603138
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.003",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 1.19439697265625,
+      "quality": 16.712926864624023,
+      "noise_fire_rate": 0.0028564452659338713
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.003",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 3.0003662109375,
+      "quality": -2.3793007507920265,
+      "noise_fire_rate": 0.0029707031790167093
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.003",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 1.19439697265625,
+      "quality": 16.672409057617188,
+      "noise_fire_rate": 0.0028564452659338713
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.003",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 3.0003662109375,
+      "quality": -2.5128052309155464,
+      "noise_fire_rate": 0.0029707031790167093
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.003",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 1.19439697265625,
+      "quality": 16.740550994873047,
+      "noise_fire_rate": 0.0028564452659338713
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.003",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 3.0003662109375,
+      "quality": -1.9949871934950352,
+      "noise_fire_rate": 0.0029707031790167093
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.01",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 4.02716064453125,
+      "quality": 16.03782081604004,
+      "noise_fire_rate": 0.010046386159956455
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.01",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 10.04925537109375,
+      "quality": -2.819596618413925,
+      "noise_fire_rate": 0.010089844465255737
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.01",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 4.02716064453125,
+      "quality": 16.009801864624023,
+      "noise_fire_rate": 0.010046386159956455
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.01",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 10.04925537109375,
+      "quality": -2.923483520746231,
+      "noise_fire_rate": 0.010089844465255737
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.01",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 4.02716064453125,
+      "quality": 16.13737678527832,
+      "noise_fire_rate": 0.010046386159956455
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.01",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 10.04925537109375,
+      "quality": -2.649387702345848,
+      "noise_fire_rate": 0.010089844465255737
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.03",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 12.04840087890625,
+      "quality": 15.219595909118652,
+      "noise_fire_rate": 0.030029296875
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.03",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 30.06402587890625,
+      "quality": -3.1939817070961,
+      "noise_fire_rate": 0.02994628995656967
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.03",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 12.04840087890625,
+      "quality": 15.207192420959473,
+      "noise_fire_rate": 0.030029296875
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.03",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 30.06402587890625,
+      "quality": -3.2045807540416718,
+      "noise_fire_rate": 0.02994628995656967
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.03",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 12.04840087890625,
+      "quality": 15.297674179077148,
+      "noise_fire_rate": 0.030029296875
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.03",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 30.06402587890625,
+      "quality": -3.272368624806404,
+      "noise_fire_rate": 0.02994628995656967
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.1",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 40.0662841796875,
+      "quality": 14.48812484741211,
+      "noise_fire_rate": 0.10012206435203552
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.1",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 100.077880859375,
+      "quality": -3.4073227494955063,
+      "noise_fire_rate": 0.10008984804153442
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.1",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 40.0662841796875,
+      "quality": 14.479427337646484,
+      "noise_fire_rate": 0.10012206435203552
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.1",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 100.077880859375,
+      "quality": -3.373490832746029,
+      "noise_fire_rate": 0.10008984804153442
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.1",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 40.0662841796875,
+      "quality": 14.467601776123047,
+      "noise_fire_rate": 0.10012206435203552
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.1",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 100.077880859375,
+      "quality": -3.482167810201645,
+      "noise_fire_rate": 0.10008984804153442
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.3",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 120.03607177734375,
+      "quality": 13.986370086669922,
+      "noise_fire_rate": 0.30010008811950684
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.3",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 300.18902587890625,
+      "quality": -3.507292255759239,
+      "noise_fire_rate": 0.2999189496040344
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.3",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 120.03607177734375,
+      "quality": 13.97654914855957,
+      "noise_fire_rate": 0.30010008811950684
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.3",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 300.18902587890625,
+      "quality": -3.4477903619408607,
+      "noise_fire_rate": 0.2999189496040344
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.3",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 120.03607177734375,
+      "quality": 13.854814529418945,
+      "noise_fire_rate": 0.30010008811950684
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.3",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 300.18902587890625,
+      "quality": -3.5670257061719894,
+      "noise_fire_rate": 0.2999189496040344
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.5",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 199.92059326171875,
+      "quality": 13.767119407653809,
+      "noise_fire_rate": 0.5004419088363647
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.5",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 500.0238037109375,
+      "quality": -3.5485606268048286,
+      "noise_fire_rate": 0.49970412254333496
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.5",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 199.92059326171875,
+      "quality": 13.755997657775879,
+      "noise_fire_rate": 0.5004419088363647
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.5",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 500.0238037109375,
+      "quality": -3.46455267816782,
+      "noise_fire_rate": 0.49970412254333496
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.5",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 199.92059326171875,
+      "quality": 13.595009803771973,
+      "noise_fire_rate": 0.5004419088363647
+    },
+    {
+      "family": "サイコロ",
+      "policy": "サイコロ p=0.5",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 500.0238037109375,
+      "quality": -3.59324012696743,
+      "noise_fire_rate": 0.49970412254333496
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=2",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 200.0,
+      "quality": 13.608494758605957,
+      "noise_fire_rate": 0.5
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=2",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 500.0,
+      "quality": -3.5723772570490837,
+      "noise_fire_rate": 0.5
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=2",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 200.0,
+      "quality": 13.579174041748047,
+      "noise_fire_rate": 0.5
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=2",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 500.0,
+      "quality": -3.4765263348817825,
+      "noise_fire_rate": 0.5
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=2",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 200.0,
+      "quality": 13.371845245361328,
+      "noise_fire_rate": 0.5
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=2",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 500.0,
+      "quality": -3.611092232167721,
+      "noise_fire_rate": 0.5
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=4",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 100.0,
+      "quality": 13.723858833312988,
+      "noise_fire_rate": 0.25
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=4",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 250.0,
+      "quality": -3.5031676217913628,
+      "noise_fire_rate": 0.25
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=4",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 100.0,
+      "quality": 13.692182540893555,
+      "noise_fire_rate": 0.25
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=4",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 250.0,
+      "quality": -3.4427404701709747,
+      "noise_fire_rate": 0.25
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=4",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 100.0,
+      "quality": 13.506799697875977,
+      "noise_fire_rate": 0.25
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=4",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 250.0,
+      "quality": -3.561402663588524,
+      "noise_fire_rate": 0.25
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=10",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 40.0,
+      "quality": 14.045655250549316,
+      "noise_fire_rate": 0.09999999403953552
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=10",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 100.0,
+      "quality": -3.459361545741558,
+      "noise_fire_rate": 0.10000000149011612
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=10",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 40.0,
+      "quality": 14.005559921264648,
+      "noise_fire_rate": 0.09999999403953552
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=10",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 100.0,
+      "quality": -3.4137134104967117,
+      "noise_fire_rate": 0.10000000149011612
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=10",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 40.0,
+      "quality": 13.940547943115234,
+      "noise_fire_rate": 0.09999999403953552
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=10",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 100.0,
+      "quality": -3.5388825982809067,
+      "noise_fire_rate": 0.10000000149011612
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=30",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 14.0,
+      "quality": 14.653912544250488,
+      "noise_fire_rate": 0.03500000014901161
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=30",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 34.0,
+      "quality": -3.4194357693195343,
+      "noise_fire_rate": 0.03400000184774399
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=30",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 14.0,
+      "quality": 14.502619743347168,
+      "noise_fire_rate": 0.03500000014901161
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=30",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 34.0,
+      "quality": -3.341012366116047,
+      "noise_fire_rate": 0.03400000184774399
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=30",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 14.0,
+      "quality": 14.58549690246582,
+      "noise_fire_rate": 0.03500000014901161
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=30",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 34.0,
+      "quality": -3.4612635523080826,
+      "noise_fire_rate": 0.03400000184774399
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=100",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 4.0,
+      "quality": 15.540840148925781,
+      "noise_fire_rate": 0.009999999776482582
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=100",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 10.0,
+      "quality": -3.1390110477805138,
+      "noise_fire_rate": 0.010000000707805157
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=100",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 4.0,
+      "quality": 15.328757286071777,
+      "noise_fire_rate": 0.009999999776482582
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=100",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 10.0,
+      "quality": -3.0846355333924294,
+      "noise_fire_rate": 0.010000000707805157
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=100",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 4.0,
+      "quality": 15.481161117553711,
+      "noise_fire_rate": 0.009999999776482582
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=100",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 10.0,
+      "quality": -2.7994280233979225,
+      "noise_fire_rate": 0.010000000707805157
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=300",
+      "writer": "DNA なし",
+      "period": "grow",
+      "fires": 2.0,
+      "quality": 16.216554641723633,
+      "noise_fire_rate": 0.004999999888241291
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=300",
+      "writer": "DNA なし",
+      "period": "adult",
+      "fires": 4.0,
+      "quality": -2.510562241077423,
+      "noise_fire_rate": 0.004000000189989805
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=300",
+      "writer": "候補3の DNA",
+      "period": "grow",
+      "fires": 2.0,
+      "quality": 16.08022117614746,
+      "noise_fire_rate": 0.004999999888241291
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=300",
+      "writer": "候補3の DNA",
+      "period": "adult",
+      "fires": 4.0,
+      "quality": -2.427607774734497,
+      "noise_fire_rate": 0.004000000189989805
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=300",
+      "writer": "目覚ましの DNA",
+      "period": "grow",
+      "fires": 2.0,
+      "quality": 16.08816909790039,
+      "noise_fire_rate": 0.004999999888241291
+    },
+    {
+      "family": "時計",
+      "policy": "時計 k=300",
+      "writer": "目覚ましの DNA",
+      "period": "adult",
+      "fires": 4.0,
+      "quality": -2.026025664061308,
+      "noise_fire_rate": 0.004000000189989805
+    }
+  ],
+  "verdicts": {
+    "grow_候補3": {
+      "verdict": "負け",
+      "alarm_fires": 29.251220703125,
+      "alarm_nll": 13.35071849822998,
+      "control_nll": 13.118663787841797
+    },
+    "grow_サイコロ": {
+      "verdict": "上回る",
+      "alarm_fires": 29.251220703125,
+      "alarm_nll": 13.35071849822998,
+      "control_nll": 14.661247627497477
+    },
+    "grow_時計": {
+      "verdict": "上回る",
+      "alarm_fires": 29.251220703125,
+      "alarm_nll": 13.35071849822998,
+      "control_nll": 14.108104851532168
+    },
+    "adult_候補3": {
+      "verdict": "上回る",
+      "alarm_fires": 37.539794921875,
+      "alarm_nll": -3.3166778162121773,
+      "control_nll": -3.29970570653677
+    },
+    "adult_サイコロ": {
+      "verdict": "上回る",
+      "alarm_fires": 37.539794921875,
+      "alarm_nll": -3.3166778162121773,
+      "control_nll": -3.311109543761683
+    },
+    "adult_時計": {
+      "verdict": "負け",
+      "alarm_fires": 37.539794921875,
+      "alarm_nll": -3.3166778162121773,
+      "control_nll": -3.4683894352066007
+    }
+  },
+  "final": "不合格"
+}
