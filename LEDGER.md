@@ -176,3 +176,4 @@
 - 09-30：`step2_attention/sealed_select.py`（封印の周期の選び直し。式だけを計算し、性能は見ない）
 - 09-30：`step2_attention/boundary.py`（境目の実験）、`test_boundary.py`（そのテスト6件）
 - 09-30：`step2_attention/graduation.py`（卒業の条件 (i) の確かめ。今は開発のシードの分だけ）
+- 09-30：`graduation.py` に診断用の `--b-dnaless` を足した（B の DNA を外して同じ θ の格子を回す。原因を見るためで、判定には使わない）
