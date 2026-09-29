@@ -117,20 +117,27 @@ def main():
     ap.add_argument("--runs", nargs="+", default=[str(HERE / "runs" / "2b_B_seed0"), str(HERE / "runs" / "2b_B_seed1")])
     ap.add_argument("--writers", default="smallcheck")
     ap.add_argument("--device", default=None)
+    ap.add_argument("--b-dnaless", type=int, default=0,
+                    help="1 なら原因を見るための診断（判定ではない）：B の DNA を外して（DNA なし）、同じ θ の格子を回す。対照の書き換え方も DNA なしだけ")
     args = ap.parse_args()
     dev = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
     assert Physio2.surprise_ahead == 4 and Physio2.sigma_min == 0.02 and W.WorldConfig().noise == 0.02, "標準の世界で回す（台帳 S2-39）"
     wcfg = W.WorldConfig()
-    out = HERE / "runs" / f"graduation_dev_{args.writers}"
+    out = HERE / "runs" / (f"graduation_dev_{args.writers}" + ("_diag_dnaless" if args.b_dnaless else ""))
     out.mkdir(parents=True, exist_ok=True)
     dnaless = AttentionCell(dna=False).to(dev).eval()
     res = dict(writers=args.writers, thetas=THETAS, headline=HEADLINE, eval_seed=1000, pairs=[list(p) for p in PAIRS_ORIGINAL], seeds={})
+    if args.b_dnaless:                                     # 診断：DNA なしの B（学習がないのでシードによらない。1回だけ）
+        args.runs = args.runs[:1]
     for run in map(Path, args.runs):
         cfg = json.loads((run / "config.json").read_text(encoding="utf-8"))
         for k, v in (("noise", 0.02), ("ahead", 4), ("visible_only", 0), ("pairs", "original"), ("firing", "trigger")):
             assert cfg.get(k) == v, (run, k, cfg.get(k))
         model = AttentionCell(dna=True).to(dev).eval()
         model.load_state_dict(torch.load(run / "model.pt", map_location=dev))
+        if args.b_dnaless:
+            model = dnaless
+            cfg = dict(cfg, seed="DNA なし")
         r = evaluate_seed(model, dnaless, wcfg, PAIRS_ORIGINAL, 1000, dev, args.writers)
         res["seeds"][str(cfg["seed"])] = r
         for period in ("grow", "adult"):
@@ -139,7 +146,11 @@ def main():
     res["passed"] = all(r["passed"] for r in res["seeds"].values())
     (out / "summary.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
 
-    L = ["# 卒業の条件 (i)：開発のシード（θ の格子）" + ("（仮：対照の書き換え方は小さな確かめのもの。7.5 の卒業の決まりとは違う）" if args.writers == "smallcheck" else ""), "",
+    if args.b_dnaless:
+        L0 = ["# 原因を見るための診断（判定ではない）：B の DNA を外した（DNA なし）θ の格子。対照の書き換え方も DNA なしだけ", ""]
+    else:
+        L0 = []
+    L = L0 + ["# 卒業の条件 (i)：開発のシード（θ の格子）" + ("（仮：対照の書き換え方は小さな確かめのもの。7.5 の卒業の決まりとは違う）" if args.writers == "smallcheck" else ""), "",
          "標準の世界、評価の乱数1000。θ を変えるのは評価だけ（θ=4 で学んだ DNA）。大人の時期の学び直しは見える3つの組の世界で数える。", "",
          f"**判定：{'2本とも満たす' if res['passed'] else '満たさない'}**（θ の格子のどの点でも負けない、かつ θ=4 で上回る。両方の時期）", ""]
     for seed, r in res["seeds"].items():
