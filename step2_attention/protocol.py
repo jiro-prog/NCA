@@ -144,3 +144,158 @@ def judge_2a(s):
         nll_wave=s["settle_nll_wave"] <= s["nll_irreducible"] + 0.2,
     )
     return all(checks.values()), checks
+
+
+# ---------------------------------------------------------------------------------------------
+# 7.5 の評価（2026-09-29、成功条件の決め直し。DESIGN.md 7.5）：育つ時期と大人の時期、対照との比べ方、近所を隠す診断
+# ---------------------------------------------------------------------------------------------
+import contextlib  # noqa: E402
+import math  # noqa: E402
+
+import torch.nn.functional as F  # noqa: E402
+
+from model import N_HIST, AttentionCell  # noqa: E402
+
+PAIRS = ((12.0, 24.0), (12.0, 20.0), (12.0, 36.0), (24.0, 12.0))   # 周期の変化4つ（大人の時期）
+CH_HIST0 = 3 + 1 + 1 + 4                                             # 近所のチャンネルのうち、最近の値が始まる番号
+
+
+def exact_w(P):
+    c = math.cos(2 * math.pi / P)
+    return (2 * c, -1.0, 1 - c)
+
+
+@contextlib.contextmanager
+def hide_neighbors():
+    """評価のときだけ、近所8か所の最近のセンサーの値を0.5 にする（近所を隠す診断。DESIGN.md 7.5）"""
+    orig = AttentionCell.perceive
+
+    def perceive(self, nbr, self_extra):
+        B, C, H, Wd = nbr.shape
+        p = F.unfold(nbr, 3, padding=1).view(B, C, 9, H, Wd).clone()
+        for k in range(N_HIST):
+            p[:, CH_HIST0 + k, [0, 1, 2, 3, 5, 6, 7, 8]] = 0.5
+        return torch.cat([p.view(B, C * 9, H, Wd), self_extra], 1)
+    AttentionCell.perceive = perceive
+    try:
+        yield
+    finally:
+        AttentionCell.perceive = orig
+
+
+@torch.no_grad()
+def run_period(cell, policy, wcfg, period, eval_seed=1000, device="cpu", pairs=PAIRS, n_per=4,
+               T_grow=400, T_adult=1000, change_at=400, relearn=300):
+    """育つ時期（period="grow"：予測器0・σ は下限から、T_grow ステップ。周期は pairs の P1 のまま）か、
+    大人の時期（"adult"：学び終えた状態から、change_at で P2 に変えて T_adult まで）を回して、7.5 の指標を返す。
+    発火は全セル（ノイズの区域を含む）で数え、質は波の区域の NLL（大人の時期は、新しい波がその列に届いてから relearn ステップの窓）"""
+    B = n_per * len(pairs)
+    P1 = torch.tensor([a for a, b in pairs for _ in range(n_per)], dtype=torch.float64)
+    P2 = torch.tensor([b for a, b in pairs for _ in range(n_per)], dtype=torch.float64)
+    g = torch.Generator(device=device).manual_seed(eval_seed)
+    g_pol = torch.Generator(device=device).manual_seed(eval_seed + 7)      # サイコロの対照の乱数（世界の乱数と分ける）
+    ws = W.reset(wcfg, P1.to(device), n=B, generator=g, device=device)
+    H = Wd = wcfg.size
+    zone = W.zone_mask(wcfg, device)
+    wave = ~zone
+    st = init_state(B, H, Wd, device)
+    if period == "adult":                                   # 学び終えた状態（表10・13 の診断と同じ始め方）
+        frames = []
+        for _ in range(N_HIST):
+            frames.append(W.sense(ws, wcfg, g))
+            ws = W.advance(ws)
+        hist = torch.cat(frames[::-1], 1)                   # [s(t), s(t−1), s(t−2), s(t−3)]
+        wv = torch.tensor([exact_w(float(p)) for p in P1], device=device, dtype=torch.float32).view(B, 3, 1, 1)
+        wv = wv.expand(B, 3, H, Wd).clone()
+        irr = torch.tensor([irreducible(wcfg.noise, float(p)) for p in P1], device=device, dtype=torch.float32)
+        v = (irr ** 2).clamp(min=Physio_sigma_min() ** 2).view(B, 1, 1, 1).expand(B, 1, H, Wd).clone()
+        mu = wv[:, 0:1] * hist[:, 0:1] + wv[:, 1:2] * hist[:, 1:2] + wv[:, 2:3]
+        st = st._replace(w=wv, v=v, hist=hist, mu=mu)
+    T = T_grow if period == "grow" else T_adult
+    NL = torch.zeros(T, B, H, Wd, device=device)
+    FI = torch.zeros(T, B, H, Wd, dtype=torch.bool, device=device)
+    SG = torch.zeros(T, B, H, Wd, device=device)
+    E2 = torch.zeros(T, B, H, Wd, device=device)
+    for t in range(T):
+        if period == "adult" and t == change_at - 1:
+            ws = W.set_period(ws, P2.to(device))
+        pol = dict(policy)
+        if pol["kind"] == "dice":
+            pol["gen"] = g_pol
+        if pol["kind"] == "clock":
+            pol["t"] = t
+        sense = W.sense(ws, wcfg, g)
+        st, rec = cell.step(st, sense, policy=pol)
+        NL[t] = nll(rec["e"], rec["sigma"], detach_sigma=False)[:, 0]
+        FI[t] = rec["hard"][:, 0]
+        SG[t] = rec["sigma"][:, 0]
+        E2[t] = rec["e"][:, 0] ** 2
+        ws = W.advance(ws)
+    cells = B * H * Wd
+    out = dict(period=period, policy=policy["kind"], fires=float(FI.sum()) / cells,
+               noise_fire_rate=float(FI[:, :, zone].float().mean()))
+    if period == "grow":
+        out["quality"] = float(NL[:, :, wave].mean())
+        out["wave_fire_rate"] = float(FI[:, :, wave].float().mean())
+        out["err_ratio_end"] = float(E2[T - 100:][:, :, wave].mean().sqrt()) / irreducible(wcfg.noise, 12.0)
+        return out
+    lag = wcfg.lag
+    q, react, back, gave = [], [], [], []
+    for x in range(Wd):
+        rows = wave[:, x]
+        if not bool(rows.any()):
+            continue
+        a0 = change_at + x * lag
+        if a0 + relearn > T:
+            continue
+        col = lambda A_: A_[..., x][..., rows]
+        q.append(float(col(NL[a0:a0 + relearn]).mean()))
+        react.append(float(col(FI[a0:a0 + 10]).any(0).any(-1).float().mean()))
+        pre = col(E2[change_at - 200:change_at]).mean(0).sqrt()
+        post = col(E2[a0 + relearn - 50:a0 + relearn]).mean(0).sqrt()
+        back.append(float((post <= 2 * pre).float().mean()))
+        gave.append(float((col(SG[a0 + relearn - 1]) > 2 * col(SG[change_at - 1])).float().mean()))
+    out["quality"] = float(np.mean(q))
+    out["steady_fire_rate_wave"] = float(FI[200:change_at][:, :, wave].float().mean())
+    out["steady_fire_rate_noise"] = float(FI[200:change_at][:, :, zone].float().mean())
+    out["steady_nll_wave"] = float(NL[200:change_at][:, :, wave].mean())
+    out["react_cols"] = float(np.mean(react))
+    out["err_back"] = float(np.mean(back))
+    out["gaveup"] = float(np.mean(gave))
+    out["d_mean_end"] = float(st.d.mean())
+    return out
+
+
+def Physio_sigma_min():
+    from model import Physio2
+    return Physio2.sigma_min
+
+
+def envelope(points):
+    """対照の点（発火数、NLL）の下の包み：発火を増やしても質が良くならない点を除き、発火数に対して NLL が下がっていく点だけを残す"""
+    pts = sorted(points)
+    env, best = [], float("inf")
+    for f, q in pts:
+        if q < best:
+            env.append((f, q))
+            best = q
+    return env
+
+
+def compare(point, env):
+    """7.5 の比べ方。比べる系の点（発火数、NLL）と、対照の下の包み。戻り値：（"上回る"／"負け"／"決められない"、対照の NLL）"""
+    f, q = point
+    f = max(f, 1e-6)
+    if f < env[0][0]:
+        return ("上回る" if q < env[0][1] else "決められない"), env[0][1]
+    if f > env[-1][0]:
+        return ("上回る" if q < env[-1][1] else "負け"), env[-1][1]
+    for (f0, q0), (f1, q1) in zip(env[:-1], env[1:]):
+        if f0 <= f <= f1:
+            if f1 == f0:
+                qc = min(q0, q1)
+            else:
+                t = (math.log(f) - math.log(max(f0, 1e-6))) / (math.log(f1) - math.log(max(f0, 1e-6)))
+                qc = q0 + t * (q1 - q0)
+            return ("上回る" if q < qc else "負け"), qc
+    return ("上回る" if q < env[0][1] else "決められない"), env[0][1]

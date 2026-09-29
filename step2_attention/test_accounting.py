@@ -215,6 +215,87 @@ def test_gradient_flows_through_rollout():
         assert p.grad.abs().sum() > 0, name
 
 
+def quiet_state():
+    """学び終えたように静かな状態（σ が大きく、驚かない）"""
+    st = init_state(1, H, Wd)
+    return st._replace(v=torch.full((1, 1, H, Wd), 1.0), w=torch.zeros(1, 3, H, Wd))
+
+
+def test_alarm_keeps_firing_only_when_set():
+    """目覚まし：驚かなくても、d が大きいと濃度が溜まって続けて発火する。d が0 なら発火しない"""
+    m = AttentionCell(dna=True, alarm=True)
+    sense = torch.full((1, 1, H, Wd), 0.0)                      # μ=0 と一致するので驚かない
+    for d0, expect in [(Physio2.theta, True), (0.0, False)]:
+        st = quiet_state()._replace(d=torch.full((1, 1, H, Wd), d0))
+        fired = 0
+        with torch.no_grad():
+            for _ in range(12):
+                st, rec = m.step(st, sense, policy={"kind": "alarm"})
+                fired += int(rec["hard"].sum())
+        assert (fired > 0) == expect, (d0, fired)
+
+
+def test_alarm_ste_reaches_alarm_output():
+    """目覚ましのときだけ、引き金の STE を通して、目覚ましの出力（最終層の最後の行）に勾配が届く"""
+    torch.manual_seed(0)
+    m = AttentionCell(dna=True, alarm=True)
+    torch.nn.init.normal_(m.rule[-1].weight, std=0.1)
+    cfg = W.WorldConfig(size=H, zone=H, noise=0.005)
+    g = torch.Generator().manual_seed(0)
+    ws = W.reset(cfg, 12.0, n=2, generator=g)
+    st = init_state(2, H, Wd)
+    loss = 0
+    for _ in range(15):
+        st, rec = m.step(st, W.sense(ws, cfg, g), policy={"kind": "alarm"})
+        loss = loss + rec["fire"].mean() + (rec["e"] ** 2 / (2 * rec["sigma"].detach() ** 2)).mean()
+        ws = W.advance(ws)
+    loss.backward()
+    ga = m.rule[-1].weight.grad[-1]
+    assert torch.isfinite(ga).all() and ga.abs().sum() > 0
+
+
+def test_non_alarm_policies_have_no_ste():
+    """目覚まし以外では、引き金は学習しない：発火（学習用）は 0/1 そのもので、濃度へ勾配を流さない"""
+    m = busy_dna()
+    st = init_state(1, H, Wd)
+    for pol in ({"kind": "trigger"}, {"kind": "cand3", "K": 20}, {"kind": "dense"}):
+        with torch.no_grad():
+            _, rec = m.step(st, torch.rand(1, 1, H, Wd), policy=pol)
+        assert torch.equal(rec["fire"], rec["write"].float()), pol
+
+
+def test_cand3_window_rules():
+    """候補3：引き金で窓が開き、驚いている間は毎ステップ発火、窓の中では濃度を0に戻さない。驚きが収まるか K 回で閉じる"""
+    m = AttentionCell(dna=False)
+    st = quiet_state()
+    c = torch.zeros(1, 1, H, Wd)
+    c[0, 0, 5, 5] = 100.0                                          # (5,5) だけ大きく驚いている
+    st = st._replace(c=c)
+    sense = torch.zeros(1, 1, H, Wd)
+    fires = []
+    with torch.no_grad():
+        for _ in range(8):
+            st, rec = m.step(st, sense, policy={"kind": "cand3", "K": 5})
+            fires.append(bool(rec["hard"][0, 0, 5, 5]))
+    assert fires[:5] == [True] * 5 and fires[5] is False            # 上限5回で閉じ、1ステップ休む
+    st = quiet_state()._replace(c=torch.full((1, 1, H, Wd), 4.5))    # しきい値のすぐ上：減衰でしきい値を下回ったら閉じる
+    with torch.no_grad():
+        st, rec = m.step(st, sense, policy={"kind": "cand3", "K": 20})
+        n_open = int(rec["hard"].sum())
+        st, rec = m.step(st, sense, policy={"kind": "cand3", "K": 20})
+    assert n_open == H * Wd and int(rec["hard"].sum()) == H * Wd and int(rec["write"].sum()) == 0   # 2回目は驚きが収まって、書かずに閉じる
+
+
+def test_2a_weights_still_load():
+    """目覚ましの出力を足しても、2a の重み（出力9つ）はそのまま読める"""
+    p = Path(__file__).resolve().parent / "runs" / "2a_seed0" / "model.pt"
+    if not p.exists():
+        return
+    m = AttentionCell(dna=True)
+    m.load_state_dict(torch.load(p, map_location="cpu"))
+    assert m.rule[-1].weight.shape[0] == AttentionCell.N_OUT
+
+
 if __name__ == "__main__":
     tests = [v for k, v in dict(globals()).items() if k.startswith("test_")]
     for t in tests:

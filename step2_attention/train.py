@@ -31,7 +31,7 @@ import torch  # noqa: E402
 
 import world as W  # noqa: E402
 from model import AttentionCell, Physio2, State2, init_state, nll  # noqa: E402
-from protocol import Protocol2, judge_2a, run_protocol2  # noqa: E402
+from protocol import Protocol2, hide_neighbors, judge_2a, run_period, run_protocol2  # noqa: E402
 from sealed import check_dev_seed  # noqa: E402
 
 EVAL_CHANGES = ((12.0, 24.0), (12.0, 20.0), (12.0, 36.0), (24.0, 12.0))
@@ -83,15 +83,16 @@ def train(args, run, dev):
     gen_cpu = torch.Generator().manual_seed(args.seed + 11)            # プールの抽選、周期、入れ替え、変える時刻
     gen_world = torch.Generator(device=dev).manual_seed(args.seed + 12)  # 世界のノイズ
     pool = Pool(args.pool, wcfg, gen_cpu)
-    model = AttentionCell(dna=True).to(dev)
+    model = AttentionCell(dna=True, alarm=args.firing == "alarm").to(dev)
     model.use_checkpoint = bool(args.checkpoint)
+    policy = firing_policy(args)
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
     sched = torch.optim.lr_scheduler.MultiStepLR(opt, [args.lr_drop_at], 0.1)
     zone = W.zone_mask(wcfg, dev)
     wave = ~zone
     log_f = open(run / "train_log.csv", "w", newline="", encoding="utf-8")
     cols = ["iter", "steps", "loss", "nll_wave", "nll_noise", "z2_wave", "z2_noise", "trig_wave", "trig_noise",
-            "eta", "g", "dw_abs", "skipped", "lr", "seconds"]
+            "fire_wave", "fire_noise", "fire_cost", "d_mean", "eta", "g", "dw_abs", "skipped", "lr", "seconds"]
     wr = csv.DictWriter(log_f, fieldnames=cols)
     wr.writeheader()
     (run / "checkpoints").mkdir(exist_ok=True)
@@ -108,7 +109,9 @@ def train(args, run, dev):
         change_t = {j: int(torch.randint(1, T, (1,), generator=gen_cpu)) for j in change_j}
         change_P = {j: float(W.sample_visible_change(world.P[j:j + 1].cpu(), gen_cpu)[0]) for j in change_j}
         loss = 0.0
-        acc = dict(nll_wave=0.0, nll_noise=0.0, z2_wave=0.0, z2_noise=0.0, trig_wave=0.0, trig_noise=0.0, eta=0.0, g=0.0)
+        fire_cost = 0.0
+        acc = dict(nll_wave=0.0, nll_noise=0.0, z2_wave=0.0, z2_noise=0.0, trig_wave=0.0, trig_noise=0.0,
+                   fire_wave=0.0, fire_noise=0.0, d_mean=0.0, eta=0.0, g=0.0)
         dw_abs = 0.0
         for t in range(T):
             for j in change_j:
@@ -118,9 +121,11 @@ def train(args, run, dev):
                     world = W.set_period(world, change_P[j], mask=mask)
             sense = W.sense(world, wcfg, gen_world)
             w_before = cell.w
-            cell, rec = model.step(cell, sense, dense=bool(args.dense))
+            cell, rec = model.step(cell, sense, policy=policy)
             l = nll(rec["e"], rec["sigma"], detach_sigma=True)
-            loss = loss + l.mean()
+            fc = rec["fire"].mean()                                    # 発火（全セル×ステップで割る。目覚ましは STE つき）
+            loss = loss + l.mean() + args.lam * fc
+            fire_cost += float(fc)
             with torch.no_grad():
                 acc["nll_wave"] += float(l[:, 0][:, wave].mean())
                 acc["nll_noise"] += float(l[:, 0][:, zone].mean())
@@ -128,6 +133,9 @@ def train(args, run, dev):
                 acc["z2_noise"] += float(rec["z2"][:, 0][:, zone].mean())
                 acc["trig_wave"] += float(rec["trig"][:, 0][:, wave].float().mean())
                 acc["trig_noise"] += float(rec["trig"][:, 0][:, zone].float().mean())
+                acc["fire_wave"] += float(rec["hard"][:, 0][:, wave].float().mean())
+                acc["fire_noise"] += float(rec["hard"][:, 0][:, zone].float().mean())
+                acc["d_mean"] += float(cell.d.mean())
                 acc["eta"] += float(rec["eta"].mean())
                 acc["g"] += float(rec["g"].mean())
                 dw_abs += float((cell.w - w_before).abs().mean())
@@ -146,17 +154,47 @@ def train(args, run, dev):
         sched.step()
         pool.store(idx, cell, world)
         row = dict(iter=it, steps=T, loss=float(loss), skipped=skipped, lr=sched.get_last_lr()[0],
-                   seconds=round(time.time() - t0, 1), dw_abs=dw_abs / T, **{k: v / T for k, v in acc.items()})
+                   seconds=round(time.time() - t0, 1), dw_abs=dw_abs / T, fire_cost=fire_cost / T,
+                   **{k: v / T for k, v in acc.items()})
         wr.writerow(row)
         if it % 50 == 0 or it == args.iters - 1:
             log_f.flush()
             print(f"iter {it:5d}  損失 {row['loss']:.3f}  NLL 波 {row['nll_wave']:.3f}／ノイズ {row['nll_noise']:.3f}  "
-                  f"z² 波 {row['z2_wave']:.2f}／ノイズ {row['z2_noise']:.2f}  η {row['eta']:.3f} g {row['g']:.4f}  "
-                  f"飛ばした {skipped}  ({row['seconds']:.0f}秒)", flush=True)
+                  f"z² 波 {row['z2_wave']:.2f}／ノイズ {row['z2_noise']:.2f}  発火率 波 {row['fire_wave']:.3f}／ノイズ {row['fire_noise']:.3f}  "
+                  f"目覚まし {row['d_mean']:.2f}  η {row['eta']:.3f} g {row['g']:.4f}  飛ばした {skipped}  ({row['seconds']:.0f}秒)", flush=True)
         if args.save_every and (it + 1) % args.save_every == 0:
             torch.save(model.state_dict(), run / "checkpoints" / f"iter{it + 1}.pt")
     log_f.close()
     return model, dict(skipped_updates=skipped, sec_per_iter=round((time.time() - t0) / max(args.iters, 1), 3))
+
+
+def firing_policy(args):
+    """学習と評価で使う発火のしかた（DESIGN.md 12章）"""
+    kind = args.firing or ("dense" if args.dense else "trigger")
+    pol = {"kind": kind}
+    if kind == "cand3":
+        pol["K"] = args.cand3_cap
+    return pol
+
+
+def evaluate_b(model, policy, wcfg, out_dir, eval_seed, dev):
+    """2b 以降の評価（DESIGN.md 7.5）：育つ時期と大人の時期、それぞれ近所を隠す診断つき。対照との比べは small_check.py"""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    res = {}
+    for period in ("grow", "adult"):
+        res[period] = run_period(model, policy, wcfg, period, eval_seed=eval_seed, device=dev)
+        with hide_neighbors():
+            res[period + "_hide_nbr"] = run_period(model, policy, wcfg, period, eval_seed=eval_seed, device=dev)
+    (out_dir / "summary.json").write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
+    return res
+
+
+def brief_b(res):
+    g, a = res["grow"], res["adult"]
+    return (f"育つ時期：発火 {g['fires']:.1f}/セル、NLL {g['quality']:.3f}（近所を隠すと {res['grow_hide_nbr']['quality']:.3f}）｜"
+            f"大人の時期：発火 {a['fires']:.1f}/セル、学び直しの NLL {a['quality']:.3f}（隠すと {res['adult_hide_nbr']['quality']:.3f}）、"
+            f"落ち着いた発火率 波 {a['steady_fire_rate_wave']:.4f}／ノイズ {a['steady_fire_rate_noise']:.4f}、"
+            f"戻った {a['err_back']:.2f}、あきらめ {a['gaveup']:.2f}")
 
 
 def save_pictures(pics, rows, out_dir, title):
@@ -256,7 +294,11 @@ def main():
     ap.add_argument("--rollout-max", type=int, default=160)
     ap.add_argument("--fresh-per-batch", type=int, default=1, help="毎回、初めから学ぶサンプルの数")
     ap.add_argument("--change-per-batch", type=int, default=2, help="毎回、途中で周期を変えるサンプルの数")
-    ap.add_argument("--dense", type=int, default=1, help="1 なら 2a（全員が毎ステップ書き換える）")
+    ap.add_argument("--dense", type=int, default=1, help="1 なら 2a（全員が毎ステップ書き換える）。--firing があればそちらが優先")
+    ap.add_argument("--firing", choices=["dense", "trigger", "cand3", "alarm"], default=None,
+                    help="発火のしかた（DESIGN.md 12章）。alarm は目覚まし（候補A、引き金に STE）")
+    ap.add_argument("--lam", type=float, default=0.0, help="発火のコストの重み λ（全セル×ステップで割った発火に掛ける）")
+    ap.add_argument("--cand3-cap", type=int, default=20, help="候補3 の1回の窓の発火の上限")
     ap.add_argument("--noise", type=float, default=W.WorldConfig().noise)
     ap.add_argument("--checkpoint", type=int, default=1)
     ap.add_argument("--save-every", type=int, default=250)
@@ -273,13 +315,18 @@ def main():
         run = Path(args.eval_only)
         cfg = json.loads((run / "config.json").read_text(encoding="utf-8"))
         wcfg = W.WorldConfig(**cfg["world"])
-        model = AttentionCell(dna=True).to(dev)
+        model = AttentionCell(dna=True, alarm=cfg.get("firing") == "alarm").to(dev)
         model.load_state_dict(torch.load(run / "model.pt", map_location=dev))
+        for k in ("firing", "lam", "cand3_cap"):
+            if k in cfg:
+                setattr(args, k, cfg[k])
+        args.dense = cfg.get("dense", 1)
     else:
         run = HERE / "runs" / (args.name or f"2a_seed{args.seed}")
         run.mkdir(parents=True, exist_ok=True)
         wcfg = W.WorldConfig(noise=args.noise)
-        cfg = dict(vars(args), stage="2a" if args.dense else "2b", physio=Physio2.to_dict(), world=wcfg.to_dict(),
+        args.firing = args.firing or ("dense" if args.dense else "trigger")
+        cfg = dict(vars(args), stage="2a" if args.firing == "dense" else "2b", physio=Physio2.to_dict(), world=wcfg.to_dict(),
                    git=git_commit(), torch=torch.__version__,
                    device=torch.cuda.get_device_name(0) if dev == "cuda" else "cpu", status="training")
         cfg.pop("eval_only")
@@ -297,6 +344,12 @@ def main():
               f"更新を飛ばした回数 {info['skipped_updates']}", flush=True)
 
     model.eval()
+    policy = firing_policy(args)
+    if policy["kind"] != "dense":
+        res = evaluate_b(model, policy, wcfg, run / "eval_b", args.eval_seed, dev)
+        print(f"{policy['kind']}：", brief_b(res), flush=True)
+        print("出力:", run)
+        return
     res = evaluate(model, wcfg, run / "eval", f"2a seed{cfg['seed']} DNA あり", args.eval_seed, dev, dense=True)
     print("DNA あり：", brief(res), flush=True)
     ref = AttentionCell(dna=False).to(dev)

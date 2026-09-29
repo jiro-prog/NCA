@@ -42,6 +42,9 @@ class Physio2:
     gamma_R = 0.9           # 痕跡（R・r）の減衰（直近約10ステップ）
     eps = 1e-3              # 最小二乗の正則化
     h_decay = 0.9           # 書き換えるときの隠れの状態の減衰（|h| ≤ 1/(1−0.9) = 10）
+    # 目覚まし（2026-09-29、前提の見直しの候補A。DESIGN 12章）：c ← 0.9c ＋ 0.1z² ＋ d、d = θ·sigmoid(a ＋ d_bias)
+    d_bias = 0.0            # Step 1 のレシピと同じ「ずらしなし」（d は θ/2 から始まる）
+    alarm_beta = 5.0        # 目覚ましのときの STE の鋭さ（Step 1 と同じ。u = (c − θ)/θ）
 
     @classmethod
     def to_dict(cls):
@@ -59,14 +62,16 @@ class State2(NamedTuple):
     h: torch.Tensor      # (B,HIDDEN_CH,H,W) 隠れの状態
     hist: torch.Tensor   # (B,N_HIST,H,W) 最近のセンサーの値 [s(t), s(t−1), s(t−2), s(t−3)]（このステップの後）
     mu: torch.Tensor     # (B,1,H,W) 次のステップの予測
+    d: torch.Tensor      # (B,1,H,W) 目覚まし（目覚ましのときだけ使う。発火したときに DNA が書き、毎ステップ濃度に足される）
+    win: torch.Tensor    # (B,1,H,W) 候補3の窓の中の何回目か（0 は窓が閉じている）
 
 
 def init_state(n, h, w, device="cpu"):
-    """予測器は0、σ は下限、痕跡・濃度・隠れの状態は0、最近の値は0.5（センサーの真ん中）から始める"""
+    """予測器は0、σ は下限、痕跡・濃度・隠れの状態・目覚ましは0、最近の値は0.5（センサーの真ん中）から始める"""
     z = lambda c: torch.zeros(n, c, h, w, device=device)
     v = torch.full((n, 1, h, w), Physio2.sigma_min ** 2, device=device)
     hist = torch.full((n, N_HIST, h, w), 0.5, device=device)
-    return State2(z(3), z(6), z(3), v, z(1), z(1), z(HIDDEN_CH), hist, z(1))
+    return State2(z(3), z(6), z(3), v, z(1), z(1), z(HIDDEN_CH), hist, z(1), z(1), z(1))
 
 
 def _sym(R6):
@@ -89,15 +94,16 @@ def ls_solution(R6, r, eps):
 class AttentionCell(nn.Module):
     N_NBR = 3 + 1 + 1 + HIDDEN_CH + N_HIST     # 近所から読むチャンネル（係数・log σ・濃度・隠れ・最近の値）
     N_IN = N_NBR * 9 + 3                         # 3×3 の生の値 ＋ 自分の w_ls − w
-    N_OUT = 2 + 3 + HIDDEN_CH                    # η、g、Δw、Δh
+    N_OUT = 2 + 3 + HIDDEN_CH                    # η、g、Δw、Δh（目覚ましのときは ＋1：目覚まし a）
 
-    def __init__(self, dna=True):
+    def __init__(self, dna=True, alarm=False):
         super().__init__()
         self.dna = dna
+        self.alarm = alarm                       # 目覚ましの出力を持つか（2a の重みは持たないので、読めるままにする）
         self.rule = nn.Sequential(
             nn.Conv2d(self.N_IN, MLP_HIDDEN, 1),
             nn.ReLU(),
-            nn.Conv2d(MLP_HIDDEN, self.N_OUT, 1),
+            nn.Conv2d(MLP_HIDDEN, self.N_OUT + (1 if alarm else 0), 1),
         )
         nn.init.zeros_(self.rule[-1].weight)     # はじめは入力によらず一定の出力（DNA なしとほぼ同じ書き換え）
         with torch.no_grad():
@@ -123,22 +129,31 @@ class AttentionCell(nn.Module):
         return self.rule(z)
 
     def gates(self, s: State2, diff):
-        """DNA の出力：η（0〜1）、g（0〜1）、Δw（3）、Δh（HIDDEN_CH）"""
+        """DNA の出力：η（0〜1）、g（0〜1）、Δw（3）、Δh（HIDDEN_CH）、目覚まし a（目覚ましを持つときだけ。なければ None）"""
         if not self.dna:
             B, _, H, W = diff.shape
             one = torch.ones(B, 1, H, W, device=diff.device)
-            return one, one, torch.zeros_like(diff), torch.zeros(B, HIDDEN_CH, H, W, device=diff.device)
+            return one, one, torch.zeros_like(diff), torch.zeros(B, HIDDEN_CH, H, W, device=diff.device), None
         z = self.perceive(self.neighbor_channels(s), diff)
         y = checkpoint(self._net, z, use_reentrant=False) if self.use_checkpoint and z.requires_grad else self._net(z)
         eta = torch.sigmoid(y[:, 0:1])
         g = torch.sigmoid(y[:, 1:2])
-        return eta, g, y[:, 2:5], y[:, 5:5 + HIDDEN_CH]
+        a = y[:, 5 + HIDDEN_CH:6 + HIDDEN_CH] if self.alarm else None
+        return eta, g, y[:, 2:5], y[:, 5:5 + HIDDEN_CH], a
 
-    def step(self, s: State2, sense, dense=True):
+    def step(self, s: State2, sense, dense=True, policy=None):
         """1ステップ進める。sense は世界のセンサーの値 (B,1,H,W)。
-        dense=True（2a）：全員が書き換える。False（2b）：引き金を引いたセルだけが書き換える。どちらでも引き金は同じように数える。
-        戻り値：新しい状態、記録（e、σ、z²、引き金、書き換え、η、g）"""
+        発火のしかた policy（dict）。省くと dense=True なら "dense"（2a）、False なら "trigger"（元の設計）：
+          dense  ：全員が毎ステップ書き換える（2a）。引き金は数えるだけ
+          trigger：元の設計。引き金（c > θ、不応期でない）を引いたセルが1回書き換え、濃度を0に戻して1ステップ休む
+          cand3  ：候補3。引き金で窓が開き、濃度がしきい値を下回るまで毎ステップ発火する（上限 K 回）。窓の中では濃度を0に戻さない
+          alarm  ：目覚まし（候補A）。c ← 0.9c ＋ 0.1z² ＋ d。d は発火したときに DNA が書く。**このときだけ引き金に STE**
+          dice   ：各セルが確率 p で書き換える（対照。gen が要る）／clock：t が k の倍数のとき全員が書き換える（対照。t が要る）
+        引き金の数え方（濃度のリセットと不応期）は、候補3 のほかはどれも同じ
+        戻り値：新しい状態、記録（e、σ、z²、引き金、書き換え、発火（学習用、目覚ましは STE つき）、発火（0/1）、η、g）"""
         P = Physio2
+        pol = policy or {"kind": "dense" if dense else "trigger"}
+        kind = pol["kind"]
         f1, f2 = s.hist[:, 0:1], s.hist[:, 1:2]                 # μ(t) を出した特徴 [s(t−1), s(t−2), 1]
         e = sense - s.mu
         e_d = e.detach()
@@ -150,26 +165,68 @@ class AttentionCell(nn.Module):
         R = P.gamma_R * s.R + torch.cat([f1 * f1, f1 * f2, f1 * one, f2 * f2, f2 * one, one], 1)
         r = P.gamma_R * s.r + sense * torch.cat([f1, f2, one], 1)
         c = P.c_decay * s.c + (1 - P.c_decay) * z2
+        if kind == "alarm":
+            c = c + s.d                                           # 目覚まし：DNA が前の発火で書いた「続ける」合図
         a = 1.0 / P.sigma_window
         v = (1 - a) * s.v + a * e_d ** 2
-        trig = (c > P.theta) & (s.ref <= 0)
-        c = torch.where(trig, torch.zeros_like(c), c)
-        ref = torch.where(trig, torch.full_like(s.ref, P.refractory), (s.ref - 1).clamp(min=0))
-        write = torch.ones_like(trig) if dense else trig
+        can = s.ref <= 0
+        win = s.win
+        if kind == "cand3":
+            K = pol.get("K", 20)
+            trig = (win <= 0) & (c > P.theta) & can               # 窓が開く（驚いた）
+            win = torch.where(trig, torch.ones_like(win), torch.where(win > 0, win + 1, win))
+            hard = win > 0                                        # 窓の中は毎ステップ発火（最小二乗を解く＝1回と数える）
+            done = hard & (c < P.theta)                           # 驚きが収まった：この回は書かずに閉じる
+            write = hard & ~done
+            close = hard & (done | (win >= K))
+            c = torch.where(close, torch.zeros_like(c), c)
+            ref = torch.where(close, torch.full_like(s.ref, P.refractory), (s.ref - 1).clamp(min=0))
+            win = torch.where(close, torch.zeros_like(win), win)
+            fire = write.float()
+        else:
+            trig = (c > P.theta) & can
+            if kind == "alarm":                                   # 目覚ましのときだけ STE（Step 1 と同じ形。u は θ で割る）
+                u = (c - P.theta) / P.theta
+                soft = (0.5 + 0.5 * P.alarm_beta * u / (1 + P.alarm_beta * u.abs())) * can.float()
+                fire = trig.float() + soft - soft.detach()
+                hard = trig
+            elif kind == "dense":
+                hard = torch.ones_like(trig)
+                fire = hard.float()
+            elif kind == "trigger":
+                hard = trig
+                fire = hard.float()
+            elif kind == "dice":
+                hard = torch.rand(trig.shape, device=trig.device, generator=pol["gen"]) < pol["p"]
+                fire = hard.float()
+            elif kind == "clock":
+                hard = torch.full_like(trig, pol["t"] % pol["k"] == 0)
+                fire = hard.float()
+            else:
+                raise ValueError(f"発火のしかたが不明：{kind}")
+            write = hard
+            c = torch.where(trig, torch.zeros_like(c), c)
+            ref = torch.where(trig, torch.full_like(s.ref, P.refractory), (s.ref - 1).clamp(min=0))
 
         # ---- 書き換えるセルだけの高い計算（出力は書き換えるセルの分以外すべて捨てる） ----
         hist = torch.cat([sense, s.hist[:, :-1]], 1)             # 最近の値 [s(t), s(t−1), s(t−2), s(t−3)]
         s_mid = s._replace(R=R, r=r, v=v, c=c, hist=hist)       # 近所が見るのは、このステップの安い計算のあとの値
         w_ls = ls_solution(R, r, P.eps).detach()
         diff = w_ls - s.w
-        eta, g, dw, dh = self.gates(s_mid, diff)
-        wf = write.float()
+        eta, g, dw, dh, da = self.gates(s_mid, diff)
+        wf = fire                                                  # 0/1（目覚ましは順方向 0/1、逆伝播は STE）
         w_new = s.w + wf * (g * s.w + torch.tanh(eta * diff + dw) - s.w)
         h_new = s.h + wf * (P.h_decay * s.h + torch.tanh(dh) - s.h)
+        if kind == "alarm":
+            if da is None:
+                raise ValueError("目覚ましには、目覚ましの出力を持つ DNA が要る（AttentionCell(alarm=True)）")
+            d_new = s.d + wf * (P.theta * torch.sigmoid(da + P.d_bias) - s.d)
+        else:
+            d_new = s.d
 
         mu = (w_new[:, 0:1] * sense + w_new[:, 1:2] * s.hist[:, 0:1] + w_new[:, 2:3])
-        new = State2(w_new, R, r, v, c, ref, h_new, hist, mu)
-        rec = dict(e=e, sigma=sigma, z2=z2, trig=trig, write=write, eta=eta, g=g)
+        new = State2(w_new, R, r, v, c, ref, h_new, hist, mu, d_new, win)
+        rec = dict(e=e, sigma=sigma, z2=z2, trig=trig, write=write, fire=fire, hard=hard, eta=eta, g=g)
         return new, rec
 
 
