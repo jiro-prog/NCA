@@ -147,6 +147,126 @@ def visibility(n, smin, P1, P2, seed=0):
     return np.mean((y2 - X2 @ w) ** 2) / sig ** 2
 
 
+def simulate_sigma(P1, P2, sigma, dense=False, n=0.005, smin=0.005, eta=1.0, T=2600, tc=2000, theta=4.0,
+                   gR=0.9, eps=1e-3, noise_zone=False, seed=0, init="zero"):
+    """
+    σ の追いかけ方の2案を比べる模擬（2026-09-29、そうの判断3）。書き換えはどちらも (b)：最小二乗の解へ η で近づける。
+    sigma：("uniform", 窓) なら全員一律の窓。("learn", 遅い窓, 速い窓, 直近) なら (c)「学んでいる間はゆっくり」：
+      この回より前の「直近」ステップ以内に引き金が引かれていたら遅い窓、そうでなければ速い窓で σ を追いかける
+    dense=False：2b のように、引き金（濃度 c > θ かつ不応期でない）が書き換えを決める
+    dense=True ：2a のように、全員が毎ステップ書き換える。引き金は同じように数える（濃度を0に戻し、不応期も同じ）が、書き換えは止めない
+    返すもの：引き金の有無 F、誤差の2乗 E2、σ S、z² Z（どれも (T, セル)）
+    """
+    rng = np.random.default_rng(seed)
+    phi = rng.uniform(0, 2 * np.pi, CELLS)
+    s1 = np.full(CELLS, 0.5)
+    s2 = np.full(CELLS, 0.5)
+    w = np.zeros((CELLS, 3))
+    v = np.full(CELLS, smin ** 2)
+    if init == "trained":   # 診断用：学び終えた状態（正確な係数、σ＝当てられない誤差、最初の2つの値も波）から始める
+        w = np.tile(exact_w(P1), (CELLS, 1))
+        v = np.full(CELLS, max(smin, irreducible(n, P1)) ** 2)
+        s2 = 0.5 + A * np.sin(phi - 4 * np.pi / P1)
+        s1 = 0.5 + A * np.sin(phi - 2 * np.pi / P1)
+    R = np.zeros((CELLS, 3, 3))
+    r = np.zeros((CELLS, 3))
+    c = np.zeros(CELLS)
+    ref = np.zeros(CELLS, bool)
+    since = np.full(CELLS, 10 ** 9)       # 最後に引き金が引かれてから何ステップか（この回の頭で数える）
+    mu = (w * np.stack([s1, s2, np.ones(CELLS)], 1)).sum(1)   # 最初の予測も係数から出す（学び終えた状態から始める診断のため）
+    I3 = np.eye(3)
+    F = np.zeros((T, CELLS), bool)
+    E2 = np.zeros((T, CELLS))
+    S = np.zeros((T, CELLS))
+    Z = np.zeros((T, CELLS))
+    for t in range(T):
+        P = P1 if t < tc else P2
+        if noise_zone:
+            s = rng.uniform(0, 1, CELLS)
+        else:
+            s = 0.5 + A * np.sin(phi) + n * rng.standard_normal(CELLS)
+        phi = phi + 2 * np.pi / P
+        f_prev = np.stack([s1, s2, np.ones(CELLS)], 1)
+        e = s - mu
+        sigma_now = np.maximum(smin, np.sqrt(v))
+        z2 = e ** 2 / sigma_now ** 2
+        R = gR * R + f_prev[:, :, None] * f_prev[:, None, :]
+        r = gR * r + s[:, None] * f_prev
+        c = 0.9 * c + 0.1 * z2
+        if sigma[0] == "uniform":
+            a = np.full(CELLS, 1 / sigma[1])
+        else:
+            _, slow, fast, recent = sigma
+            a = np.where(since <= recent, 1 / slow, 1 / fast)   # この回より前の引き金だけで決める
+        v = (1 - a) * v + a * e ** 2
+        trig = (c > theta) & ~ref
+        write = np.ones(CELLS, bool) if dense else trig
+        if write.any():
+            wls = np.linalg.solve(R[write] + eps * I3, r[write][:, :, None])[:, :, 0]
+            w[write] = w[write] + np.tanh(eta * (wls - w[write]))
+        c[trig] = 0
+        ref = trig
+        since = np.where(trig, 1, since + 1)
+        F[t] = trig
+        E2[t] = e ** 2
+        S[t] = np.maximum(smin, np.sqrt(v))
+        Z[t] = z2
+        s2, s1 = s1, s
+        mu = (w * np.stack([s1, s2, np.ones(CELLS)], 1)).sum(1)
+    return F, E2, S, Z
+
+
+def settle_time(series, ok, end):
+    """series[t]（窓の平均）が ok を満たし、それが end まで続く最初の t。最後まで満たさなければ None"""
+    good = ok(series[:end])
+    if not good[-1]:
+        return None
+    bad = np.nonzero(~good)[0]
+    return 0 if len(bad) == 0 else int(bad[-1] + 1)
+
+
+def windowed(a, k):
+    """(T, セル) を、セルで平均してから k ステップの窓で平均した列（t から t+k−1 まで）"""
+    m = a.mean(1)
+    return np.convolve(m, np.ones(k) / k, mode="valid")
+
+
+def judge_sigma(sigma, dense=False, tc=2000):
+    """σ の案1つについて、事前に決めた指標をすべて出す（EXPERIMENTS.md 2026-09-29「σ の2案の比べ方」）"""
+    out = dict(changes={})
+    base = None
+    for a, b in [(12, 24), (12, 20), (12, 36), (24, 12)]:
+        F, E2, S, Z = simulate_sigma(a, b, sigma, dense=dense, tc=tc)
+        pre = np.sqrt(E2[tc - 400:tc].mean(0))
+        post = np.sqrt(E2[tc + 250:tc + 300].mean(0))
+        out["changes"][f"{a}→{b}"] = dict(
+            react=F[tc:tc + 10].any(0).mean(), back=(post <= 2 * pre).mean(),
+            gaveup=(S[tc + 299] > 2 * S[tc - 1]).mean(), after=F[tc + 200:tc + 300].mean(),
+            relearn=F[tc:tc + 300].sum(0).mean())
+        if base is None:      # 変える前の落ち着いた様子と、落ち着くまでの時間は 12→24 の回で測る（変える前は同じ世界）
+            base = dict(
+                wave_rate=F[tc - 400:tc].mean(), wave_z2=Z[tc - 400:tc].mean(),
+                err_ratio=np.sqrt(E2[tc - 400:tc].mean()) / irreducible(0.005, a),
+                wave_sigma=np.median(S[tc - 1]),
+                early_rate=F[400:800].mean(), early_z2=Z[400:800].mean(),
+                early_err=np.sqrt(E2[600:800].mean()) / irreducible(0.005, a),
+                t_quiet_wave=settle_time(windowed(F, 50), lambda x: x <= 0.01, tc - 50),
+                t_calib_wave=settle_time(windowed(Z, 100), lambda x: (x >= 0.5) & (x <= 1.5), tc - 100),
+                learn_fires=F[:400].sum(0).mean())
+    out.update(base)
+    F, E2, S, Z = simulate_sigma(12, 12, sigma, dense=dense, tc=tc, noise_zone=True)
+    out.update(noise_rate=F[tc - 400:tc].mean(), noise_z2=Z[tc - 400:tc].mean(), noise_sigma=np.median(S[tc - 1]),
+               noise_early_rate=F[400:800].mean(),
+               t_quiet_noise=settle_time(windowed(F, 50), lambda x: x <= 0.01, tc - 50))
+    ch = out["changes"].values()
+    out["works"] = (all(c["react"] >= 0.9 and c["back"] >= 0.95 and c["gaveup"] <= 0.05 and c["after"] <= 0.01 for c in ch)
+                    and out["wave_rate"] <= 0.01 and 0.5 <= out["wave_z2"] <= 1.5
+                    and 0.5 <= out["noise_z2"] <= 1.5 and out["noise_rate"] <= 0.01)
+    ts = [out["t_quiet_noise"], out["t_quiet_wave"], out["t_calib_wave"]]
+    out["settle"] = None if any(x is None for x in ts) else max(ts)
+    return out
+
+
 def row(label, o):
     return (f"| {label} | {o['learn_fires']:.1f} | {o['quiet']:.4f} | {o['z2']:.2f} | {o['err_ratio']:.1f} | "
             f"{o['react']:.2f} | {o['relearn']:.1f} | {o['back']:.2f} | {o['gaveup']:.2f} | {o['after']:.4f} |")
@@ -216,6 +336,103 @@ def main():
     out += ["", "ノイズの区域（一様乱数）：", "", NOISE_HEAD]
     for tu in [1000, 300]:
         out.append(noise_row(f"最小二乗、上がる窓 約{tu}", 0.005, 0.005, 1.0, learner="ls", tau_up=tu, tau_down=100))
+
+    # ---- 2026-09-29（続き）そうの判断のあと：学習に混ぜる変化の境目と、σ の追いかけ方の2案 ----
+    out += ["", "## 表6：変えた直後の z² の平均と |cos ω の差|（ノイズ0.005、学び終えた予測器）", "",
+            "学習に混ぜる周期の変化の境目を決めるため。理屈の近似は 1 ＋ 2·0.4²·(差)² ÷ 当てられない誤差²。", "",
+            "| 変化 | \\|cos ω の差\\| | z² の平均（測った） | 理屈の近似 |", "|---|---:|---:|---:|"]
+    vis_pairs = []
+    for P1 in (12.0, 20.0):
+        for d in (0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.085, 0.10):
+            for sign in (+1, -1):
+                cc = np.cos(2 * np.pi / P1) + sign * d
+                if cc >= 1 or cc <= np.cos(2 * np.pi / 8):
+                    continue
+                vis_pairs.append((P1, 2 * np.pi / np.arccos(cc)))
+    for P1, P2 in vis_pairs:
+        dc = abs(np.cos(2 * np.pi / P2) - np.cos(2 * np.pi / P1))
+        approx = 1 + 2 * A ** 2 * dc ** 2 / irreducible(0.005, P1) ** 2
+        out.append(f"| {P1:.0f}→{P2:.1f} | {dc:.3f} | {visibility(0.005, 0.005, P1, P2):.1f} | {approx:.1f} |")
+
+    arms = [("参照：窓100（今の設計）", ("uniform", 100)),
+            ("(d) 一律 窓150", ("uniform", 150)), ("(d) 一律 窓300", ("uniform", 300)), ("(d) 一律 窓600", ("uniform", 600)),
+            ("(c) 学んでいる間はゆっくり（1000／100、直近10）", ("learn", 1000, 100, 10))]
+    res = {name: judge_sigma(sig) for name, sig in arms}
+    res_dense = {name: judge_sigma(sig, dense=True) for name, sig in arms}
+
+    def fmt_t(x):
+        return "—（届かず）" if x is None else f"{x}"
+
+    out += ["", "## 表7：σ の追いかけ方の2案（2b のように、引き金が書き換えを決める）。周期の変化ごと", "",
+            "書き換えは (b)（最小二乗の解へ η=1 で近づける）、ノイズ0.005、θ=4、予測器0から。0〜2000 で落ち着き、2000 で周期を変える。", "",
+            "| 案 | 変化 | 10歩以内の反応 | 誤差が戻った | あきらめ | 学び直し後の発火率 | 学び直しの発火/セル |",
+            "|---|---|---:|---:|---:|---:|---:|"]
+    for name, o in res.items():
+        for ch, cm in o["changes"].items():
+            out.append(f"| {name} | {ch} | {cm['react']:.2f} | {cm['back']:.2f} | {cm['gaveup']:.2f} | {cm['after']:.4f} | {cm['relearn']:.1f} |")
+
+    def steady_table(rs, title):
+        rows = ["", title, "",
+                "| 案 | 最初の400の発火/セル | 波の発火率 | 波の z² | 誤差÷当てられない誤差 | 波の σ | ノイズの発火率 | ノイズの z² | ノイズの σ | "
+                "400〜800 の波の発火率・z² | 400〜800 のノイズの発火率 | 効く |",
+                "|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|---|"]
+        for name, o in rs.items():
+            rows.append(f"| {name} | {o['learn_fires']:.1f} | {o['wave_rate']:.4f} | {o['wave_z2']:.2f} | {o['err_ratio']:.2f} | {o['wave_sigma']:.4f} | "
+                        f"{o['noise_rate']:.4f} | {o['noise_z2']:.2f} | {o['noise_sigma']:.3f} | "
+                        f"{o['early_rate']:.4f}・{o['early_z2']:.2f} | {o['noise_early_rate']:.4f} | {'○' if o['works'] else '×'} |")
+        return rows
+
+    out += steady_table(res, "## 表8：変える前の落ち着いた様子（1600〜2000）と、もとのプロトコルの目安（400〜800）。2b のように")
+    out += ["", "## 表9：落ち着くまでの時間（0から数えたステップ。2b のように）", "",
+            "| 案 | ノイズの区域が静かになる | 波が静かになる | 波の自信度が合う | 一番長いもの | 効く |", "|---|---:|---:|---:|---:|---|"]
+    for name, o in res.items():
+        out.append(f"| {name} | {fmt_t(o['t_quiet_noise'])} | {fmt_t(o['t_quiet_wave'])} | {fmt_t(o['t_calib_wave'])} | "
+                   f"{fmt_t(o['settle'])} | {'○' if o['works'] else '×'} |")
+    out += steady_table(res_dense, "## 表9b：2a のように（全員が毎ステップ書き換える。引き金は数えるだけ）。確かめとして")
+    out += ["", "| 案（2a のように） | ノイズの区域が静かになる | 波が静かになる | 波の自信度が合う |", "|---|---:|---:|---:|"]
+    for name, o in res_dense.items():
+        out.append(f"| {name} | {fmt_t(o['t_quiet_noise'])} | {fmt_t(o['t_quiet_wave'])} | {fmt_t(o['t_calib_wave'])} |")
+
+    # 事前に決めた決め方（EXPERIMENTS.md）
+    c_name = arms[-1][0]
+    d_names = [nm for nm, sig in arms[1:4]]
+    c_ok = res[c_name]["works"]
+    d_ok = [nm for nm in d_names if res[nm]["works"] and res[nm]["settle"] is not None]
+    if c_ok and d_ok:
+        best_d = min(d_ok, key=lambda nm: res[nm]["settle"])
+        cs = res[c_name]["settle"]
+        if cs is not None and res[best_d]["settle"] <= 2 * cs:
+            verdict = f"両方「効く」、(d) の落ち着くまで {res[best_d]['settle']} ≤ (c) の2倍（{2 * cs}）→ **(d) {best_d}**（単純なほう）"
+        else:
+            verdict = f"両方「効く」が、(d) の落ち着くまで {res[best_d]['settle']} が (c) の2倍（{None if cs is None else 2 * cs}）を超える → **(c)**（数字をそうに見せる）"
+    elif c_ok:
+        verdict = "(c) だけ「効く」 → **(c)**"
+    elif d_ok:
+        verdict = f"(d) だけ「効く」 → **(d) {min(d_ok, key=lambda nm: res[nm]['settle'])}**"
+    else:
+        verdict = "どちらも「効かない」 → **止めて報告する**"
+    out += ["", f"**事前に決めた決め方による判定**：{verdict}"]
+
+    # 2a のように動かしたときの、周期の変化ごとの数字（確かめ）
+    out += ["", "## 表9c：2a のように動かしたときの、周期の変化ごとの数字（引き金は数えるだけ。確かめ）", "",
+            "| 案 | 変化 | 10歩以内の引き金 | 誤差が戻った | あきらめ | 学び直し後の引き金の率 |", "|---|---|---:|---:|---:|---:|"]
+    for name, o in res_dense.items():
+        for ch, cm in o["changes"].items():
+            out.append(f"| {name} | {ch} | {cm['react']:.2f} | {cm['back']:.2f} | {cm['gaveup']:.2f} | {cm['after']:.4f} |")
+
+    # 診断（判定には使わない）：学び終えた状態から始めたら、学び直しはどうか。「効かない」の原因が最初の学びだけかを切り分ける
+    out += ["", "## 表10（診断。判定には使わない）：学び終えた状態から始める（2b のように、400 で周期を変える）", "",
+            "予測器0から始める最初の学び（表8で誤差が3.8〜12倍のまま）を外して、驚きでの学び直しだけを見る。", "",
+            "| 案 | 変化 | 変える前の発火率 | 変える前の z² | 10歩以内の反応 | 誤差が戻った | あきらめ | 学び直し後の発火率 | 学び直しの発火/セル |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---:|"]
+    for name, sig in arms:
+        for a, b in [(12, 24), (12, 20), (12, 36), (24, 12)]:
+            F, E2, S, Z = simulate_sigma(a, b, sig, T=1000, tc=400, init="trained")
+            pre = np.sqrt(E2[200:400].mean(0))
+            post = np.sqrt(E2[650:700].mean(0))
+            out.append(f"| {name} | {a}→{b} | {F[200:400].mean():.4f} | {Z[200:400].mean():.2f} | {F[400:410].any(0).mean():.2f} | "
+                       f"{(post <= 2 * pre).mean():.2f} | {(S[699] > 2 * S[399]).mean():.2f} | {F[600:700].mean():.4f} | "
+                       f"{F[400:700].sum(0).mean():.1f} |")
 
     out += ["", f"（計算 {time.time() - t0:.0f} 秒）", ""]
     (HERE / "results.md").write_text("\n".join(out), encoding="utf-8")
