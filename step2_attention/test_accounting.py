@@ -45,7 +45,7 @@ def test_non_writing_cells_keep_their_coefficients():
     m = busy_dna()
     st = init_state(1, H, Wd)
     st = st._replace(w=torch.randn(1, 3, H, Wd), h=torch.randn(1, HIDDEN_CH, H, Wd),
-                     v=torch.full((1, 1, H, Wd), 1.0))                       # σ が大きいので z² は小さく、引き金は引かれない
+                     v=torch.full((1, 1, H, Wd), 1.0), vk=torch.full((1, 1, H, Wd), 1.0))   # σ・σ_k が大きいので驚きは小さく、引き金は引かれない
     with torch.no_grad():
         new, rec = m.step(st, torch.rand(1, 1, H, Wd), dense=False)
     quiet = ~rec["write"]
@@ -59,7 +59,7 @@ def test_only_triggered_cells_write_in_2b():
     st = init_state(1, H, Wd)
     c = torch.zeros(1, 1, H, Wd)
     c[0, 0, 3, 3] = 10.0                                               # このセルだけ濃度がしきい値を超えている
-    st = st._replace(c=c, v=torch.full((1, 1, H, Wd), 1.0), w=torch.randn(1, 3, H, Wd))
+    st = st._replace(c=c, v=torch.full((1, 1, H, Wd), 1.0), vk=torch.full((1, 1, H, Wd), 1.0), w=torch.randn(1, 3, H, Wd))
     with torch.no_grad():
         new, rec = m.step(st, torch.full((1, 1, H, Wd), 0.5), dense=False)
     assert int(rec["write"].sum()) == 1 and bool(rec["write"][0, 0, 3, 3])
@@ -296,9 +296,24 @@ def test_2a_weights_still_load():
     assert m.rule[-1].weight.shape[0] == AttentionCell.N_OUT
 
 
+def with_ahead(k):
+    """驚きの信号の先を k にして回し、終わったら元に戻す（2026-09-30 から標準は4）"""
+    def deco(fn):
+        def wrapped():
+            old = Physio2.surprise_ahead
+            Physio2.surprise_ahead = k
+            try:
+                fn()
+            finally:
+                Physio2.surprise_ahead = old
+        wrapped.__name__ = fn.__name__
+        return wrapped
+    return deco
+
+
+@with_ahead(1)
 def test_one_step_surprise_is_unchanged():
-    """驚きの信号が1歩先（k=1、これまでどおり）なら、覚えている予測と σ_k は1歩先の予測と σ にぴったり重なり、濃度に溜めるのも z²"""
-    assert Physio2.surprise_ahead == 1
+    """驚きの信号が1歩先（k=1、2026-09-29 までの標準）なら、覚えている予測と σ_k は1歩先の予測と σ にぴったり重なり、濃度に溜めるのも z²"""
     cfg = W.WorldConfig(size=H, zone=H, noise=0.01)
     g = torch.Generator().manual_seed(3)
     ws = W.reset(cfg, 12.0, n=2, generator=g)

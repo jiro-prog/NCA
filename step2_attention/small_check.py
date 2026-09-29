@@ -25,8 +25,8 @@ import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
 import world as W  # noqa: E402
-from model import AttentionCell, init_state, irreducible  # noqa: E402
-from protocol import compare, envelope, hide_neighbors, run_period  # noqa: E402
+from model import AttentionCell, Physio2, init_state, irreducible  # noqa: E402
+from protocol import PAIRS, compare, envelope, hide_neighbors, run_period  # noqa: E402
 
 FAMILIES = {
     "候補3": [{"kind": "cand3", "K": k} for k in (1, 2, 5, 10, 20, 40)],
@@ -42,7 +42,7 @@ def label(pol):
 
 @torch.no_grad()
 def consistency(dev):
-    wcfg = W.WorldConfig()
+    wcfg = W.WorldConfig(noise=0.005)                     # 世界（2026-09-30 の既定の切り替えのあとも、回したときと同じ値に固定。台帳 S2-39）
     g = torch.Generator(device=dev).manual_seed(1000)
     ws = W.reset(wcfg, 12.0, n=4, generator=g, device=dev)
     st = init_state(4, wcfg.size, wcfg.size, dev)
@@ -93,10 +93,11 @@ def main():
     ap.add_argument("--quick", type=int, default=0, help="1 なら試運転（対照を各2点、書き換え方は DNA なしだけ）。判定には使わない")
     args = ap.parse_args()
     dev = "cuda" if torch.cuda.is_available() else "cpu"
+    Physio2.sigma_min, Physio2.surprise_ahead = 0.005, 1          # セルの数字（2026-09-30 の既定の切り替えのあとも、回したときと同じ値に固定。台帳 S2-39）
     alarm_run, cand3_run = Path(args.alarm_run), Path(args.cand3_run)
     out = HERE / "runs" / f"small_check_{alarm_run.name}"
     out.mkdir(parents=True, exist_ok=True)
-    wcfg = W.WorldConfig()
+    wcfg = W.WorldConfig(noise=0.005)                     # 世界（2026-09-30 の既定の切り替えのあとも、回したときと同じ値に固定。台帳 S2-39）
 
     alarm = AttentionCell(dna=True, alarm=True).to(dev)
     alarm.load_state_dict(torch.load(alarm_run / "model.pt", map_location=dev))
@@ -118,9 +119,9 @@ def main():
     # 目覚ましの点と、候補3（学んだ DNA、K=20）の点、近所を隠す診断
     for name, model, pol in (("alarm", alarm, {"kind": "alarm"}), ("cand3", c3dna, {"kind": "cand3", "K": 20})):
         for period in ("grow", "adult"):
-            res[f"{name}_{period}"] = run_period(model, pol, wcfg, period, eval_seed=args.eval_seed, device=dev)
+            res[f"{name}_{period}"] = run_period(model, pol, wcfg, period, eval_seed=args.eval_seed, device=dev, pairs=PAIRS)
             with hide_neighbors():
-                res[f"{name}_{period}_hide_nbr"] = run_period(model, pol, wcfg, period, eval_seed=args.eval_seed, device=dev)
+                res[f"{name}_{period}_hide_nbr"] = run_period(model, pol, wcfg, period, eval_seed=args.eval_seed, device=dev, pairs=PAIRS)
         print(f"{name}：育つ時期 発火 {res[name + '_grow']['fires']:.1f}・NLL {res[name + '_grow']['quality']:.3f}｜"
               f"大人の時期 発火 {res[name + '_adult']['fires']:.1f}・NLL {res[name + '_adult']['quality']:.3f}", flush=True)
 
@@ -133,7 +134,7 @@ def main():
         for pol in pols:
             for wname, model in writers.items():
                 for period in ("grow", "adult"):
-                    r = run_period(model, pol, wcfg, period, eval_seed=args.eval_seed, device=dev)
+                    r = run_period(model, pol, wcfg, period, eval_seed=args.eval_seed, device=dev, pairs=PAIRS)
                     curves[period][fam].append((r["fires"], r["quality"]))
                     points.append(dict(family=fam, policy=label(pol), writer=wname, period=period, fires=r["fires"],
                                        quality=r["quality"], noise_fire_rate=r["noise_fire_rate"]))

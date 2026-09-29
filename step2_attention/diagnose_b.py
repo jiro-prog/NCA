@@ -41,6 +41,7 @@ POLICIES = {                                     # 名前：（驚きの先、�
 @torch.no_grad()
 def run_adult_diag(cell, pol, wcfg, k, dev, pairs=PAIRS_ORIGINAL, n_per=4, T=1000, change_at=400, relearn=300, eval_seed=1000):
     """run_period の大人の時期と同じ始め方・同じ乱数の並びで回し、学び残しの材料を毎ステップ記録する"""
+    k_before = Physio2.surprise_ahead
     Physio2.surprise_ahead = k
     B = n_per * len(pairs)
     P1 = torch.tensor([a for a, b in pairs for _ in range(n_per)], dtype=torch.float64)
@@ -94,7 +95,7 @@ def run_adult_diag(cell, pol, wcfg, k, dev, pairs=PAIRS_ORIGINAL, n_per=4, T=100
         ZK[t] = rec["zk2"][:, 0]
         NL[t] = nll(rec["e"], rec["sigma"], detach_sigma=False)[:, 0]
         ws = W.advance(ws)
-    Physio2.surprise_ahead = 1
+    Physio2.surprise_ahead = k_before
 
     names = [f"{a:g}→{b:g}" for a, b in pairs]
     per = {n: dict(stop=[], end=[], react=[]) for n in names}
@@ -157,6 +158,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     res = dict(pairs=[list(p) for p in PAIRS_ORIGINAL], noises={})
     dnaless = AttentionCell(dna=False).to(dev).eval()
+    sigma_before = Physio2.sigma_min
     for noise in (0.02, 0.005):
         Physio2.sigma_min = noise
         wcfg = W.WorldConfig(noise=noise)
@@ -165,15 +167,16 @@ def main():
             r[name] = run_adult_diag(dnaless, pol, wcfg, k, dev)
             print(f"ノイズ{noise}・{name}：済み", flush=True)
         # 一致の確かめ：B の発火数と NLL が run_period と同じ
-        Physio2.surprise_ahead = 4
-        rp_b = run_period(dnaless, {"kind": "trigger"}, wcfg, "adult", eval_seed=1000, device=dev, pairs=PAIRS_ORIGINAL)
-        Physio2.surprise_ahead = 1
+        k_before = Physio2.surprise_ahead
+        Physio2.surprise_ahead = 4                          # 4つの組の平均で比べる（quiet の組を分けない）（2026-09-30 の既定の切り替えのあとも、回したときと同じ値に固定。台帳 S2-39）
+        rp_b = run_period(dnaless, {"kind": "trigger"}, wcfg, "adult", eval_seed=1000, device=dev, pairs=PAIRS_ORIGINAL, quiet=())
+        Physio2.surprise_ahead = k_before
         r["_consistency_B"] = dict(diag=(r["B（4歩先、DNA なし）"]["fires"], r["B（4歩先、DNA なし）"]["quality"]),
                                    run_period=(rp_b["fires"], rp_b["quality"]),
                                    same=abs(rp_b["fires"] - r["B（4歩先、DNA なし）"]["fires"]) < 1e-6
                                    and abs(rp_b["quality"] - r["B（4歩先、DNA なし）"]["quality"]) < 1e-5)
         # 物差しの空の確かめ
-        none = run_period(dnaless, {"kind": "dice", "p": 0.0}, wcfg, "adult", eval_seed=1000, device=dev, pairs=PAIRS_ORIGINAL)
+        none = run_period(dnaless, {"kind": "dice", "p": 0.0}, wcfg, "adult", eval_seed=1000, device=dev, pairs=PAIRS_ORIGINAL, quiet=())
         r["_null"] = dict(gaveup=none["gaveup"], err_back=none["err_back"], quality=none["quality"], per_pair=none["per_pair"])
         if noise == 0.02:
             for run in map(Path, args.runs):
@@ -185,7 +188,7 @@ def main():
                 r[f"B（学んだ DNA、シード{cfg['seed']}）"] = run_adult_diag(m, {"kind": "trigger"}, wcfg, 4, dev)
                 print(f"ノイズ{noise}・学んだ DNA シード{cfg['seed']}：済み", flush=True)
         res["noises"][str(noise)] = r
-    Physio2.sigma_min = 0.005
+    Physio2.sigma_min = sigma_before
 
     # 判定（15章）
     def floor(r, n):

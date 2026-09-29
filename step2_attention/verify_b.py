@@ -37,11 +37,12 @@ PJ = {"grow": "育つ時期", "adult": "大人の時期"}
 
 def rp(cell, pol, wcfg, period, dev, ahead=4, theta=4.0):
     """驚きの信号の先としきい値を決めて run_period（元の組、評価の乱数1000）"""
+    old = (Physio2.surprise_ahead, Physio2.theta)
     Physio2.surprise_ahead, Physio2.theta = ahead, theta
-    try:
-        return run_period(cell, pol, wcfg, period, eval_seed=1000, device=dev, pairs=PAIRS_ORIGINAL)
+    try:                                                    # 14章の合否は4つの組の平均で決めた（quiet の組を分けない）（2026-09-30 の既定の切り替えのあとも、回したときと同じ値に固定。台帳 S2-39）
+        return run_period(cell, pol, wcfg, period, eval_seed=1000, device=dev, pairs=PAIRS_ORIGINAL, quiet=())
     finally:
-        Physio2.surprise_ahead, Physio2.theta = 1, 4.0
+        Physio2.surprise_ahead, Physio2.theta = old
 
 
 def check_s2_10(dev):

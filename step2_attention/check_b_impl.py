@@ -20,7 +20,7 @@ import torch  # noqa: E402
 import world as W  # noqa: E402
 from dnaless_curves import FAMILIES, curves  # noqa: E402
 from model import AttentionCell, Physio2  # noqa: E402
-from protocol import run_period  # noqa: E402
+from protocol import PAIRS, run_period  # noqa: E402
 
 
 def main():
@@ -30,9 +30,9 @@ def main():
     res = {}
 
     # (a) 1歩先はこれまでと同じ
-    assert Physio2.surprise_ahead == 1 and Physio2.sigma_min == 0.005
+    Physio2.surprise_ahead, Physio2.sigma_min = 1, 0.005                 # (a) は1歩先・ノイズ0.005 の世界（2026-09-30 の既定の切り替えのあとも、回したときと同じ値に固定。台帳 S2-39）
     ref = json.loads((HERE / "runs" / "dnaless_curves_now" / "summary.json").read_text(encoding="utf-8"))["seeds"]["1000"]["points"]
-    new = curves(W.WorldConfig(), 1000, dev, FAMILIES)
+    new = curves(W.WorldConfig(noise=0.005), 1000, dev, FAMILIES, pairs=PAIRS)
     key = lambda p: (p["family"], p["policy"], p["period"])
     ref_d = {key(p): p for p in ref}
     diffs = []
@@ -51,7 +51,7 @@ def main():
     for period in ("grow", "adult"):
         Physio2.surprise_ahead = 4
         cell = AttentionCell(dna=False).to(dev).eval()
-        a = run_period(cell, {"kind": "trigger"}, wcfg, period, eval_seed=1000, device=dev)
+        a = run_period(cell, {"kind": "trigger"}, wcfg, period, eval_seed=1000, device=dev, pairs=PAIRS)
         b = precheck_b.run_period_b("z4", wcfg, period, 1000, dev)
         Physio2.surprise_ahead = 1
         same = a["fires"] == b["fires"] and a["quality"] == b["quality"]

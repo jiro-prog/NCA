@@ -33,7 +33,7 @@ class WorldConfig:
     v: float = 0.25         # 波の速さ（列/ステップ）。1/v は整数
     amp: float = 0.4        # 波の振幅
     mean: float = 0.5       # 波の平均
-    noise: float = 0.005    # センサーのノイズ（標準偏差）。2026-09-29 に0.02から変更（DESIGN.md 2.5、そうの判断）
+    noise: float = 0.02     # センサーのノイズ（標準偏差）。2026-09-29 に0.005（パッチ S2-7）、2026-09-30 に0.02 に戻した（標準の世界の切り替え、台帳 S2-39）
     zone: int = 24          # ノイズの区域は x ≥ zone かつ y ≥ zone。size 以上なら区域なし
 
     def __post_init__(self):

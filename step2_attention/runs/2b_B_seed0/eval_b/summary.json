@@ -56,7 +56,7 @@
   "adult": {
     "period": "adult",
     "policy": "trigger",
-    "fires": 3.0203857421875,
+    "fires": 3.9589029947916665,
     "noise_fire_rate": 0.00313183618709445,
     "per_pair": {
       "12→24": {
@@ -88,19 +88,37 @@
         "gaveup": 0.00227864584303461
       }
     },
-    "quality": -2.3796839490532875,
+    "quality": -2.336212143301964,
     "steady_fire_rate_wave": 4.882812572759576e-05,
     "steady_fire_rate_noise": 0.0,
     "steady_nll_wave": -2.5720837116241455,
-    "react_cols": 0.751953125,
-    "err_back": 0.9970703143626451,
-    "gaveup": 0.0009765625072759576,
-    "d_mean_end": 0.0
+    "react_cols": 1.0,
+    "err_back": 0.9965549204498529,
+    "gaveup": 0.0009494357800576836,
+    "d_mean_end": 0.0,
+    "fires_all": 3.0203857421875,
+    "quality_all": -2.3796839490532875,
+    "react_cols_all": 0.751953125,
+    "err_back_all": 0.9970703143626451,
+    "gaveup_all": 0.0009765625072759576,
+    "relearn_pairs": [
+      "12→24",
+      "12→20",
+      "24→12"
+    ],
+    "quiet_check": {
+      "24→36": {
+        "cells_fired_frac": 0.0021158854360692203,
+        "fires_per_cell_window": 0.015706380363553762,
+        "quality": -2.5100991800427437,
+        "quiet": true
+      }
+    }
   },
   "adult_hide_nbr": {
     "period": "adult",
     "policy": "trigger",
-    "fires": 2.81201171875,
+    "fires": 3.679443359375,
     "noise_fire_rate": 0.0031289064791053534,
     "per_pair": {
       "12→24": {
@@ -132,13 +150,31 @@
         "gaveup": 0.00455729168606922
       }
     },
-    "quality": -2.386583559215069,
+    "quality": -2.3459081649780273,
     "steady_fire_rate_wave": 5.794270691694692e-05,
     "steady_fire_rate_noise": 0.0,
     "steady_nll_wave": -2.571755886077881,
-    "react_cols": 0.751953125,
-    "err_back": 0.9963175505399704,
-    "gaveup": 0.00203450521803461,
-    "d_mean_end": 0.0
+    "react_cols": 1.0,
+    "err_back": 0.9960937667638063,
+    "gaveup": 0.0017089844186557457,
+    "d_mean_end": 0.0,
+    "fires_all": 2.81201171875,
+    "quality_all": -2.386583559215069,
+    "react_cols_all": 0.751953125,
+    "err_back_all": 0.9963175505399704,
+    "gaveup_all": 0.00203450521803461,
+    "relearn_pairs": [
+      "12→24",
+      "12→20",
+      "24→12"
+    ],
+    "quiet_check": {
+      "24→36": {
+        "cells_fired_frac": 0.0021158854360692203,
+        "fires_per_cell_window": 0.01774088549427688,
+        "quality": -2.5086096823215485,
+        "quiet": true
+      }
+    }
   }
 }

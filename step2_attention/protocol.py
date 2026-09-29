@@ -82,6 +82,7 @@ def summarize2(E2, NL, Z2, TR, WR, SG, arrival, wave, zone, proto, wcfg):
     out = dict(P1=proto.P1, P2=proto.P2)
     irr = irreducible(wcfg.noise, proto.P1)
     out["irreducible"] = irr
+    out["noise"] = wcfg.noise                                  # 2a の判定の数字は世界のノイズで決まる（judge_2a）
     out["nll_irreducible"] = 0.5 + float(np.log(irr))       # 当てられない誤差の正規分布の NLL（σ が合っているとき）
     for name, m in (("wave", wave), ("noise", zone)):
         out[f"settle_nll_{name}"] = float(NL[a:b][:, :, m].mean())
@@ -133,10 +134,14 @@ def summarize2(E2, NL, Z2, TR, WR, SG, arrival, wave, zone, proto, wcfg):
     return out
 
 
+SIGMA_WAVE_MAX = {0.005: 0.015, 0.02: 0.06}   # 波の σ の中央値の上限。ノイズ0.005 は S2-10 の数字、ノイズ0.02 は元の数字（2026-09-30、S2-39・S2-43）
+
+
 def judge_2a(s):
-    """2a の合格（DESIGN.md 7.1。数字は 2026-09-29 に走らせる前に決めた）：落ち着いた時期（400〜800）だけで判定する"""
+    """2a の合格（DESIGN.md 7.1。数字は 2026-09-29 に走らせる前に決めた）：落ち着いた時期（400〜800）だけで判定する。
+    波の σ の上限は世界のノイズで決まる（ノイズを記録していない古いまとめは0.005 の世界）"""
     checks = dict(
-        sigma_wave=s["sigma_median_wave"] <= 0.015,
+        sigma_wave=s["sigma_median_wave"] <= SIGMA_WAVE_MAX[s.get("noise", 0.005)],
         sigma_noise=0.25 <= s["sigma_median_noise"] <= 0.33,
         sigma_ratio=s["sigma_ratio"] >= 5,
         calib_wave=0.5 <= s["settle_z2_wave"] <= 1.5,
@@ -157,7 +162,8 @@ import torch.nn.functional as F  # noqa: E402
 from model import N_HIST, AttentionCell, Physio2, ahead  # noqa: E402
 
 PAIRS = ((12.0, 24.0), (12.0, 20.0), (12.0, 36.0), (24.0, 12.0))   # 周期の変化4つ（大人の時期）。12→36 はパッチ S2-8 のあと
-PAIRS_ORIGINAL = ((12.0, 24.0), (12.0, 20.0), (24.0, 36.0), (24.0, 12.0))   # パッチを外した元の組（外側のテストは 24→36。DESIGN.md 14章）
+PAIRS_ORIGINAL = ((12.0, 24.0), (12.0, 20.0), (24.0, 36.0), (24.0, 12.0))   # パッチを外した元の組（外側のテストは 24→36。DESIGN.md 14章）。2026-09-30 から標準
+QUIET_PAIRS = ((24.0, 36.0),)   # 予測にほとんど影響しない変化。学び直しの成績から分け、「発火しない」の確かめとして別に報告する（DESIGN.md 7.5 の追記、台帳 S2-40）
 CH_HIST0 = 3 + 1 + 1 + 4                                             # 近所のチャンネルのうち、最近の値が始まる番号
 
 
@@ -196,11 +202,14 @@ def hide_neighbors():
 
 
 @torch.no_grad()
-def run_period(cell, policy, wcfg, period, eval_seed=1000, device="cpu", pairs=PAIRS, n_per=4,
-               T_grow=400, T_adult=1000, change_at=400, relearn=300):
+def run_period(cell, policy, wcfg, period, eval_seed=1000, device="cpu", pairs=PAIRS_ORIGINAL, n_per=4,
+               T_grow=400, T_adult=1000, change_at=400, relearn=300, quiet=QUIET_PAIRS):
     """育つ時期（period="grow"：予測器0・σ は下限から、T_grow ステップ。周期は pairs の P1 のまま）か、
     大人の時期（"adult"：学び終えた状態から、change_at で P2 に変えて T_adult まで）を回して、7.5 の指標を返す。
-    発火は全セル（ノイズの区域を含む）で数え、質は波の区域の NLL（大人の時期は、新しい波がその列に届いてから relearn ステップの窓）"""
+    発火は全セル（ノイズの区域を含む）で数え、質は波の区域の NLL（大人の時期は、新しい波がその列に届いてから relearn ステップの窓）。
+    2026-09-30（DESIGN.md 7.5 の追記）：pairs に quiet の組があれば、大人の時期の学び直しの成績（発火数・質・反応・戻り・あきらめ）はそれ以外の組の世界だけで数え、
+    quiet の組は「発火しない」の確かめ（窓の中で1回でも発火した波の区域のセルの割合など）として別に返す。4つの組すべての値も fires_all・quality_all で返す。
+    quiet の組がなければ、これまでどおり全部の組で数える"""
     B = n_per * len(pairs)
     P1 = torch.tensor([a for a, b in pairs for _ in range(n_per)], dtype=torch.float64)
     P2 = torch.tensor([b for a, b in pairs for _ in range(n_per)], dtype=torch.float64)
@@ -271,6 +280,12 @@ def run_period(cell, policy, wcfg, period, eval_seed=1000, device="cpu", pairs=P
     lag = wcfg.lag
     q, react, back, gave = [], [], [], []
     pp = {n: dict(q=[], react=[], back=[], gave=[]) for n in pair_name}
+    quiet_i = [i for i, pr in enumerate(pairs) if tuple(pr) in {tuple(qp) for qp in quiet}]      # 「発火しない」の確かめの組
+    rel = torch.ones(B, dtype=torch.bool, device=FI.device)                                    # 学び直しの成績を数える世界
+    for i in quiet_i:
+        rel[pair_sl[i]] = False
+    rq, rreact, rback, rgave = [], [], [], []
+    qc = {pair_name[i]: dict(fired=[], fires=[], q=[]) for i in quiet_i}
     for x in range(Wd):
         rows = wave[:, x]
         if not bool(rows.any()):
@@ -291,6 +306,16 @@ def run_period(cell, policy, wcfg, period, eval_seed=1000, device="cpu", pairs=P
             d["react"].append(float(col(FI[a0:a0 + 10])[:, sl].any(0).any(-1).float().mean()))
             d["back"].append(float((post[sl] <= 2 * pre[sl]).float().mean()))
             d["gave"].append(float((col(SG[a0 + relearn - 1])[sl] > 2 * col(SG[change_at - 1])[sl]).float().mean()))
+        if quiet_i:                                         # 学び直しの成績（quiet の組を除く）と、「発火しない」の確かめ
+            rq.append(float(col(NL[a0:a0 + relearn])[:, rel].mean()))
+            rreact.append(float(col(FI[a0:a0 + 10])[:, rel].any(0).any(-1).float().mean()))
+            rback.append(float((post[rel] <= 2 * pre[rel]).float().mean()))
+            rgave.append(float((col(SG[a0 + relearn - 1])[rel] > 2 * col(SG[change_at - 1])[rel]).float().mean()))
+            for i in quiet_i:
+                w_ = col(FI[a0:a0 + relearn])[:, pair_sl[i]]                                   # (窓, 世界, 行)
+                qc[pair_name[i]]["fired"].append(float(w_.any(0).float().mean()))             # 窓の中で1回でも発火したセルの割合
+                qc[pair_name[i]]["fires"].append(float(w_.float().sum(0).mean()))              # 窓の中の1セルあたりの発火数
+                qc[pair_name[i]]["q"].append(float(col(NL[a0:a0 + relearn])[:, pair_sl[i]].mean()))
     out["per_pair"] = {n: dict(fires=float(FI[:, pair_sl[i]].sum()) / (n_per * H * Wd), quality=float(np.mean(d["q"])),
                                react_cols=float(np.mean(d["react"])), err_back=float(np.mean(d["back"])), gaveup=float(np.mean(d["gave"])))
                        for i, (n, d) in enumerate(pp.items())}
@@ -302,6 +327,16 @@ def run_period(cell, policy, wcfg, period, eval_seed=1000, device="cpu", pairs=P
     out["err_back"] = float(np.mean(back))
     out["gaveup"] = float(np.mean(gave))
     out["d_mean_end"] = float(st.d.mean())
+    if quiet_i:                                             # 学び直しの成績は quiet の組を除いた世界で（4つの組すべては *_all に残す）
+        out["fires_all"], out["quality_all"] = out["fires"], out["quality"]
+        out["react_cols_all"], out["err_back_all"], out["gaveup_all"] = out["react_cols"], out["err_back"], out["gaveup"]
+        out["fires"] = float(FI[:, rel].sum()) / (int(rel.sum()) * H * Wd)
+        out["quality"] = float(np.mean(rq))
+        out["react_cols"], out["err_back"], out["gaveup"] = float(np.mean(rreact)), float(np.mean(rback)), float(np.mean(rgave))
+        out["relearn_pairs"] = [pair_name[i] for i in range(len(pairs)) if i not in quiet_i]
+        out["quiet_check"] = {n: dict(cells_fired_frac=float(np.mean(d["fired"])), fires_per_cell_window=float(np.mean(d["fires"])),
+                                      quality=float(np.mean(d["q"])), quiet=float(np.mean(d["fired"])) <= 0.05)
+                              for n, d in qc.items()}
     return out
 
 

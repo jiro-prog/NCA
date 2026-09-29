@@ -247,6 +247,7 @@ def plot(period, seed, ctrl_pts, b_pt, ref_pt, path):
 
 def main():
     Physio2.sigma_min = SIGMA_MIN                            # S2-7 を丸ごと戻す（ノイズと σ の下限）
+    Physio2.surprise_ahead = 1                               # 本物のセルとの一致の確かめは1歩先の引き金（2026-09-30 の既定の切り替えのあとも、回したときと同じ値に固定。台帳 S2-39）
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     wcfg = W.WorldConfig(noise=NOISE)
     out = S2 / "runs" / "precheck_b"
@@ -257,7 +258,7 @@ def main():
     cell = AttentionCell(dna=False).to(dev).eval()
     cons = {}
     for period in ("grow", "adult"):
-        a = run_period(cell, {"kind": "trigger"}, wcfg, period, eval_seed=EVAL_SEEDS[0], device=dev)
+        a = run_period(cell, {"kind": "trigger"}, wcfg, period, eval_seed=EVAL_SEEDS[0], device=dev, pairs=PAIRS)   # 組（2026-09-30 の既定の切り替えのあとも、回したときと同じ値に固定。台帳 S2-39）
         b = run_period_b("z1", wcfg, period, EVAL_SEEDS[0], dev)
         cons[period] = dict(run_period=(a["fires"], a["quality"]), precheck=(b["fires"], b["quality"]),
                             same=abs(a["fires"] - b["fires"]) < 1e-6 and abs(a["quality"] - b["quality"]) < 1e-5)

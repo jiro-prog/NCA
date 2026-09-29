@@ -12,6 +12,8 @@ Step 2 の学習と評価（DESIGN.md 5章・6章）。いまは 2a（全員が�
 - 封印テストのシード（9000以上）は拒む（sealed.py）
 - 2026-09-29（DESIGN.md 14章）：--ahead（驚きの信号の先。B は4）、--sigma-min、--visible-only（0 で学習の変化を見える組に絞らない）、
   --pairs original（大人の時期の組を元の 12→24・12→20・24→36・24→12 に）。--eval-only ではどれも config.json から戻す
+- 2026-09-30（台帳 S2-39）：既定を合格した run（2b_B_seed0・seed1）の設定そのものに切り替えた（ノイズ0.02、σ の下限0.02、4歩先、見える組に絞らない、元の組）。
+  古い run の --eval-only は config から戻す（組がなければ patched、驚きの先がなければ1）
 """
 import argparse
 import csv
@@ -36,7 +38,8 @@ from model import AttentionCell, Physio2, State2, init_state, nll  # noqa: E402
 from protocol import PAIRS, PAIRS_ORIGINAL, Protocol2, hide_neighbors, judge_2a, run_period, run_protocol2  # noqa: E402
 from sealed import check_dev_seed  # noqa: E402
 
-EVAL_CHANGES = ((12.0, 24.0), (12.0, 20.0), (12.0, 36.0), (24.0, 12.0))
+EVAL_CHANGES = {"patched": ((12.0, 24.0), (12.0, 20.0), (12.0, 36.0), (24.0, 12.0)),    # 2a の評価の変化（組の選び方と同じ）
+                "original": ((12.0, 24.0), (12.0, 20.0), (24.0, 36.0), (24.0, 12.0))}
 
 
 def git_commit():
@@ -257,13 +260,13 @@ def save_pictures(pics, rows, out_dir, title):
     plt.close(fig)
 
 
-def evaluate(model, wcfg, out_dir, title, eval_seed, dev, dense=True):
+def evaluate(model, wcfg, out_dir, title, eval_seed, dev, dense=True, changes=EVAL_CHANGES["original"]):
     out_dir.mkdir(parents=True, exist_ok=True)
     res = {}
-    for P1, P2 in EVAL_CHANGES:
+    for P1, P2 in changes:
         proto = Protocol2(P1=P1, P2=P2)
         s, rows, pics = run_protocol2(model, wcfg, proto, eval_seed, dense=dense, device=dev,
-                                      frames=(P1, P2) == EVAL_CHANGES[0])
+                                      frames=(P1, P2) == changes[0])
         key = f"{P1:g}to{P2:g}"
         cols = s.pop("columns")
         res[key] = s
@@ -276,7 +279,7 @@ def evaluate(model, wcfg, out_dir, title, eval_seed, dev, dense=True):
             w_ = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
             w_.writeheader()
             w_.writerows(rows)
-        if (P1, P2) == EVAL_CHANGES[0]:
+        if (P1, P2) == changes[0]:
             save_pictures(pics, rows, out_dir, f"{title}（周期 {P1:g}→{P2:g}）")
     ok, checks = judge_2a(res["12to24"])
     res["judge_2a"] = dict(passed=ok, checks=checks)
@@ -310,10 +313,10 @@ def main():
     ap.add_argument("--cand3-cap", type=int, default=20, help="候補3 の1回の窓の発火の上限")
     ap.add_argument("--noise", type=float, default=W.WorldConfig().noise)
     ap.add_argument("--sigma-min", type=float, default=Physio2.sigma_min, help="σ の下限（センサーのノイズと同じにする）")
-    ap.add_argument("--ahead", type=int, default=1, help="驚きの信号の先（1 はこれまでどおり、B は4。DESIGN.md 14章）")
-    ap.add_argument("--visible-only", type=int, default=1, help="1 なら学習の周期の変化を見える組に絞る（S2-11）。0 で絞らない")
-    ap.add_argument("--pairs", choices=["patched", "original"], default="patched",
-                    help="大人の時期の組。patched は 12→36（S2-8 のあと）、original は元の 24→36")
+    ap.add_argument("--ahead", type=int, default=Physio2.surprise_ahead, help="驚きの信号の先（標準は4。1 は2026-09-29 までの1歩先）")
+    ap.add_argument("--visible-only", type=int, default=0, help="1 なら学習の周期の変化を見える組に絞る（S2-11、2026-09-29 まで）。標準は0（絞らない）")
+    ap.add_argument("--pairs", choices=["patched", "original"], default="original",
+                    help="大人の時期の組。標準は original（元の 24→36）。patched は 12→36（S2-8 のあと、2026-09-29 まで）")
     ap.add_argument("--checkpoint", type=int, default=1)
     ap.add_argument("--save-every", type=int, default=250)
     ap.add_argument("--name", default=None)
@@ -334,9 +337,10 @@ def main():
         Physio2.surprise_ahead = phys.get("surprise_ahead", 1)
         model = AttentionCell(dna=True, alarm=cfg.get("firing") == "alarm").to(dev)
         model.load_state_dict(torch.load(run / "model.pt", map_location=dev))
-        for k in ("firing", "lam", "cand3_cap", "pairs"):
+        for k in ("firing", "lam", "cand3_cap"):
             if k in cfg:
                 setattr(args, k, cfg[k])
+        args.pairs = cfg.get("pairs", "patched")                            # 組を記録していない古い run は、パッチのあとの組で評価していた
         args.dense = cfg.get("dense", 1)
     else:
         run = HERE / "runs" / (args.name or f"2a_seed{args.seed}")
@@ -369,10 +373,12 @@ def main():
         print(f"{policy['kind']}：", brief_b(res), flush=True)
         print("出力:", run)
         return
-    res = evaluate(model, wcfg, run / "eval", f"2a seed{cfg['seed']} DNA あり", args.eval_seed, dev, dense=True)
+    res = evaluate(model, wcfg, run / "eval", f"2a seed{cfg['seed']} DNA あり", args.eval_seed, dev, dense=True,
+                   changes=EVAL_CHANGES[args.pairs])
     print("DNA あり：", brief(res), flush=True)
     ref = AttentionCell(dna=False).to(dev)
-    res_ref = evaluate(ref, wcfg, run / "eval_ref", "2a DNA なし（密な最小二乗）", args.eval_seed, dev, dense=True)
+    res_ref = evaluate(ref, wcfg, run / "eval_ref", "2a DNA なし（密な最小二乗）", args.eval_seed, dev, dense=True,
+                       changes=EVAL_CHANGES[args.pairs])
     print("DNA なし：", brief(res_ref), flush=True)
     d = res["12to24"]["settle_nll_wave"] - res_ref["12to24"]["settle_nll_wave"]
     print(f"波の NLL の差（DNA あり − なし、落ち着いた時期）：{d:+.3f} ナット", flush=True)

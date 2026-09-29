@@ -158,8 +158,8 @@ def test_visible_changes_only():
 
 
 def test_default_noise_is_decided_value():
-    """世界のノイズの既定は、そうの判断の0.005（設計書とコードの食い違いを防ぐ）"""
-    assert WorldConfig().noise == 0.005
+    """世界のノイズの既定は、そうの判断の値（設計書とコードの食い違いを防ぐ）。2026-09-29 に0.005、2026-09-30 に標準の世界の切り替えで0.02（台帳 S2-39）"""
+    assert WorldConfig().noise == 0.02
 
 
 def test_v_must_divide():

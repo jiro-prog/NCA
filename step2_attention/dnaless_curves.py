@@ -1,7 +1,10 @@
 """
 DNA なしの発火のしかたの曲線（DESIGN.md 7.5 の比べ方）。学習は要らない。
 
-    .venv/Scripts/python.exe step2_attention/dnaless_curves.py --eval-seeds 1000 1001 [--noise 0.005] [--sigma-min 0.005]
+    .venv/Scripts/python.exe step2_attention/dnaless_curves.py --eval-seeds 1000 1001 [--noise 0.02] [--sigma-min 0.02] [--ahead 4] [--pairs original]
+
+2026-09-30：既定は標準の世界（ノイズ0.02、σ の下限0.02、4歩先、元の組）。runs/dnaless_curves_now/ を同じに出すには
+--noise 0.005 --sigma-min 0.005 --ahead 1 --pairs patched（2026-09-29 に回したときの値）。関数 curves の組の既定は、記録のスクリプトのために patched のまま
 
 驚き駆動の家族（候補3 の K ∈ {1,2,5,10,20,40}。K=1 は元の設計の引き金）と、時計・サイコロの曲線を、
 書き換え方をすべて DNA なし（η=1、g=1、Δw=0）にそろえて、育つ時期と大人の時期で回す。
@@ -23,7 +26,7 @@ import torch  # noqa: E402
 
 import world as W  # noqa: E402
 from model import AttentionCell, Physio2  # noqa: E402
-from protocol import compare, envelope, run_period  # noqa: E402
+from protocol import PAIRS, PAIRS_ORIGINAL, compare, envelope, run_period  # noqa: E402
 
 FAMILIES = {
     "驚き駆動": [{"kind": "cand3", "K": k} for k in (1, 2, 5, 10, 20, 40)],
@@ -39,14 +42,14 @@ def label(pol):
 
 
 @torch.no_grad()
-def curves(wcfg, eval_seed, dev, families=FAMILIES):
-    """DNA なしで、家族ごと・時期ごとの点（発火数、NLL ほか）を返す"""
+def curves(wcfg, eval_seed, dev, families=FAMILIES, pairs=PAIRS):
+    """DNA なしで、家族ごと・時期ごとの点（発火数、NLL ほか）を返す。組の既定は patched（記録のスクリプト precheck_b が使う。2026-09-30）"""
     cell = AttentionCell(dna=False).to(dev).eval()
     pts = []
     for fam, pols in families.items():
         for pol in pols:
             for period in ("grow", "adult"):
-                r = run_period(cell, pol, wcfg, period, eval_seed=eval_seed, device=dev)
+                r = run_period(cell, pol, wcfg, period, eval_seed=eval_seed, device=dev, pairs=pairs)
                 pts.append(dict(family=fam, policy=label(pol), **{k: v for k, v in r.items() if k != "policy"}))
     return pts
 
@@ -71,6 +74,8 @@ def main():
     ap.add_argument("--eval-seeds", type=int, nargs="+", default=[1000, 1001])
     ap.add_argument("--noise", type=float, default=None, help="世界のノイズ（省くと今の世界の値）")
     ap.add_argument("--sigma-min", type=float, default=None, help="σ の下限（省くと今の値）")
+    ap.add_argument("--ahead", type=int, default=None, help="驚きの信号の先（省くと標準）")
+    ap.add_argument("--pairs", choices=["patched", "original"], default="original", help="大人の時期の組（標準は original）")
     ap.add_argument("--name", default="now")
     args = ap.parse_args()
     for s in args.eval_seeds:
@@ -80,6 +85,9 @@ def main():
     wcfg = W.WorldConfig() if args.noise is None else W.WorldConfig(noise=args.noise)
     if args.sigma_min is not None:
         Physio2.sigma_min = args.sigma_min
+    if args.ahead is not None:
+        Physio2.surprise_ahead = args.ahead
+    pairs = PAIRS_ORIGINAL if args.pairs == "original" else PAIRS
     out = HERE / "runs" / f"dnaless_curves_{args.name}"
     out.mkdir(parents=True, exist_ok=True)
     res = dict(world=wcfg.to_dict(), sigma_min=Physio2.sigma_min, seeds={})
@@ -87,7 +95,7 @@ def main():
     lines = ["# DNA なしの驚き駆動と、時計・サイコロ（7.5 の比べ方）", "",
              f"世界のノイズ {wcfg.noise}、σ の下限 {Physio2.sigma_min}。書き換えはすべて DNA なし。", ""]
     for seed in args.eval_seeds:
-        pts = curves(wcfg, seed, dev)
+        pts = curves(wcfg, seed, dev, pairs=pairs)
         verdicts = judge(pts)
         res["seeds"][str(seed)] = dict(points=pts, verdicts=verdicts)
         lines += [f"## 評価の乱数 {seed}", "", "| 時期 | 驚き駆動の点 | 発火数（1セル） | NLL | 時計（同じ発火数） | サイコロ（同じ発火数） |",
