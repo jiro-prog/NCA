@@ -1,0 +1,1710 @@
+{
+  "world": {
+    "size": 32,
+    "v": 0.25,
+    "amp": 0.4,
+    "mean": 0.5,
+    "noise": 0.02,
+    "zone": 24
+  },
+  "sigma_min": 0.02,
+  "pairs": [
+    [
+      12.0,
+      24.0
+    ],
+    [
+      12.0,
+      20.0
+    ],
+    [
+      24.0,
+      36.0
+    ],
+    [
+      24.0,
+      12.0
+    ]
+  ],
+  "seeds": {
+    "0": {
+      "run": "2b_B_seed0",
+      "skipped_updates": 0,
+      "B_grow": {
+        "period": "grow",
+        "policy": "trigger",
+        "fires": 3.629638671875,
+        "noise_fire_rate": 0.010029296390712261,
+        "quality": -1.3396053314208984,
+        "wave_fire_rate": 0.009010416455566883,
+        "err_ratio_end": 1.2468125096360914,
+        "per_pair": {
+          "12→24": {
+            "fires": 3.298583984375,
+            "quality": -1.2537697553634644
+          },
+          "12→20": {
+            "fires": 3.301513671875,
+            "quality": -1.2634330987930298
+          },
+          "24→36": {
+            "fires": 3.91455078125,
+            "quality": -1.4113786220550537
+          },
+          "24→12": {
+            "fires": 4.00390625,
+            "quality": -1.4298391342163086
+          }
+        }
+      },
+      "B_grow_hide_nbr": {
+        "period": "grow",
+        "policy": "trigger",
+        "fires": 4.20318603515625,
+        "noise_fire_rate": 0.009902343153953552,
+        "quality": -1.3211179971694946,
+        "wave_fire_rate": 0.010548340156674385,
+        "err_ratio_end": 1.2409756769941542,
+        "per_pair": {
+          "12→24": {
+            "fires": 3.578369140625,
+            "quality": -1.282341480255127
+          },
+          "12→20": {
+            "fires": 3.702392578125,
+            "quality": -1.2563012838363647
+          },
+          "24→36": {
+            "fires": 4.706787109375,
+            "quality": -1.3654459714889526
+          },
+          "24→12": {
+            "fires": 4.8251953125,
+            "quality": -1.3803834915161133
+          }
+        }
+      },
+      "B_curve_grow": [
+        {
+          "theta": 2.0,
+          "fires": 6.02587890625,
+          "quality": -1.4314526319503784
+        },
+        {
+          "theta": 3.0,
+          "fires": 4.3079833984375,
+          "quality": -1.3943241834640503
+        },
+        {
+          "theta": 4.0,
+          "fires": 3.629638671875,
+          "quality": -1.3396053314208984
+        },
+        {
+          "theta": 6.0,
+          "fires": 2.95269775390625,
+          "quality": -1.2663874626159668
+        },
+        {
+          "theta": 8.0,
+          "fires": 2.66461181640625,
+          "quality": -1.1923021078109741
+        }
+      ],
+      "B_adult": {
+        "period": "adult",
+        "policy": "trigger",
+        "fires": 3.0203857421875,
+        "noise_fire_rate": 0.00313183618709445,
+        "per_pair": {
+          "12→24": {
+            "fires": 4.113037109375,
+            "quality": -2.4302307665348053,
+            "react_cols": 1.0,
+            "err_back": 0.999755859375,
+            "gaveup": 0.000244140625
+          },
+          "12→20": {
+            "fires": 4.318359375,
+            "quality": -2.446114830672741,
+            "react_cols": 1.0,
+            "err_back": 0.9996744804084301,
+            "gaveup": 0.00032552084303461015
+          },
+          "24→36": {
+            "fires": 0.204833984375,
+            "quality": -2.5100991800427437,
+            "react_cols": 0.0078125,
+            "err_back": 0.9986165389418602,
+            "gaveup": 0.0010579427180346102
+          },
+          "24→12": {
+            "fires": 3.4453125,
+            "quality": -2.1322909221053123,
+            "react_cols": 1.0,
+            "err_back": 0.9902343787252903,
+            "gaveup": 0.00227864584303461
+          }
+        },
+        "quality": -2.3796839490532875,
+        "steady_fire_rate_wave": 4.882812572759576e-05,
+        "steady_fire_rate_noise": 0.0,
+        "steady_nll_wave": -2.5720837116241455,
+        "react_cols": 0.751953125,
+        "err_back": 0.9970703143626451,
+        "gaveup": 0.0009765625072759576,
+        "d_mean_end": 0.0
+      },
+      "B_adult_hide_nbr": {
+        "period": "adult",
+        "policy": "trigger",
+        "fires": 2.81201171875,
+        "noise_fire_rate": 0.0031289064791053534,
+        "per_pair": {
+          "12→24": {
+            "fires": 3.72021484375,
+            "quality": -2.459881477057934,
+            "react_cols": 1.0,
+            "err_back": 0.999755859375,
+            "gaveup": 0.000244140625
+          },
+          "12→20": {
+            "fires": 3.951171875,
+            "quality": -2.456343397498131,
+            "react_cols": 1.0,
+            "err_back": 0.9994303397834301,
+            "gaveup": 0.00032552084303461015
+          },
+          "24→36": {
+            "fires": 0.209716796875,
+            "quality": -2.5086096823215485,
+            "react_cols": 0.0078125,
+            "err_back": 0.9969889372587204,
+            "gaveup": 0.0030110677471384406
+          },
+          "24→12": {
+            "fires": 3.366943359375,
+            "quality": -2.1214996576309204,
+            "react_cols": 1.0,
+            "err_back": 0.9890950545668602,
+            "gaveup": 0.00455729168606922
+          }
+        },
+        "quality": -2.386583559215069,
+        "steady_fire_rate_wave": 5.794270691694692e-05,
+        "steady_fire_rate_noise": 0.0,
+        "steady_nll_wave": -2.571755886077881,
+        "react_cols": 0.751953125,
+        "err_back": 0.9963175505399704,
+        "gaveup": 0.00203450521803461,
+        "d_mean_end": 0.0
+      },
+      "B_curve_adult": [
+        {
+          "theta": 2.0,
+          "fires": 8.48443603515625,
+          "quality": -2.3256042301654816
+        },
+        {
+          "theta": 3.0,
+          "fires": 3.8717041015625,
+          "quality": -2.3527439162135124
+        },
+        {
+          "theta": 4.0,
+          "fires": 3.0203857421875,
+          "quality": -2.3796839490532875
+        },
+        {
+          "theta": 6.0,
+          "fires": 2.46649169921875,
+          "quality": -2.3463112264871597
+        },
+        {
+          "theta": 8.0,
+          "fires": 1.8150634765625,
+          "quality": -2.3028853982686996
+        }
+      ],
+      "controls": [
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 2
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 200.0,
+          "quality": -1.2478797435760498
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 2
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 500.0,
+          "quality": -2.5164098888635635
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 2
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 200.0,
+          "quality": -1.3571580648422241
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 2
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 500.0,
+          "quality": -2.3821854442358017
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 4
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 100.0,
+          "quality": -1.1885504722595215
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 4
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 250.0,
+          "quality": -2.5031924545764923
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 4
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 100.0,
+          "quality": -1.3686068058013916
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 4
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 250.0,
+          "quality": -2.389100596308708
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 10
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 40.0,
+          "quality": -1.0258358716964722
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 10
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 100.0,
+          "quality": -2.480216011404991
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 10
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 40.0,
+          "quality": -1.2965372800827026
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 10
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 100.0,
+          "quality": -2.3529345616698265
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 30
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 14.0,
+          "quality": -0.6712684035301208
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 30
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 34.0,
+          "quality": -2.508688196539879
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 30
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 14.0,
+          "quality": -1.2555084228515625
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 30
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 34.0,
+          "quality": -2.373105190694332
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 100
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 4.0,
+          "quality": 0.022037271410226822
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 100
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 10.0,
+          "quality": -2.4677794724702835
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 100
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 4.0,
+          "quality": -0.9123715758323669
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 100
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 10.0,
+          "quality": -2.457427017390728
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 300
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 2.0,
+          "quality": 0.6464235186576843
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 300
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 4.0,
+          "quality": -2.2643218263983727
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 300
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 2.0,
+          "quality": -0.5117424130439758
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 300
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 4.0,
+          "quality": -2.2606502175331116
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.003
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 1.19439697265625,
+          "quality": 1.1432521343231201
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.003
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 3.0003662109375,
+          "quality": -2.3170042634010315
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.003
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 1.19439697265625,
+          "quality": 1.1175451278686523
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.003
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 3.0003662109375,
+          "quality": -2.129393734037876
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.01
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 4.02716064453125,
+          "quality": 0.5027535557746887
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.01
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 10.04925537109375,
+          "quality": -2.4231083393096924
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.01
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 4.02716064453125,
+          "quality": 0.47478270530700684
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.01
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 10.04925537109375,
+          "quality": -2.394489124417305
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.03
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 12.04840087890625,
+          "quality": -0.20216581225395203
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.03
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 30.06402587890625,
+          "quality": -2.4864924624562263
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.03
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 12.04840087890625,
+          "quality": -0.25647199153900146
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.03
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 30.06402587890625,
+          "quality": -2.3793473094701767
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.1
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 40.0662841796875,
+          "quality": -0.7315719127655029
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.1
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 100.077880859375,
+          "quality": -2.4945024996995926
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.1
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 40.0662841796875,
+          "quality": -0.8179618120193481
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.1
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 100.077880859375,
+          "quality": -2.341592028737068
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.3
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 120.03607177734375,
+          "quality": -1.0290708541870117
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.3
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 300.18902587890625,
+          "quality": -2.494122087955475
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.3
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 120.03607177734375,
+          "quality": -1.1393492221832275
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.3
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 300.18902587890625,
+          "quality": -2.372962012887001
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.5
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 199.92059326171875,
+          "quality": -1.1451572179794312
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.5
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 500.0238037109375,
+          "quality": -2.498004697263241
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.5
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 199.92059326171875,
+          "quality": -1.240032434463501
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.5
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 500.0238037109375,
+          "quality": -2.3744465112686157
+        }
+      ],
+      "verdicts": {
+        "grow_時計": {
+          "verdict": "上回る",
+          "fires": 3.629638671875,
+          "nll": -1.3396053314208984,
+          "control_nll": -0.8562137579408942
+        },
+        "grow_サイコロ": {
+          "verdict": "上回る",
+          "fires": 3.629638671875,
+          "nll": -1.3396053314208984,
+          "control_nll": 0.5297442057126962
+        },
+        "adult_時計": {
+          "verdict": "上回る",
+          "fires": 3.0203857421875,
+          "nll": -2.3796839490532875,
+          "control_nll": -2.2643218263983727
+        },
+        "adult_サイコロ": {
+          "verdict": "上回る",
+          "fires": 3.0203857421875,
+          "nll": -2.3796839490532875,
+          "control_nll": -2.3175880111893004
+        }
+      },
+      "passed": true
+    },
+    "1": {
+      "run": "2b_B_seed1",
+      "skipped_updates": 0,
+      "B_grow": {
+        "period": "grow",
+        "policy": "trigger",
+        "fires": 3.6209716796875,
+        "noise_fire_rate": 0.010087890550494194,
+        "quality": -1.347025752067566,
+        "wave_fire_rate": 0.008983398787677288,
+        "err_ratio_end": 1.2368659037380494,
+        "per_pair": {
+          "12→24": {
+            "fires": 3.31103515625,
+            "quality": -1.2678767442703247
+          },
+          "12→20": {
+            "fires": 3.31787109375,
+            "quality": -1.2688430547714233
+          },
+          "24→36": {
+            "fires": 3.87939453125,
+            "quality": -1.4200190305709839
+          },
+          "24→12": {
+            "fires": 3.9755859375,
+            "quality": -1.4313645362854004
+          }
+        }
+      },
+      "B_grow_hide_nbr": {
+        "period": "grow",
+        "policy": "trigger",
+        "fires": 4.38385009765625,
+        "noise_fire_rate": 0.009975586086511612,
+        "quality": -1.2986382246017456,
+        "wave_fire_rate": 0.01102522760629654,
+        "err_ratio_end": 1.267452589442274,
+        "per_pair": {
+          "12→24": {
+            "fires": 3.66650390625,
+            "quality": -1.2822569608688354
+          },
+          "12→20": {
+            "fires": 3.654296875,
+            "quality": -1.253917932510376
+          },
+          "24→36": {
+            "fires": 5.078125,
+            "quality": -1.326642394065857
+          },
+          "24→12": {
+            "fires": 5.136474609375,
+            "quality": -1.331735372543335
+          }
+        }
+      },
+      "B_curve_grow": [
+        {
+          "theta": 2.0,
+          "fires": 7.18646240234375,
+          "quality": -1.365113377571106
+        },
+        {
+          "theta": 3.0,
+          "fires": 4.35028076171875,
+          "quality": -1.3955758810043335
+        },
+        {
+          "theta": 4.0,
+          "fires": 3.6209716796875,
+          "quality": -1.347025752067566
+        },
+        {
+          "theta": 6.0,
+          "fires": 3.00433349609375,
+          "quality": -1.2766807079315186
+        },
+        {
+          "theta": 8.0,
+          "fires": 2.6844482421875,
+          "quality": -1.195130467414856
+        }
+      ],
+      "B_adult": {
+        "period": "adult",
+        "policy": "trigger",
+        "fires": 2.751220703125,
+        "noise_fire_rate": 0.003109375247731805,
+        "per_pair": {
+          "12→24": {
+            "fires": 3.631591796875,
+            "quality": -2.464126668870449,
+            "react_cols": 1.0,
+            "err_back": 0.999755859375,
+            "gaveup": 0.0
+          },
+          "12→20": {
+            "fires": 3.742431640625,
+            "quality": -2.477653205394745,
+            "react_cols": 1.0,
+            "err_back": 0.9996744804084301,
+            "gaveup": 0.00032552084303461015
+          },
+          "24→36": {
+            "fires": 0.20751953125,
+            "quality": -2.51106134057045,
+            "react_cols": 0.0078125,
+            "err_back": 1.0,
+            "gaveup": 0.0
+          },
+          "24→12": {
+            "fires": 3.42333984375,
+            "quality": -2.1665691286325455,
+            "react_cols": 1.0,
+            "err_back": 0.9934895876795053,
+            "gaveup": 0.00398763021803461
+          }
+        },
+        "quality": -2.4048525393009186,
+        "steady_fire_rate_wave": 4.6875000407453626e-05,
+        "steady_fire_rate_noise": 0.0,
+        "steady_nll_wave": -2.5723981857299805,
+        "react_cols": 0.751953125,
+        "err_back": 0.9982299841940403,
+        "gaveup": 0.001078287765267305,
+        "d_mean_end": 0.0
+      },
+      "B_adult_hide_nbr": {
+        "period": "adult",
+        "policy": "trigger",
+        "fires": 2.85150146484375,
+        "noise_fire_rate": 0.003096679924055934,
+        "per_pair": {
+          "12→24": {
+            "fires": 3.822265625,
+            "quality": -2.431160107254982,
+            "react_cols": 1.0,
+            "err_back": 1.0,
+            "gaveup": 0.0
+          },
+          "12→20": {
+            "fires": 3.957763671875,
+            "quality": -2.436096116900444,
+            "react_cols": 1.0,
+            "err_back": 0.9996744804084301,
+            "gaveup": 0.0
+          },
+          "24→36": {
+            "fires": 0.20068359375,
+            "quality": -2.5099625885486603,
+            "react_cols": 0.0078125,
+            "err_back": 0.9981282576918602,
+            "gaveup": 0.0018717448110692203
+          },
+          "24→12": {
+            "fires": 3.42529296875,
+            "quality": -2.1387690380215645,
+            "react_cols": 1.0,
+            "err_back": 0.9860839881002903,
+            "gaveup": 0.008789062558207661
+          }
+        },
+        "quality": -2.37899699062109,
+        "steady_fire_rate_wave": 4.329426883487031e-05,
+        "steady_fire_rate_noise": 0.0,
+        "steady_nll_wave": -2.572235345840454,
+        "react_cols": 0.751953125,
+        "err_back": 0.9959716834127903,
+        "gaveup": 0.0026652018350432627,
+        "d_mean_end": 0.0
+      },
+      "B_curve_adult": [
+        {
+          "theta": 2.0,
+          "fires": 8.9959716796875,
+          "quality": -2.2451137602329254
+        },
+        {
+          "theta": 3.0,
+          "fires": 3.6494140625,
+          "quality": -2.3729847446084023
+        },
+        {
+          "theta": 4.0,
+          "fires": 2.751220703125,
+          "quality": -2.4048525393009186
+        },
+        {
+          "theta": 6.0,
+          "fires": 2.34539794921875,
+          "quality": -2.371981330215931
+        },
+        {
+          "theta": 8.0,
+          "fires": 1.78948974609375,
+          "quality": -2.29976636916399
+        }
+      ],
+      "controls": [
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 2
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 200.0,
+          "quality": -1.2478797435760498
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 2
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 500.0,
+          "quality": -2.5164098888635635
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 2
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 200.0,
+          "quality": -0.5444179773330688
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 2
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 500.0,
+          "quality": -1.583686862140894
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 4
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 100.0,
+          "quality": -1.1885504722595215
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 4
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 250.0,
+          "quality": -2.5031924545764923
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 4
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 100.0,
+          "quality": -0.6189401149749756
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 4
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 250.0,
+          "quality": -1.5799391977488995
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 10
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 40.0,
+          "quality": -1.0258358716964722
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 10
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 100.0,
+          "quality": -2.480216011404991
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 10
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 40.0,
+          "quality": -0.7724834680557251
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 10
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 100.0,
+          "quality": -1.576073195785284
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 30
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 14.0,
+          "quality": -0.6712684035301208
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 30
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 34.0,
+          "quality": -2.508688196539879
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 30
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 14.0,
+          "quality": -1.0988342761993408
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 30
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 34.0,
+          "quality": -1.7800069898366928
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 100
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 4.0,
+          "quality": 0.022037271410226822
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 100
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 10.0,
+          "quality": -2.4677794724702835
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 100
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 4.0,
+          "quality": -0.8297827243804932
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 100
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 10.0,
+          "quality": -2.360778972506523
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 300
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 2.0,
+          "quality": 0.6464235186576843
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 300
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 4.0,
+          "quality": -2.2643218263983727
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 300
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 2.0,
+          "quality": -0.45111083984375
+        },
+        {
+          "family": "時計",
+          "policy": {
+            "kind": "clock",
+            "k": 300
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 4.0,
+          "quality": -2.2192859649658203
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.003
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 1.19439697265625,
+          "quality": 1.1432521343231201
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.003
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 3.0003662109375,
+          "quality": -2.3170042634010315
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.003
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 1.19439697265625,
+          "quality": 1.137466311454773
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.003
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 3.0003662109375,
+          "quality": -2.075804725289345
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.01
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 4.02716064453125,
+          "quality": 0.5027535557746887
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.01
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 10.04925537109375,
+          "quality": -2.4231083393096924
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.01
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 4.02716064453125,
+          "quality": 0.4903636872768402
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.01
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 10.04925537109375,
+          "quality": -2.285267598927021
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.03
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 12.04840087890625,
+          "quality": -0.20216581225395203
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.03
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 30.06402587890625,
+          "quality": -2.4864924624562263
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.03
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 12.04840087890625,
+          "quality": -0.20162971317768097
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.03
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 30.06402587890625,
+          "quality": -1.8548565953969955
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.1
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 40.0662841796875,
+          "quality": -0.7315719127655029
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.1
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 100.077880859375,
+          "quality": -2.4945024996995926
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.1
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 40.0662841796875,
+          "quality": -0.4044429063796997
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.1
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 100.077880859375,
+          "quality": -1.5882078409194946
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.3
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 120.03607177734375,
+          "quality": -1.0290708541870117
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.3
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 300.18902587890625,
+          "quality": -2.494122087955475
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.3
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 120.03607177734375,
+          "quality": -0.4430958330631256
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.3
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 300.18902587890625,
+          "quality": -1.5817377977073193
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.5
+          },
+          "writer": "DNA なし",
+          "period": "grow",
+          "fires": 199.92059326171875,
+          "quality": -1.1451572179794312
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.5
+          },
+          "writer": "DNA なし",
+          "period": "adult",
+          "fires": 500.0238037109375,
+          "quality": -2.498004697263241
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.5
+          },
+          "writer": "B の DNA",
+          "period": "grow",
+          "fires": 199.92059326171875,
+          "quality": -0.4661751389503479
+        },
+        {
+          "family": "サイコロ",
+          "policy": {
+            "kind": "dice",
+            "p": 0.5
+          },
+          "writer": "B の DNA",
+          "period": "adult",
+          "fires": 500.0238037109375,
+          "quality": -1.5815046168863773
+        }
+      ],
+      "verdicts": {
+        "grow_時計": {
+          "verdict": "上回る",
+          "fires": 3.6209716796875,
+          "nll": -1.347025752067566,
+          "control_nll": -0.7753966918898235
+        },
+        "grow_サイコロ": {
+          "verdict": "上回る",
+          "fires": 3.6209716796875,
+          "nll": -1.347025752067566,
+          "control_nll": 0.5469691418837246
+        },
+        "adult_時計": {
+          "verdict": "上回る",
+          "fires": 2.751220703125,
+          "nll": -2.4048525393009186,
+          "control_nll": -2.2643218263983727
+        },
+        "adult_サイコロ": {
+          "verdict": "上回る",
+          "fires": 2.751220703125,
+          "nll": -2.4048525393009186,
+          "control_nll": -2.3170042634010315
+        }
+      },
+      "passed": true
+    }
+  },
+  "references": {
+    "dnaless_B_grow": {
+      "period": "grow",
+      "policy": "trigger",
+      "fires": 4.468017578125,
+      "noise_fire_rate": 0.00960693322122097,
+      "quality": -0.7838112115859985,
+      "wave_fire_rate": 0.011274251155555248,
+      "err_ratio_end": 2.566598672000124,
+      "per_pair": {
+        "12→24": {
+          "fires": 4.160888671875,
+          "quality": -0.738203227519989
+        },
+        "12→20": {
+          "fires": 3.98876953125,
+          "quality": -0.6459214091300964
+        },
+        "24→36": {
+          "fires": 4.83740234375,
+          "quality": -0.862288236618042
+        },
+        "24→12": {
+          "fires": 4.885009765625,
+          "quality": -0.8888318538665771
+        }
+      }
+    },
+    "one_step_grow": {
+      "period": "grow",
+      "policy": "trigger",
+      "fires": 3.182861328125,
+      "noise_fire_rate": 0.010729980655014515,
+      "quality": -0.5684195160865784,
+      "wave_fire_rate": 0.007772298064082861,
+      "err_ratio_end": 2.6785825587018857,
+      "per_pair": {
+        "12→24": {
+          "fires": 3.218505859375,
+          "quality": -0.35451048612594604
+        },
+        "12→20": {
+          "fires": 3.1181640625,
+          "quality": -0.3980146050453186
+        },
+        "24→36": {
+          "fires": 3.19189453125,
+          "quality": -0.7460563778877258
+        },
+        "24→12": {
+          "fires": 3.202880859375,
+          "quality": -0.7750965356826782
+        }
+      }
+    },
+    "dnaless_B_adult": {
+      "period": "adult",
+      "policy": "trigger",
+      "fires": 2.09075927734375,
+      "noise_fire_rate": 0.0030029297340661287,
+      "per_pair": {
+        "12→24": {
+          "fires": 3.455810546875,
+          "quality": -2.510345906019211,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0
+        },
+        "12→20": {
+          "fires": 3.26953125,
+          "quality": -2.5167470425367355,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0
+        },
+        "24→36": {
+          "fires": 0.176513671875,
+          "quality": -2.513049103319645,
+          "react_cols": 0.0078125,
+          "err_back": 1.0,
+          "gaveup": 0.0
+        },
+        "24→12": {
+          "fires": 1.461181640625,
+          "quality": -2.392114944756031,
+          "react_cols": 1.0,
+          "err_back": 1.0,
+          "gaveup": 0.0
+        }
+      },
+      "quality": -2.4830642119050026,
+      "steady_fire_rate_wave": 9.765624781721272e-06,
+      "steady_fire_rate_noise": 0.0,
+      "steady_nll_wave": -2.573646068572998,
+      "react_cols": 0.751953125,
+      "err_back": 1.0,
+      "gaveup": 0.0,
+      "d_mean_end": 0.0
+    },
+    "one_step_adult": {
+      "period": "adult",
+      "policy": "trigger",
+      "fires": 0.2550048828125,
+      "noise_fire_rate": 0.003642578376457095,
+      "per_pair": {
+        "12→24": {
+          "fires": 0.261474609375,
+          "quality": -2.0890381410717964,
+          "react_cols": 0.2734375,
+          "err_back": 0.9907226618379354,
+          "gaveup": 0.0014648437791038305
+        },
+        "12→20": {
+          "fires": 0.2607421875,
+          "quality": -2.193453647196293,
+          "react_cols": 0.1171875,
+          "err_back": 0.9994303397834301,
+          "gaveup": 0.0
+        },
+        "24→36": {
+          "fires": 0.248291015625,
+          "quality": -2.5115520656108856,
+          "react_cols": 0.015625,
+          "err_back": 0.99951171875,
+          "gaveup": 0.0
+        },
+        "24→12": {
+          "fires": 0.24951171875,
+          "quality": -2.0653053671121597,
+          "react_cols": 0.1640625,
+          "err_back": 0.9940592478960752,
+          "gaveup": 0.0021972656541038305
+        }
+      },
+      "quality": -2.214837282896042,
+      "steady_fire_rate_wave": 3.6783854739042e-05,
+      "steady_fire_rate_noise": 0.0,
+      "steady_nll_wave": -2.572190999984741,
+      "react_cols": 0.142578125,
+      "err_back": 0.9959309957921505,
+      "gaveup": 0.0009155273583019152,
+      "d_mean_end": 0.0
+    }
+  },
+  "final": "合格",
+  "s2_10": {
+    "passed": true,
+    "checks": {
+      "sigma_wave": true,
+      "sigma_noise": true,
+      "sigma_ratio": true,
+      "calib_wave": true,
+      "calib_noise": true,
+      "nll_wave": true
+    },
+    "values": {
+      "sigma_median_wave": 0.050721146166324615,
+      "sigma_median_noise": 0.31121233105659485,
+      "sigma_ratio": 6.135751152705982,
+      "settle_z2_wave": 0.9982190728187561,
+      "settle_z2_noise": 1.007124662399292,
+      "settle_nll_wave": -2.4755725860595703,
+      "nll_irreducible": -2.6073040492110957
+    }
+  }
+}
