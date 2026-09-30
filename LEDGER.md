@@ -189,3 +189,4 @@
 - 09-30：`step2_attention/boundary.py`（境目の実験）、`test_boundary.py`（そのテスト6件）
 - 09-30：`step2_attention/graduation.py`（卒業の条件 (i) の確かめ。今は開発のシードの分だけ）
 - 09-30：`graduation.py` に診断用の `--b-dnaless` を足した（B の DNA を外して同じ θ の格子を回す。原因を見るためで、判定には使わない）
+- 09-30：封印テストの対照の DNA 12本（`step2_attention/runs/sealed_ctrl_*_s9001/`）。それぞれの `eval_b/` は、学習のあとの評価（標準の世界、開発の評価の乱数1000、その点の発火のしかた）で、判定には使っていない。どれも更新を飛ばした回数0
