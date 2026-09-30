@@ -128,7 +128,7 @@ def run(var, wcfg, seed, dev, start):
                 RL = torch.where(fired, torch.zeros_like(RL), RL)
                 rL = torch.where(fired, torch.zeros_like(rL), rL)
             q = torch.where(fired, torch.zeros_like(q), q + 1)
-            sleep_m = q == N_Q
+            sleep_m = ((q > 0) & (torch.remainder(q, N_Q) == 0)) if var.get("periodic") else (q == N_Q)   # periodic：静かな間は N_Q ごと（9.6 の追加の診断）
             if kind.endswith("_o"):
                 sleep_m = sleep_m & wave
             if bool(sleep_m.any()):
