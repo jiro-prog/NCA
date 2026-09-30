@@ -380,6 +380,26 @@ def test_four_step_cheap_updates_every_step():
             ws = W.advance(ws)
 
 
+def test_clock_with_per_sample_time():
+    """時計の時刻をサンプルごとの値（テンソル）で渡しても、全サンプルが同じ時刻なら数（スカラー）で渡したときと1ビットも同じ。
+    時刻がサンプルごとに違えば、それぞれの時刻で打つ（封印テストの対照の学習。2026-09-30、DESIGN.md 17章）"""
+    m = AttentionCell(dna=False)
+    cfg = W.WorldConfig(size=H, zone=H)
+    g = torch.Generator().manual_seed(7)
+    ws = W.reset(cfg, 12.0, n=3, generator=g)
+    s1 = init_state(3, H, Wd)
+    s2 = init_state(3, H, Wd)
+    with torch.no_grad():
+        for t in range(12):
+            sense = W.sense(ws, cfg, g)
+            s1, r1 = m.step(s1, sense, policy={"kind": "clock", "k": 4, "t": t})
+            s2, r2 = m.step(s2, sense, policy={"kind": "clock", "k": 4, "t": torch.full((3,), t)})
+            assert torch.equal(r1["hard"], r2["hard"]) and torch.equal(s1.w, s2.w) and torch.equal(s1.c, s2.c)
+            ws = W.advance(ws)
+        _, r3 = m.step(s1, sense, policy={"kind": "clock", "k": 4, "t": torch.tensor([8, 9, 12])})
+    assert r3["hard"][0].all() and not r3["hard"][1].any() and r3["hard"][2].all()
+
+
 if __name__ == "__main__":
     tests = [v for k, v in dict(globals()).items() if k.startswith("test_")]
     for t in tests:

@@ -225,7 +225,11 @@ class AttentionCell(nn.Module):
                 hard = torch.rand(trig.shape, device=trig.device, generator=pol["gen"]) < pol["p"]
                 fire = hard.float()
             elif kind == "clock":
-                hard = torch.full_like(trig, pol["t"] % pol["k"] == 0)
+                tt = pol["t"]
+                if torch.is_tensor(tt) and tt.dim() > 0:          # サンプルごとの時刻（学習で時計の時刻を持ち越すとき。2026-09-30、DESIGN.md 17章）
+                    hard = ((tt.view(-1, 1, 1, 1) % pol["k"]) == 0).to(trig.device).expand_as(trig)
+                else:
+                    hard = torch.full_like(trig, pol["t"] % pol["k"] == 0)
                 fire = hard.float()
             else:
                 raise ValueError(f"発火のしかたが不明：{kind}")

@@ -14,6 +14,8 @@ Step 2 の学習と評価（DESIGN.md 5章・6章）。いまは 2a（全員が�
   --pairs original（大人の時期の組を元の 12→24・12→20・24→36・24→12 に）。--eval-only ではどれも config.json から戻す
 - 2026-09-30（台帳 S2-39）：既定を合格した run（2b_B_seed0・seed1）の設定そのものに切り替えた（ノイズ0.02、σ の下限0.02、4歩先、見える組に絞らない、元の組）。
   古い run の --eval-only は config から戻す（組がなければ patched、驚きの先がなければ1）
+- 2026-09-30（DESIGN.md 17章）：封印テストの対照のために、--firing clock（--clock-k）・dice（--dice-p）で学べるようにした。
+  時計はプールのサンプルごとに時刻を持ち越す（ロールアウトごとに0から数え直さない）。--sealed 1 は封印の学習シード（sealed.py）だけを許す
 """
 import argparse
 import csv
@@ -36,7 +38,7 @@ import torch  # noqa: E402
 import world as W  # noqa: E402
 from model import AttentionCell, Physio2, State2, init_state, nll  # noqa: E402
 from protocol import PAIRS, PAIRS_ORIGINAL, Protocol2, hide_neighbors, judge_2a, run_period, run_protocol2  # noqa: E402
-from sealed import check_dev_seed  # noqa: E402
+from sealed import SEALED_TRAIN_SEEDS, check_dev_seed  # noqa: E402
 
 EVAL_CHANGES = {"patched": ((12.0, 24.0), (12.0, 20.0), (12.0, 36.0), (24.0, 12.0)),    # 2a の評価の変化（組の選び方と同じ）
                 "original": ((12.0, 24.0), (12.0, 20.0), (24.0, 36.0), (24.0, 12.0))}
@@ -59,6 +61,7 @@ class Pool:
         self.wcfg = wcfg
         self.cell = init_state(n, wcfg.size, wcfg.size)
         self.world = W.reset(wcfg, W.sample_periods(n, gen), n=n, generator=gen)
+        self.tick = torch.zeros(n, dtype=torch.long)       # サンプルごとの時刻（時計の対照の学習で持ち越す。2026-09-30）
 
     def take(self, idx, dev):
         return State2(*(t[idx].to(dev) for t in self.cell)), self.world.index(idx).to(dev)
@@ -91,6 +94,7 @@ def train(args, run, dev):
     model = AttentionCell(dna=True, alarm=args.firing == "alarm").to(dev)
     model.use_checkpoint = bool(args.checkpoint)
     policy = firing_policy(args)
+    gen_dice = torch.Generator(device=dev).manual_seed(args.seed + 13)  # サイコロの対照の発火（ほかの乱数と混ぜない）
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
     sched = torch.optim.lr_scheduler.MultiStepLR(opt, [args.lr_drop_at], 0.1)
     zone = W.zone_mask(wcfg, dev)
@@ -106,8 +110,10 @@ def train(args, run, dev):
     for it in range(args.iters):
         idx = torch.randperm(args.pool, generator=gen_cpu)[:args.batch]
         cell, world = pool.take(idx, dev)
+        tick = pool.tick[idx].clone()
         for j in range(args.fresh_per_batch):                         # 初めから学ぶサンプル
             cell, world = fresh(cell, world, j, wcfg, gen_cpu, dev)
+            tick[j] = 0
         T = int(torch.randint(args.rollout_min, args.rollout_max + 1, (1,), generator=gen_cpu))
         # 周期を途中で変えるサンプル：変える時刻と行き先（見える組だけ）
         change_j = list(range(args.fresh_per_batch, args.fresh_per_batch + args.change_per_batch))
@@ -129,7 +135,12 @@ def train(args, run, dev):
                     world = W.set_period(world, change_P[j], mask=mask)
             sense = W.sense(world, wcfg, gen_world)
             w_before = cell.w
-            cell, rec = model.step(cell, sense, policy=policy)
+            pol = policy
+            if policy["kind"] == "clock":                              # サンプルごとの時刻で時計を打つ
+                pol = dict(policy, t=(tick + t).to(dev))
+            elif policy["kind"] == "dice":
+                pol = dict(policy, gen=gen_dice)
+            cell, rec = model.step(cell, sense, policy=pol)
             l = nll(rec["e"], rec["sigma"], detach_sigma=True)
             fc = rec["fire"].mean()                                    # 発火（全セル×ステップで割る。目覚ましは STE つき）
             loss = loss + l.mean() + args.lam * fc
@@ -161,6 +172,7 @@ def train(args, run, dev):
             skipped += 1
         sched.step()
         pool.store(idx, cell, world)
+        pool.tick[idx] = tick + T
         row = dict(iter=it, steps=T, loss=float(loss), skipped=skipped, lr=sched.get_last_lr()[0],
                    seconds=round(time.time() - t0, 1), dw_abs=dw_abs / T, fire_cost=fire_cost / T,
                    **{k: v / T for k, v in acc.items()})
@@ -182,6 +194,10 @@ def firing_policy(args):
     pol = {"kind": kind}
     if kind == "cand3":
         pol["K"] = args.cand3_cap
+    if kind == "clock":
+        pol["k"] = args.clock_k
+    if kind == "dice":
+        pol["p"] = args.dice_p
     return pol
 
 
@@ -307,10 +323,13 @@ def main():
     ap.add_argument("--fresh-per-batch", type=int, default=1, help="毎回、初めから学ぶサンプルの数")
     ap.add_argument("--change-per-batch", type=int, default=2, help="毎回、途中で周期を変えるサンプルの数")
     ap.add_argument("--dense", type=int, default=1, help="1 なら 2a（全員が毎ステップ書き換える）。--firing があればそちらが優先")
-    ap.add_argument("--firing", choices=["dense", "trigger", "cand3", "alarm"], default=None,
+    ap.add_argument("--firing", choices=["dense", "trigger", "cand3", "alarm", "clock", "dice"], default=None,
                     help="発火のしかた（DESIGN.md 12章）。alarm は目覚まし（候補A、引き金に STE）")
     ap.add_argument("--lam", type=float, default=0.0, help="発火のコストの重み λ（全セル×ステップで割った発火に掛ける）")
     ap.add_argument("--cand3-cap", type=int, default=20, help="候補3 の1回の窓の発火の上限")
+    ap.add_argument("--clock-k", type=int, default=0, help="時計の対照の間隔 k（--firing clock のとき）")
+    ap.add_argument("--dice-p", type=float, default=0.0, help="サイコロの対照の確率 p（--firing dice のとき）")
+    ap.add_argument("--sealed", type=int, default=0, help="1 なら封印テストの学習（封印の学習シードだけを許す。DESIGN.md 17章）")
     ap.add_argument("--noise", type=float, default=W.WorldConfig().noise)
     ap.add_argument("--sigma-min", type=float, default=Physio2.sigma_min, help="σ の下限（センサーのノイズと同じにする）")
     ap.add_argument("--ahead", type=int, default=Physio2.surprise_ahead, help="驚きの信号の先（標準は4。1 は2026-09-29 までの1歩先）")
@@ -324,8 +343,16 @@ def main():
     ap.add_argument("--eval-seed", type=int, default=1000)
     ap.add_argument("--device", default=None, help="cpu か cuda（既定は使えれば cuda）。試運転を CPU で回すとき")
     args = ap.parse_args()
-    check_dev_seed(args.seed, "学習のシード")
+    if args.sealed:                                                  # 封印テストの道：封印の学習シードだけ
+        if args.seed not in SEALED_TRAIN_SEEDS:
+            raise ValueError(f"--sealed 1 では、学習のシードは封印の学習シード {SEALED_TRAIN_SEEDS} のどれかにする")
+    else:
+        check_dev_seed(args.seed, "学習のシード")
     check_dev_seed(args.eval_seed, "評価のシード")
+    if args.firing == "clock" and args.clock_k < 1:
+        raise ValueError("--firing clock には --clock-k（1以上）が要る")
+    if args.firing == "dice" and not (0 < args.dice_p <= 1):
+        raise ValueError("--firing dice には --dice-p（0より大きく1以下）が要る")
     dev = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
 
     if args.eval_only:
@@ -337,7 +364,7 @@ def main():
         Physio2.surprise_ahead = phys.get("surprise_ahead", 1)
         model = AttentionCell(dna=True, alarm=cfg.get("firing") == "alarm").to(dev)
         model.load_state_dict(torch.load(run / "model.pt", map_location=dev))
-        for k in ("firing", "lam", "cand3_cap"):
+        for k in ("firing", "lam", "cand3_cap", "clock_k", "dice_p"):
             if k in cfg:
                 setattr(args, k, cfg[k])
         args.pairs = cfg.get("pairs", "patched")                            # 組を記録していない古い run は、パッチのあとの組で評価していた
