@@ -91,6 +91,7 @@ def run(var, wcfg, seed, dev, start):
     RL = torch.zeros(B, 6, S_, S_, device=dev)
     rL = torch.zeros(B, 3, S_, S_, device=dev)
     q = torch.zeros(B, 1, S_, S_, device=dev)
+    nk = torch.zeros(B, 1, S_, S_, device=dev)                                         # doubling：最後の驚きの発火からの見直しの回数（9.7）
     xs = torch.arange(S_, device=dev)
     lag = wcfg.lag
     Z = lambda dt=torch.float32: torch.zeros(n_sw, B, S_, S_, device=dev, dtype=dt)
@@ -128,7 +129,11 @@ def run(var, wcfg, seed, dev, start):
                 RL = torch.where(fired, torch.zeros_like(RL), RL)
                 rL = torch.where(fired, torch.zeros_like(rL), rL)
             q = torch.where(fired, torch.zeros_like(q), q + 1)
-            sleep_m = ((q > 0) & (torch.remainder(q, N_Q) == 0)) if var.get("periodic") else (q == N_Q)   # periodic：静かな間は N_Q ごと（9.6 の追加の診断）
+            if var.get("doubling"):                                                    # 9.7 の (は)：間隔を N_Q、2N_Q、4N_Q…と伸ばす（最後の驚きから N_Q、3N_Q、7N_Q…）
+                nk = torch.where(fired, torch.zeros_like(nk), nk)
+                sleep_m = q == N_Q * (torch.pow(2.0, nk + 1) - 1)
+            else:
+                sleep_m = ((q > 0) & (torch.remainder(q, N_Q) == 0)) if var.get("periodic") else (q == N_Q)   # periodic：静かな間は N_Q ごと（9.6 の追加の診断）
             if kind.endswith("_o"):
                 sleep_m = sleep_m & wave
             if bool(sleep_m.any()):
@@ -145,6 +150,8 @@ def run(var, wcfg, seed, dev, start):
                     we = exact_w_t(colP).float().permute(0, 2, 1).unsqueeze(2)                      # (B,3,1,W)
                     vk_ex = (wcfg.noise ** 2 * gain4(we)).clamp(min=Physio2.sigma_min ** 2).expand(B, 1, S_, S_)
                     st = st._replace(vk=torch.where(sleep_m, vk_ex, st.vk))
+        if var.get("doubling"):
+            nk = nk + sleep_m.float()
         # 記録
         F = fired[:, 0]
         Sm = sleep_m[:, 0]
