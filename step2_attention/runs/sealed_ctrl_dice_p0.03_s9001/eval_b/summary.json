@@ -1,0 +1,180 @@
+{
+  "grow": {
+    "period": "grow",
+    "policy": "dice",
+    "fires": 12.04840087890625,
+    "noise_fire_rate": 0.030029296875,
+    "quality": -0.39549487829208374,
+    "wave_fire_rate": 0.030127115547657013,
+    "err_ratio_end": 1.025154729182383,
+    "per_pair": {
+      "12→24": {
+        "fires": 12.086181640625,
+        "quality": -0.3644202947616577
+      },
+      "12→20": {
+        "fires": 12.00439453125,
+        "quality": -0.3419610857963562
+      },
+      "24→36": {
+        "fires": 12.011474609375,
+        "quality": -0.43005672097206116
+      },
+      "24→12": {
+        "fires": 12.091552734375,
+        "quality": -0.44554150104522705
+      }
+    }
+  },
+  "grow_hide_nbr": {
+    "period": "grow",
+    "policy": "dice",
+    "fires": 12.04840087890625,
+    "noise_fire_rate": 0.030029296875,
+    "quality": -0.39389583468437195,
+    "wave_fire_rate": 0.030127115547657013,
+    "err_ratio_end": 1.0284020972958878,
+    "per_pair": {
+      "12→24": {
+        "fires": 12.086181640625,
+        "quality": -0.36693862080574036
+      },
+      "12→20": {
+        "fires": 12.00439453125,
+        "quality": -0.34422433376312256
+      },
+      "24→36": {
+        "fires": 12.011474609375,
+        "quality": -0.4245976507663727
+      },
+      "24→12": {
+        "fires": 12.091552734375,
+        "quality": -0.4398226737976074
+      }
+    }
+  },
+  "adult": {
+    "period": "adult",
+    "policy": "dice",
+    "fires": 30.072102864583332,
+    "noise_fire_rate": 0.02994628995656967,
+    "per_pair": {
+      "12→24": {
+        "fires": 30.146240234375,
+        "quality": -2.4659622982144356,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "12→20": {
+        "fires": 29.940673828125,
+        "quality": -2.495822712779045,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "24→36": {
+        "fires": 30.039794921875,
+        "quality": -2.589887984097004,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "24→12": {
+        "fires": 30.12939453125,
+        "quality": -2.505805604159832,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      }
+    },
+    "quality": -2.489196851849556,
+    "steady_fire_rate_wave": 0.030205728486180305,
+    "steady_fire_rate_noise": 0.030170897021889687,
+    "steady_nll_wave": -2.5470776557922363,
+    "react_cols": 1.0,
+    "err_back": 1.0,
+    "gaveup": 0.0,
+    "d_mean_end": 0.0,
+    "fires_all": 30.06402587890625,
+    "quality_all": -2.514369674026966,
+    "react_cols_all": 1.0,
+    "err_back_all": 1.0,
+    "gaveup_all": 0.0,
+    "relearn_pairs": [
+      "12→24",
+      "12→20",
+      "24→12"
+    ],
+    "quiet_check": {
+      "24→36": {
+        "cells_fired_frac": 1.0,
+        "fires_per_cell_window": 9.115478545427322,
+        "quality": -2.589887984097004,
+        "quiet": false
+      }
+    }
+  },
+  "adult_hide_nbr": {
+    "period": "adult",
+    "policy": "dice",
+    "fires": 30.072102864583332,
+    "noise_fire_rate": 0.02994628995656967,
+    "per_pair": {
+      "12→24": {
+        "fires": 30.146240234375,
+        "quality": -2.461255967617035,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "12→20": {
+        "fires": 29.940673828125,
+        "quality": -2.4934414476156235,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "24→36": {
+        "fires": 30.039794921875,
+        "quality": -2.5674152448773384,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "24→12": {
+        "fires": 30.12939453125,
+        "quality": -2.505532331764698,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      }
+    },
+    "quality": -2.48674326390028,
+    "steady_fire_rate_wave": 0.030205728486180305,
+    "steady_fire_rate_noise": 0.030170897021889687,
+    "steady_nll_wave": -2.550168991088867,
+    "react_cols": 1.0,
+    "err_back": 1.0,
+    "gaveup": 0.0,
+    "d_mean_end": 0.0,
+    "fires_all": 30.06402587890625,
+    "quality_all": -2.5069112926721573,
+    "react_cols_all": 1.0,
+    "err_back_all": 1.0,
+    "gaveup_all": 0.0,
+    "relearn_pairs": [
+      "12→24",
+      "12→20",
+      "24→12"
+    ],
+    "quiet_check": {
+      "24→36": {
+        "cells_fired_frac": 1.0,
+        "fires_per_cell_window": 9.115478545427322,
+        "quality": -2.5674152448773384,
+        "quiet": false
+      }
+    }
+  }
+}

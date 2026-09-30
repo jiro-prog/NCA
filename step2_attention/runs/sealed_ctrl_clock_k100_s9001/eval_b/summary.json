@@ -1,0 +1,180 @@
+{
+  "grow": {
+    "period": "grow",
+    "policy": "clock",
+    "fires": 4.0,
+    "noise_fire_rate": 0.009999999776482582,
+    "quality": -1.1779165267944336,
+    "wave_fire_rate": 0.009999999776482582,
+    "err_ratio_end": 1.022810166722843,
+    "per_pair": {
+      "12→24": {
+        "fires": 4.0,
+        "quality": -1.0532515048980713
+      },
+      "12→20": {
+        "fires": 4.0,
+        "quality": -1.0399558544158936
+      },
+      "24→36": {
+        "fires": 4.0,
+        "quality": -1.298454761505127
+      },
+      "24→12": {
+        "fires": 4.0,
+        "quality": -1.3200035095214844
+      }
+    }
+  },
+  "grow_hide_nbr": {
+    "period": "grow",
+    "policy": "clock",
+    "fires": 4.0,
+    "noise_fire_rate": 0.009999999776482582,
+    "quality": -1.1284528970718384,
+    "wave_fire_rate": 0.009999999776482582,
+    "err_ratio_end": 1.043609849373923,
+    "per_pair": {
+      "12→24": {
+        "fires": 4.0,
+        "quality": -1.0492252111434937
+      },
+      "12→20": {
+        "fires": 4.0,
+        "quality": -1.0376547574996948
+      },
+      "24→36": {
+        "fires": 4.0,
+        "quality": -1.205168604850769
+      },
+      "24→12": {
+        "fires": 4.0,
+        "quality": -1.2217626571655273
+      }
+    }
+  },
+  "adult": {
+    "period": "adult",
+    "policy": "clock",
+    "fires": 10.0,
+    "noise_fire_rate": 0.010000000707805157,
+    "per_pair": {
+      "12→24": {
+        "fires": 10.0,
+        "quality": -2.438890539109707,
+        "react_cols": 0.125,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "12→20": {
+        "fires": 10.0,
+        "quality": -2.474427968263626,
+        "react_cols": 0.125,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "24→36": {
+        "fires": 10.0,
+        "quality": -2.5714710503816605,
+        "react_cols": 0.125,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "24→12": {
+        "fires": 10.0,
+        "quality": -2.460117496550083,
+        "react_cols": 0.125,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      }
+    },
+    "quality": -2.45781197398901,
+    "steady_fire_rate_wave": 0.009999999776482582,
+    "steady_fire_rate_noise": 0.009999999776482582,
+    "steady_nll_wave": -2.3849380016326904,
+    "react_cols": 0.125,
+    "err_back": 1.0,
+    "gaveup": 0.0,
+    "d_mean_end": 0.0,
+    "fires_all": 10.0,
+    "quality_all": -2.486226737499237,
+    "react_cols_all": 0.125,
+    "err_back_all": 1.0,
+    "gaveup_all": 0.0,
+    "relearn_pairs": [
+      "12→24",
+      "12→20",
+      "24→12"
+    ],
+    "quiet_check": {
+      "24→36": {
+        "cells_fired_frac": 1.0,
+        "fires_per_cell_window": 3.0,
+        "quality": -2.5714710503816605,
+        "quiet": false
+      }
+    }
+  },
+  "adult_hide_nbr": {
+    "period": "adult",
+    "policy": "clock",
+    "fires": 10.0,
+    "noise_fire_rate": 0.010000000707805157,
+    "per_pair": {
+      "12→24": {
+        "fires": 10.0,
+        "quality": -2.4272109493613243,
+        "react_cols": 0.125,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "12→20": {
+        "fires": 10.0,
+        "quality": -2.462873376905918,
+        "react_cols": 0.125,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "24→36": {
+        "fires": 10.0,
+        "quality": -2.5496712774038315,
+        "react_cols": 0.125,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "24→12": {
+        "fires": 10.0,
+        "quality": -2.4501077234745026,
+        "react_cols": 0.125,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      }
+    },
+    "quality": -2.446730650961399,
+    "steady_fire_rate_wave": 0.009999999776482582,
+    "steady_fire_rate_noise": 0.009999999776482582,
+    "steady_nll_wave": -2.3751914501190186,
+    "react_cols": 0.125,
+    "err_back": 1.0,
+    "gaveup": 0.0,
+    "d_mean_end": 0.0,
+    "fires_all": 10.0,
+    "quality_all": -2.472465805709362,
+    "react_cols_all": 0.125,
+    "err_back_all": 1.0,
+    "gaveup_all": 0.0,
+    "relearn_pairs": [
+      "12→24",
+      "12→20",
+      "24→12"
+    ],
+    "quiet_check": {
+      "24→36": {
+        "cells_fired_frac": 1.0,
+        "fires_per_cell_window": 3.0,
+        "quality": -2.5496712774038315,
+        "quiet": false
+      }
+    }
+  }
+}

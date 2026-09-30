@@ -1,0 +1,180 @@
+{
+  "grow": {
+    "period": "grow",
+    "policy": "clock",
+    "fires": 100.0,
+    "noise_fire_rate": 0.25,
+    "quality": -1.5132280588150024,
+    "wave_fire_rate": 0.25,
+    "err_ratio_end": 0.9496001918284231,
+    "per_pair": {
+      "12→24": {
+        "fires": 100.0,
+        "quality": -1.3855003118515015
+      },
+      "12→20": {
+        "fires": 100.0,
+        "quality": -1.3804277181625366
+      },
+      "24→36": {
+        "fires": 100.0,
+        "quality": -1.6367095708847046
+      },
+      "24→12": {
+        "fires": 100.0,
+        "quality": -1.6502740383148193
+      }
+    }
+  },
+  "grow_hide_nbr": {
+    "period": "grow",
+    "policy": "clock",
+    "fires": 100.0,
+    "noise_fire_rate": 0.25,
+    "quality": -1.2646284103393555,
+    "wave_fire_rate": 0.25,
+    "err_ratio_end": 1.1769493630831551,
+    "per_pair": {
+      "12→24": {
+        "fires": 100.0,
+        "quality": -1.1815670728683472
+      },
+      "12→20": {
+        "fires": 100.0,
+        "quality": -1.1745600700378418
+      },
+      "24→36": {
+        "fires": 100.0,
+        "quality": -1.3417218923568726
+      },
+      "24→12": {
+        "fires": 100.0,
+        "quality": -1.36066472530365
+      }
+    }
+  },
+  "adult": {
+    "period": "adult",
+    "policy": "clock",
+    "fires": 250.0,
+    "noise_fire_rate": 0.25,
+    "per_pair": {
+      "12→24": {
+        "fires": 250.0,
+        "quality": -2.722868926823139,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "12→20": {
+        "fires": 250.0,
+        "quality": -2.6893187686800957,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "24→36": {
+        "fires": 250.0,
+        "quality": -2.852084718644619,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "24→12": {
+        "fires": 250.0,
+        "quality": -2.516491211950779,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      }
+    },
+    "quality": -2.642892949283123,
+    "steady_fire_rate_wave": 0.25,
+    "steady_fire_rate_noise": 0.25,
+    "steady_nll_wave": -2.662766456604004,
+    "react_cols": 1.0,
+    "err_back": 1.0,
+    "gaveup": 0.0,
+    "d_mean_end": 0.0,
+    "fires_all": 250.0,
+    "quality_all": -2.6951908841729164,
+    "react_cols_all": 1.0,
+    "err_back_all": 1.0,
+    "gaveup_all": 0.0,
+    "relearn_pairs": [
+      "12→24",
+      "12→20",
+      "24→12"
+    ],
+    "quiet_check": {
+      "24→36": {
+        "cells_fired_frac": 1.0,
+        "fires_per_cell_window": 75.0,
+        "quality": -2.852084718644619,
+        "quiet": false
+      }
+    }
+  },
+  "adult_hide_nbr": {
+    "period": "adult",
+    "policy": "clock",
+    "fires": 250.0,
+    "noise_fire_rate": 0.25,
+    "per_pair": {
+      "12→24": {
+        "fires": 250.0,
+        "quality": -2.4658406898379326,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "12→20": {
+        "fires": 250.0,
+        "quality": -2.459390416741371,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "24→36": {
+        "fires": 250.0,
+        "quality": -2.5857030898332596,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      },
+      "24→12": {
+        "fires": 250.0,
+        "quality": -2.3677859976887703,
+        "react_cols": 1.0,
+        "err_back": 1.0,
+        "gaveup": 0.0
+      }
+    },
+    "quality": -2.43100568652153,
+    "steady_fire_rate_wave": 0.25,
+    "steady_fire_rate_noise": 0.25,
+    "steady_nll_wave": -2.445777177810669,
+    "react_cols": 1.0,
+    "err_back": 1.0,
+    "gaveup": 0.0,
+    "d_mean_end": 0.0,
+    "fires_all": 250.0,
+    "quality_all": -2.4696800112724304,
+    "react_cols_all": 1.0,
+    "err_back_all": 1.0,
+    "gaveup_all": 0.0,
+    "relearn_pairs": [
+      "12→24",
+      "12→20",
+      "24→12"
+    ],
+    "quiet_check": {
+      "24→36": {
+        "cells_fired_frac": 1.0,
+        "fires_per_cell_window": 75.0,
+        "quality": -2.5857030898332596,
+        "quiet": false
+      }
+    }
+  }
+}
