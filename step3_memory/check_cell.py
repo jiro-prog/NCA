@@ -7,7 +7,7 @@
   床   ：模擬の「床」          と Cell3(sleep=False)
   天井 ：模擬の「天井」        と Cell3(sleep=False)＋evaluate.run(ceiling=True)
   眠る段：模擬の「(は) 2倍ずつ」（③・γ_L=0.99・間隔を2倍ずつ）と Cell3(sleep=True)
-を回し、セルごとの記録（反応・驚きの発火・睡眠の書き込み・窓の NLL・学び残しのもと・σ₄ など）と、まとめの数字の差をすべて調べる。
+を回し、セルごとの記録（反応・驚きの発火・睡眠の書き込み・窓の NLL・学び残しのもと・σ₄ など）、まとめの数字、最後の状態のすべての差を調べる。
 合格：すべての差が0（1ビットも同じ）。出力：step3_memory/runs/check_cell/summary.md
 """
 import argparse
@@ -46,8 +46,8 @@ def main():
         ("眠る段", dict(name="(は) 2倍ずつ", kind="both", g=0.99, doubling=True), dict(sleep=True, ceiling=False)),
     ]
     L = ["# 回帰の確かめ：本物のセル（cell.Cell3）と模擬（precheck/sleep.py）", "",
-         "差は、セルごとの記録の差の最大（真偽の記録は、食い違ったセルの数）と、まとめの数字の差の最大。合格はすべて0", "",
-         "| 始め方 | 評価の乱数 | 段 | " + " | ".join(KEYS) + " | まとめの数字 |", "|---|---:|---|" + "---:|" * (len(KEYS) + 1)]
+         "差は、セルごとの記録の差の最大（真偽の記録は、食い違ったセルの数）、まとめの数字の差の最大、最後の状態のすべて（係数・痕跡・σ・σ₄・濃度・不応期・最近の値・予測・覚えている予測・長い痕跡・数え・見直しの回数）の差の最大。合格はすべて0", "",
+         "| 始め方 | 評価の乱数 | 段 | " + " | ".join(KEYS) + " | まとめの数字 | 最後の状態のすべて |", "|---|---:|---|" + "---:|" * (len(KEYS) + 2)]
     worst = 0.0
     for start in ("adult", "grow"):
         for seed in (300, 301):
@@ -55,6 +55,9 @@ def main():
                 ref = S.run(var, wcfg, seed, dev, start)
                 new = E.run(C.Cell3(sleep=opt["sleep"], device=dev), wcfg, seed, start, dev=dev, ceiling=opt["ceiling"])
                 ds = [diff(ref[k], new[k]) for k in KEYS]
+                fr, fn = ref["final"], new["final"]                  # 最後の状態のすべて（床の状態の各欄＋長い痕跡・数え・見直しの回数）
+                dst = max([diff(a_, b_) for a_, b_ in zip(fr["core"], fn.core)] +
+                          [diff(fr["RL"], fn.RL), diff(fr["rL"], fn.rL), diff(fr["q"], fn.q), diff(fr["k"], fn.k)])
                 sr, sn = S.summarize(ref, wcfg), E.summarize(new, wcfg)
                 dsum = 0.0
                 for gr, gn in zip(sr, sn):
@@ -62,9 +65,9 @@ def main():
                     for rr, rn in zip(gr["rows"], gn["rows"]):
                         for key in ("react", "sig_ratio", "fires", "sleeps", "restless", "quality", "resid"):
                             dsum = max(dsum, abs(rr[key] - rn[key]))
-                worst = max(worst, max(ds), dsum)
-                L.append(f"| {'大人' if start == 'adult' else '育ち'} | {seed} | {name} | " + " | ".join(f"{d:g}" for d in ds) + f" | {dsum:g} |")
-                print(f"{start} {seed} {name}: 最大の差 {max(max(ds), dsum):g}", flush=True)
+                worst = max(worst, max(ds), dsum, dst)
+                L.append(f"| {'大人' if start == 'adult' else '育ち'} | {seed} | {name} | " + " | ".join(f"{d:g}" for d in ds) + f" | {dsum:g} | {dst:g} |")
+                print(f"{start} {seed} {name}: 最大の差 {max(max(ds), dsum, dst):g}", flush=True)
     verdict = "合格（1ビットも同じ）" if worst == 0.0 else f"不合格（最大の差 {worst:g}）"
     L += ["", f"**{verdict}**"]
     out = HERE / "runs" / "check_cell"

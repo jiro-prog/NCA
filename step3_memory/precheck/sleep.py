@@ -175,7 +175,8 @@ def run(var, wcfg, seed, dev, start):
             out_fires[sw] += (F & ~in_win).float()
         ws = W.advance(ws)
     return dict(nll_sum=nll_sum, num_end=num_end, den_end=den_end, fires_ph=fires_ph, sleeps_ph=sleeps_ph, out_fires=out_fires,
-                react=react, sig_pre=sig_pre, fires_tot=fires_tot, sleeps_tot=sleeps_tot, sched=sched, wave=wave, elapsed=time.time() - t0)
+                react=react, sig_pre=sig_pre, fires_tot=fires_tot, sleeps_tot=sleeps_tot, sched=sched, wave=wave, elapsed=time.time() - t0,
+                final=dict(core=st, RL=RL, rL=rL, q=q, k=nk))                  # 最後の状態（check_cell.py の回帰の確かめで比べるため。計算は変えていない）
 
 
 def summarize(res, wcfg):

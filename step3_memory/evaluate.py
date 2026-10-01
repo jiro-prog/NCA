@@ -156,7 +156,8 @@ def run(cell, wcfg, seed, start, plan=Plan(), dev="cpu", ceiling=False, sealed=F
             out_fires[sw] += (F & ~in_win).float()
         ws = W.advance(ws)
     return dict(nll_sum=nll_sum, num_end=num_end, den_end=den_end, fires_ph=fires_ph, sleeps_ph=sleeps_ph, out_fires=out_fires,
-                react=react, sig_pre=sig_pre, fires_tot=fires_tot, sleeps_tot=sleeps_tot, sched=sched, wave=wave, elapsed=time.time() - t0)
+                react=react, sig_pre=sig_pre, fires_tot=fires_tot, sleeps_tot=sleeps_tot, sched=sched, wave=wave, elapsed=time.time() - t0,
+                final=st)
 
 
 def summarize(res, wcfg, plan=Plan()):
