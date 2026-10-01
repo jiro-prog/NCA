@@ -6,6 +6,10 @@ Step 3 の評価（step3_memory/DESIGN.md 7.1・9.2・10.2。開発の模擬 pre
 組 plan.groups の (A, B, C) ごとに世界の実現 plan.n_per 個を並べる。センサーの値は世界の乱数だけで決まる（どのセルでも同じ。組にした比べ）。
 始め方：start="grow"（予測器0から最初のパターンで育つ）か "adult"（学び終えた大人の状態。Step 2 の大人の時期と同じ始め方）。
 ceiling=True なら天井（波の区域のセルが驚いて発火したら、その列がいま見ている周期の正確な係数を書く。参考で、判定には使わない）。
+記憶の段（cell.Cell3(memory=True)）では、見張りの記録も足す（DESIGN.md 12章。合否には使わない）：
+  recalls_ph 思い出しの数（驚きの発火の内訳）、取り違え（思い出した保存先が当たるパターンが、その列がいま見ているパターンと違う）を
+  初めての時期／戻りの時期、いまの係数と見分けがつかない書き直し／違う係数を書いた、に分けて、正しく思い出した数、何回目の発火で思い出したか、
+  驚きの発火1回あたりに比べた保存先の数、最後の保存先の使用数、いっぱいになったことのあるセル、入れ替えの数
 
 記録（切り替えごと、セルごと）：
   react     新しい波がその列に届いてから window ステップの中で、一度でも驚いて発火したか
@@ -113,6 +117,23 @@ def run(cell, wcfg, seed, start, plan=Plan(), dev="cpu", ceiling=False, sealed=F
     react = Z(torch.bool)
     fires_tot = torch.zeros(B, S_, S_, device=dev)
     sleeps_tot = torch.zeros(B, S_, S_, device=dev)
+    memory = bool(getattr(cell, "memory", False))
+    recalls_ph = Z()
+    if memory:
+        first_phase = {p: plan.seq.index(p) for p in "ABC"}
+        fp_tab = torch.tensor([first_phase["A"], first_phase["B"], first_phase["C"]], device=dev)
+        PA, PB, PC = (torch.tensor([grp[i] for grp in plan.groups for _ in range(plan.n_per)], device=dev).view(B, 1, 1) for i in range(3))
+        mis_novel = torch.zeros(B, S_, S_, device=dev)
+        mis_return = torch.zeros(B, S_, S_, device=dev)
+        mis_noop = torch.zeros(B, S_, S_, device=dev)
+        mis_change = torch.zeros(B, S_, S_, device=dev)
+        rec_ok = torch.zeros(B, S_, S_, device=dev)
+        nth_hist = torch.zeros(4, device=dev)
+        fire_since = torch.zeros(B, S_, S_, device=dev)
+        comp_sum = torch.zeros((), device=dev)
+        comp_n = torch.zeros((), device=dev)
+        ever_full = torch.zeros(B, S_, S_, dtype=torch.bool, device=dev)
+        evict = torch.zeros(B, S_, S_, device=dev)
     t0 = time.time()
     for t in range(T):
         j = t // plan.dwell
@@ -129,8 +150,40 @@ def run(cell, wcfg, seed, start, plan=Plan(), dev="cpu", ceiling=False, sealed=F
             m_new = wn[:, 0:1] * x1 + wn[:, 1:2] * x2 + wn[:, 2:3]
             num = (core.mu - m_new) ** 2
             den = (m_old - m_new) ** 2
+        prev = st
         st, rec = cell.step(st, sense)
         fired = rec["surprise"]
+        if memory:
+            f0 = fired[:, 0]
+            rel_m = (t - (j * plan.dwell + xs * lag)).view(1, 1, S_)
+            if j >= 1:
+                fire_since = torch.where((rel_m == 0).expand_as(fire_since), torch.zeros_like(fire_since), fire_since)
+            fire_since = fire_since + f0.float()
+            rc = rec["recall"][:, 0]
+            comp_sum += rec["compared"].sum()
+            comp_n += f0.float().sum()
+            evict += rec["evicted"][:, 0].float()
+            ever_full |= (st.mn > 0).all(1)
+            if bool(rc.any()) and j >= 1:
+                u = st.core.w
+                cP = colP.float().view(B, 1, S_)
+                gg = torch.stack([pred_gap_t(u, PA), pred_gap_t(u, PB), pred_gap_t(u, PC)], 0)
+                best_g, best_p = gg.min(0)
+                slot_p = torch.where(best_g <= 0.02, best_p, torch.full_like(best_p, -1))
+                cur_p = torch.where(cP == PA, 0, torch.where(cP == PB, 1, 2)).expand(B, S_, S_)
+                j_col = torch.where(rel_m >= 0, torch.full_like(rel_m, j), torch.full_like(rel_m, j - 1)).expand(B, S_, S_)
+                novel = fp_tab[cur_p] == j_col
+                sig2 = st.core.v.clamp(min=Physio2.sigma_min ** 2)[:, 0]
+                noop = C.quad(st.core.R, u - prev.core.w) <= C.Physio3.tau * sig2
+                wrong = rc & wave & (slot_p != cur_p)
+                ok = rc & wave & (slot_p == cur_p)
+                mis_noop += (wrong & noop).float()
+                mis_change += (wrong & ~noop).float()
+                mis_novel += (wrong & novel).float()
+                mis_return += (wrong & ~novel).float()
+                rec_ok += ok.float()
+                k_ = fire_since[rc & wave].clamp(max=4).long() - 1
+                nth_hist += torch.bincount(k_, minlength=4).float()[:4]
         if ceiling:
             w_star = exact_w_t(colP).float().permute(0, 2, 1).unsqueeze(2).expand(B, 3, S_, S_)
             st = st._replace(core=C.rewrite(st.core, w_star, fired & wave))
@@ -152,12 +205,25 @@ def run(cell, wcfg, seed, start, plan=Plan(), dev="cpu", ceiling=False, sealed=F
             den_end[sw] += den[:, 0] * in_end.float()
             fires_ph[sw] += F.float()
             sleeps_ph[sw] += Sm.float()
+            recalls_ph[sw] += rec["recall"][:, 0].float()
             react[sw] |= F & in_win
             out_fires[sw] += (F & ~in_win).float()
         ws = W.advance(ws)
-    return dict(nll_sum=nll_sum, num_end=num_end, den_end=den_end, fires_ph=fires_ph, sleeps_ph=sleeps_ph, out_fires=out_fires,
-                react=react, sig_pre=sig_pre, fires_tot=fires_tot, sleeps_tot=sleeps_tot, sched=sched, wave=wave, elapsed=time.time() - t0,
-                final=st)
+    out = dict(nll_sum=nll_sum, num_end=num_end, den_end=den_end, fires_ph=fires_ph, sleeps_ph=sleeps_ph, out_fires=out_fires,
+               react=react, sig_pre=sig_pre, fires_tot=fires_tot, sleeps_tot=sleeps_tot, sched=sched, wave=wave, elapsed=time.time() - t0,
+               final=st, recalls_ph=recalls_ph)
+    if memory:
+        out.update(mis_novel=mis_novel, mis_return=mis_return, mis_noop=mis_noop, mis_change=mis_change, rec_ok=rec_ok, nth_hist=nth_hist.tolist(),
+                   comp=float(comp_sum) / max(float(comp_n), 1.0), ever_full=ever_full, evict=evict, slot_used=(st.mn > 0).sum(1))
+    return out
+
+
+def pred_gap_t(u, P):
+    """u (B,3,H,W) と周期 P (B,1,1) → (B,H,W)：きれいな波（平均0.5・振幅0.4）の上での、正確な係数との1歩先の予測の差（二乗平均の平方根）"""
+    c = torch.cos(2 * math.pi / P)
+    dw1, dw2, db = u[:, 0] - 2 * c, u[:, 1] + 1.0, u[:, 2] - (1 - c)
+    m, a = 0.5, 0.4
+    return torch.sqrt((dw1 * m + dw2 * m + db) ** 2 + a * a / 2 * (dw1 ** 2 + dw2 ** 2 + 2 * dw1 * dw2 * c))
 
 
 def summarize(res, wcfg, plan=Plan()):

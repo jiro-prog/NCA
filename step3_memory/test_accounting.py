@@ -186,6 +186,151 @@ def test_dev_code_refuses_sealed_seeds():
     raise AssertionError("封印の乱数が拒まれなかった")
 
 
+# ---------------------------------------------------------------------------------------------
+# 記憶の段（2026-10-02 に足した。DESIGN.md 12章）
+# ---------------------------------------------------------------------------------------------
+def test_memory_rung_equals_sleep_rung_until_first_recall():
+    """記憶の段は、最初に思い出すまでは、眠る段と床の状態が1ビットも同じ（保存先をしまうだけでは、セルの動きは変わらない）"""
+    cfg, g, ws = world(P=12.0, seed=7)
+    cfg2, g2, ws2 = world(P=12.0, seed=7)
+    mem, slp = C.Cell3(sleep=True, memory=True), C.Cell3(sleep=True)
+    a, b = C.init_state(2, H, Wd), C.init_state(2, H, Wd)
+    seen_store = False
+    for t in range(1200):
+        if t == 599:
+            ws, ws2 = W.set_period(ws, 24.0), W.set_period(ws2, 24.0)
+        a, ra = mem.step(a, W.sense(ws, cfg, g))
+        b, rb = slp.step(b, W.sense(ws2, cfg2, g2))
+        seen_store |= bool(ra["stored_new"].any())
+        if ra["recall"].any():
+            break
+        for x, y in zip(a.core, b.core):
+            assert torch.equal(x, y)
+        ws, ws2 = W.advance(ws), W.advance(ws2)
+    assert seen_store                                                   # 実際にしまっている
+
+
+def test_recall_only_at_surprise_and_writes_a_slot_exactly():
+    """思い出しは驚きの発火のときだけ。思い出したセルの係数は、保存先のどれかと1ビットも同じ"""
+    cell = C.Cell3(sleep=True, memory=True)
+    cfg, g, ws = world(P=12.0, seed=8)
+    st = C.init_state(2, H, Wd)
+    seen = False
+    for t in range(2400):
+        if t % 600 == 599:
+            ws = W.set_period(ws, [24.0, 12.0, 24.0, 12.0][(t // 600) % 4])
+        prev = st
+        st, rec = cell.step(st, W.sense(ws, cfg, g))
+        rc = rec["recall"]
+        assert not bool((rc & ~rec["surprise"]).any())
+        if rc.any():
+            seen = True
+            m = rc[:, 0]
+            same = torch.zeros_like(m)
+            for i in range(C.Physio3.k_slots):
+                same |= (st.core.w == prev.mslot[:, i]).all(1)
+            assert bool(same[m].all())
+        ws = W.advance(ws)
+    assert seen
+
+
+def test_store_only_at_sleep():
+    """しまう（新しくしまう・寄せる・入れ替える）は、睡眠の書き込みのときだけ"""
+    cell = C.Cell3(sleep=True, memory=True)
+    recs, _ = run(cell, 1800, P=12.0, P2=24.0, t_change=900)
+    n_store = 0
+    for r in recs:
+        st_ = r["stored_new"] | r["merged"] | r["evicted"]
+        assert not bool((st_ & ~r["sleep"]).any())
+        n_store += int(st_.sum())
+    assert n_store > 0
+
+
+def test_merge_is_running_average():
+    """寄せる：保存先 ← 保存先 ＋ (w − 保存先)/(n＋1)、n ← n＋1"""
+    K = C.Physio3.k_slots
+    mslot = torch.zeros(1, K, 3, 1, 1)
+    mslot[0, 0, :, 0, 0] = torch.tensor([1.7, -1.0, 0.13])
+    mn = torch.zeros(1, K, 1, 1); mn[0, 0] = 2.0
+    mage = torch.zeros(1, K, 1, 1); mage[0, 0] = 30.0
+    w = mslot[:, 0] + 0.001
+    RL = torch.tensor([1.0, 0, 0, 1.0, 0, 1.0]).view(1, 6, 1, 1)
+    M = torch.ones(1, 1, 1, dtype=torch.bool)
+    s2, n2, a2, mg, nw, ev = C.store(mslot, mn, mage, M, w, RL, torch.full((1, 1, 1), 1.0))
+    assert bool(mg.all()) and not bool(nw.any()) and not bool(ev.any())
+    assert torch.allclose(s2[0, 0], mslot[0, 0] + (w[0] - mslot[0, 0]) / 3.0)
+    assert float(n2[0, 0]) == 3.0 and float(a2[0, 0]) == 0.0
+
+
+def test_full_evicts_least_recently_used():
+    """いっぱいのとき、新しくしまう係数は、いちばん長く使っていない保存先を入れ替える（入れ替えとして記録される）"""
+    K = C.Physio3.k_slots
+    mslot = torch.zeros(1, K, 3, 1, 1)
+    for i in range(K):
+        mslot[0, i, :, 0, 0] = torch.tensor([float(i), -1.0, 0.0])
+    mn = torch.ones(1, K, 1, 1)
+    mage = torch.tensor([5.0, 9.0, 2.0, 7.0]).view(1, K, 1, 1)
+    w = torch.tensor([10.0, 10.0, 10.0]).view(1, 3, 1, 1)                # どの保存先とも合わない
+    RL = torch.tensor([1.0, 0, 0, 1.0, 0, 1.0]).view(1, 6, 1, 1)
+    M = torch.ones(1, 1, 1, dtype=torch.bool)
+    s2, n2, a2, mg, nw, ev = C.store(mslot, mn, mage, M, w, RL, torch.full((1, 1, 1), 1e-4))
+    assert bool(ev.all()) and not bool(mg.any()) and not bool(nw.any())
+    assert torch.equal(s2[0, 1, :, 0, 0], w[0, :, 0, 0])               # いちばん長く使っていない（最後に使ってから9）を入れ替えた
+    assert float(n2[0, 1]) == 1.0 and float(a2[0, 1]) == 0.0
+    for i in (0, 2, 3):
+        assert torch.equal(s2[0, i], mslot[0, i])
+
+
+def test_compared_counts_occupied_slots_at_fires():
+    """比べた保存先の数（記録）は、驚いて発火したセルで、埋まっている保存先の数。発火していないセルは0"""
+    cell = C.Cell3(sleep=True, memory=True)
+    cfg, g, ws = world(P=12.0, seed=9)
+    st = C.init_state(2, H, Wd)
+    seen = False
+    for t in range(1500):
+        if t == 799:
+            ws = W.set_period(ws, 24.0)
+        prev = st
+        st, rec = cell.step(st, W.sense(ws, cfg, g))
+        occ = (prev.mn > 0).sum(1, keepdim=True).float()
+        exp = torch.where(rec["surprise"], occ, torch.zeros_like(occ))
+        assert torch.equal(rec["compared"], exp)
+        seen |= bool((rec["compared"] > 0).any())
+        ws = W.advance(ws)
+    assert seen
+
+
+def test_memory_numbers_memory_rung():
+    """メモリの会計：記憶の段は56（眠る段36＋保存先4×5）"""
+    assert C.memory_numbers(sleep=True, memory=True) == 56
+
+
+def test_memory_records_are_produced():
+    """評価（evaluate.run）は、記憶の段の見張りの記録（保存先の使用数・いっぱい・入れ替え・取り違えの内訳・見逃し・思い出し・何回目の発火か・比べた数）を出す"""
+    import evaluate as E
+    plan = E.Plan(n_per=1, dwell=300, window=150, end=(120, 150))
+    res = E.run(C.Cell3(sleep=True, memory=True), W.WorldConfig(size=H, zone=H), 300, "grow", plan=plan)
+    for key in ("slot_used", "ever_full", "evict", "mis_noop", "mis_change", "mis_novel", "mis_return", "rec_ok", "nth_hist", "comp", "recalls_ph", "react"):
+        assert key in res, key
+    assert int(res["slot_used"].max()) <= C.Physio3.k_slots
+    wrong = float(res["mis_novel"].sum() + res["mis_return"].sum())
+    assert wrong == float(res["mis_noop"].sum() + res["mis_change"].sum())     # 取り違えの内訳は2通りに分けても同じ数
+    assert len(res["nth_hist"]) == 4
+    misses = int((~res["react"][:, :, res["wave"]]).sum())                       # 見逃しの数が数えられる
+    assert misses >= 0
+    assert float(res["recalls_ph"].sum()) <= float(res["fires_ph"].sum())        # 思い出しは驚きの発火の内訳
+
+
+def test_memory_deterministic():
+    """記憶の段も、実行時にサイコロを使わない：同じ世界の乱数なら2回回して1ビットも同じ"""
+    _, s1 = run(C.Cell3(sleep=True, memory=True), 1500, P=12.0, P2=20.0, t_change=700, seed=5)
+    _, s2 = run(C.Cell3(sleep=True, memory=True), 1500, P=12.0, P2=20.0, t_change=700, seed=5)
+    for a, b in zip(s1[-1], s2[-1]):
+        if isinstance(a, torch.Tensor):
+            assert torch.equal(a, b)
+    for a, b in zip(s1[-1].core, s2[-1].core):
+        assert torch.equal(a, b)
+
 if __name__ == "__main__":
     tests = [v for k, v in dict(globals()).items() if k.startswith("test_")]
     for t in tests:

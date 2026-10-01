@@ -153,6 +153,9 @@ def run(var, wcfg, seed, start, dev, plan=E.Plan()):
                comp=(float(comp_sum) / max(float(comp_n), 1.0)) if book is not None else None)
     if book is not None:
         out.update(slot_n=book.n, ever_full=book.ever_full, evict=book.evict)
+    # 最後の状態（check_cell.py の回帰の確かめで、本物のセルの記憶の段と比べるため。計算は変えていない）
+    out["final"] = dict(core=st.core, RL=st.RL, rL=st.rL, q=st.q, k=st.k,
+                        slot=None if book is None else book.slot, n=None if book is None else book.n, age=None if book is None else book.age)
     return out
 
 
