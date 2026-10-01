@@ -64,6 +64,8 @@ def run(var, wcfg, seed, start, dev, plan=E.Plan()):
     mis_novel = torch.zeros(B, S_, S_, device=dev)       # 初めてのパターンの時期の取り違え
     mis_return = torch.zeros(B, S_, S_, device=dev)      # 戻りの時期の取り違え
     rec_ok = torch.zeros(B, S_, S_, device=dev)          # 正しい保存先を思い出した回数
+    mis_noop = torch.zeros(B, S_, S_, device=dev)        # 取り違えのうち、いまの係数と見分けがつかない保存先を書き直したもの（予測はほぼ変わらない）
+    mis_change = torch.zeros(B, S_, S_, device=dev)      # 取り違えのうち、いまの係数と違う保存先を書いたもの（予測が変わる）
     nth_hist = torch.zeros(4, device=dev)                # 何回目の発火で思い出したか（1・2・3・4以上。波の区域）
     fire_since = torch.zeros(B, S_, S_, device=dev)      # その列に新しい波が届いてからの驚きの発火の数
     comp_sum = torch.zeros((), device=dev)               # 驚きの発火のときに比べた保存先の数の合計
@@ -118,7 +120,10 @@ def run(var, wcfg, seed, start, dev, plan=E.Plan()):
                     novel = fp == j_col
                     wrong = recalled & wave & (slot_p != cur_p)
                     ok = recalled & wave & (slot_p == cur_p)
+                    noop = quad(R, u - prev.core.w) <= TAU * sig2      # いまの係数と、最近の材料の上で見分けがつかない
                     if j >= 1:
+                        mis_noop += (wrong & noop).float()
+                        mis_change += (wrong & ~noop).float()
                         mis_novel += (wrong & novel).float()
                         mis_return += (wrong & ~novel).float()
                         rec_ok += ok.float()
@@ -144,7 +149,7 @@ def run(var, wcfg, seed, start, dev, plan=E.Plan()):
             react[sw] |= fired & in_win
         ws = W.advance(ws)
     out = dict(nll_sum=nll_sum, fires_ph=fires_ph, sleeps_ph=sleeps_ph, recalls_ph=recalls_ph, react=react, wave=wave,
-               mis_novel=mis_novel, mis_return=mis_return, rec_ok=rec_ok, nth_hist=nth_hist.tolist(),
+               mis_novel=mis_novel, mis_return=mis_return, rec_ok=rec_ok, nth_hist=nth_hist.tolist(), mis_noop=mis_noop, mis_change=mis_change,
                comp=(float(comp_sum) / max(float(comp_n), 1.0)) if book is not None else None)
     if book is not None:
         out.update(slot_n=book.n, ever_full=book.ever_full, evict=book.evict)
