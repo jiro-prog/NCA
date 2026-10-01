@@ -55,6 +55,8 @@ def run(wcfg, seed, start, dev, plan=E.Plan()):
             d = torch.where(occ, d, torch.full_like(d, float("inf")))
             d_best, i_best = d.min(1)
             u = torch.gather(book.slot, 1, i_best.view(B, 1, 1, S_, S_).expand(B, 1, 3, S_, S_)).squeeze(1)
+            neff = st.RL[:, 5]                                                         # 長い痕跡の有効な数（足し算の重みの和）
+            since = (t - (j * plan.dwell + torch.arange(S_, device=dev) * wcfg.lag)).float().view(1, 1, S_).expand(B, S_, S_)   # その列に新しい波が届いてからのステップ数
             for gi, grp in enumerate(plan.groups):
                 sl_ = slice(gi * plan.n_per, (gi + 1) * plan.n_per)
                 PA = grp[0]
@@ -66,16 +68,18 @@ def run(wcfg, seed, start, dev, plan=E.Plan()):
                 ismerge = m & (r <= SC.TAU)
                 for key, mm in (("dup", isdup), ("merge", ismerge)):
                     if bool(mm.any()):
-                        ev[gi][key].append(torch.stack([r[mm], gw[mm], gu[mm]], 1).cpu())
+                        ev[gi][key].append(torch.stack([r[mm], gw[mm], gu[mm], neff[sl_][mm], since[sl_][mm]], 1).cpu())
         book.store(M, st.core.w, st.RL, st.core.v.clamp(min=Physio2.sigma_min ** 2)[:, 0])
         ws = W.advance(ws)
     out = []
     for gi, grp in enumerate(plan.groups):
         row = dict(group="/".join(f"{p:g}" for p in grp))
         for key in ("dup", "merge"):
-            a = torch.cat(ev[gi][key]).numpy() if ev[gi][key] else np.zeros((0, 3))
+            a = torch.cat(ev[gi][key]).numpy() if ev[gi][key] else np.zeros((0, 5))
             row[key] = dict(n=int(a.shape[0]), r_med=float(np.median(a[:, 0])) if len(a) else None, r_q90=float(np.quantile(a[:, 0], 0.9)) if len(a) else None,
-                            gw_med=float(np.median(a[:, 1])) if len(a) else None, gu_med=float(np.median(a[:, 2])) if len(a) else None)
+                            gw_med=float(np.median(a[:, 1])) if len(a) else None, gu_med=float(np.median(a[:, 2])) if len(a) else None,
+                            neff_med=float(np.median(a[:, 3])) if len(a) else None, since_med=float(np.median(a[:, 4])) if len(a) else None,
+                            since_lt200=float(np.mean(a[:, 4] < 200)) if len(a) else None)
         out.append(row)
     return out
 
@@ -88,15 +92,17 @@ def main():
     L = ["# (し1) の A の重複は、なぜ「別のパターン」と判定されたか（読み方は事前に決めていない）", "",
          "A に当たる係数をしまう瞬間を、「A に当たる保存先があるのに新しくしまった（重複のもと）」と「寄せた」に分けた。",
          "差÷σ² は当てはまりの差 (u − w)ᵀR_L(u − w) をそのセルの σ² で割ったもの（6 以下なら寄せる）。w・u の A との差は、きれいな波の上の1歩先の予測の差（0.02 以下で A に当たる）", "",
-         "| 始め方 | 評価の乱数 | 組 | 重複のもと：回数 | 差÷σ²（中央値／90%点） | w・u の A との差（中央値） | 寄せた：回数 | 差÷σ²（中央値／90%点） | w・u の A との差（中央値） |",
-         "|---|---:|---|---:|---|---|---:|---|---|"]
+         "材料＝長い痕跡の有効な数（足し算の重みの和。100ステップ以上静かなら約63〜100）。届いてから＝その列に新しい波が届いてからのステップ数（負なら、まだ前のパターン）。200未満＝その割合", "",
+         "| 始め方 | 評価の乱数 | 組 | 重複のもと：回数 | 差÷σ²（中央値／90%点） | w・u の A との差（中央値） | 材料（中央値） | 届いてから（中央値／200未満） | 寄せた：回数 | 差÷σ²（中央値／90%点） | w・u の A との差（中央値） | 材料（中央値） | 届いてから（中央値／200未満） |",
+         "|---|---:|---|---:|---|---|---:|---|---:|---|---|---:|---|"]
     f = lambda x: "—" if x is None else f"{x:.3g}"
     for start in ("adult", "grow"):
         for seed in (300, 301):
             for r in run(wcfg, seed, start, args.device):
                 dd, mm = r["dup"], r["merge"]
                 L.append(f"| {'大人' if start == 'adult' else '育ち'} | {seed} | {r['group']} | {dd['n']} | {f(dd['r_med'])}／{f(dd['r_q90'])} | {f(dd['gw_med'])}・{f(dd['gu_med'])} | "
-                         f"{mm['n']} | {f(mm['r_med'])}／{f(mm['r_q90'])} | {f(mm['gw_med'])}・{f(mm['gu_med'])} |")
+                         f"{f(dd['neff_med'])} | {f(dd['since_med'])}／{f(dd['since_lt200'])} | "
+                         f"{mm['n']} | {f(mm['r_med'])}／{f(mm['r_q90'])} | {f(mm['gw_med'])}・{f(mm['gu_med'])} | {f(mm['neff_med'])} | {f(mm['since_med'])}／{f(mm['since_lt200'])} |")
             print(start, seed, "done", flush=True)
     out = SC.ROOT / "step3_memory" / "runs" / "precheck_storage" / "why.md"
     out.write_text("\n".join(L) + "\n", encoding="utf-8")
