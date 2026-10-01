@@ -16,6 +16,11 @@ Step 2 の凍結したレシピ（DNA なしの B。git のタグ step2-recipe-f
   k ← k ＋ 1
 驚きの発火と睡眠の書き込みは同じステップに重ならない（驚いて発火したら q = 0 なので）。
 
+タイミングのずれ（原則2 の試験。封印テストでは記録だけ。DESIGN.md 10.3）：step(jitter_p=p) なら、引き金を引いたセルの発火が確率 p でちょうど1ステップ遅れる。
+遅れたセルは濃度を0 に戻さず、次のステップで濃度に関係なく必ず発火する（持ち越しをさらに遅らせることはない。Step 1 と同じ形）。
+p=0 で持ち越しもないときは、Step 2 の凍結したレシピの step をそのまま呼ぶ。p>0 のときだけ、同じ式を書き写した core_step_jit を使う
+（p=0 なら Step 2 の step と1ビットも同じことをテストで確かめる）。
+
 記憶の段（12章。比べる物差しは D(u) = (u − w)ᵀR(u − w)、基準は 6σ²。σ² はそのセルの v（下限つき））：
   毎ステップ：保存先ごとに、最後に使ってからのステップ数を1つ足す（安い数え）
   思い出し（(お1)、驚いて発火したとき）：最近の痕跡 R・r の最小二乗の解 w_ls に、いちばん合う保存先 u*（D が最小）が D(u*) ≤ 6σ² なら、
@@ -37,7 +42,7 @@ import torch
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "step2_attention"))
 
-from model import AttentionCell, Physio2, State2, ahead, ls_solution  # noqa: E402
+from model import HIDDEN_CH, AttentionCell, Physio2, State2, ahead, ls_solution  # noqa: E402
 from model import init_state as init_state2  # noqa: E402
 
 
@@ -62,6 +67,7 @@ class State3(NamedTuple):
     mslot: torch.Tensor     # (B,K,3,H,W) 保存先の係数（記憶の段だけが使う）
     mn: torch.Tensor        # (B,K,H,W) 保存先ごとの、何回しまったか（0 は空き）
     mage: torch.Tensor      # (B,K,H,W) 保存先ごとの、最後に使ってからのステップ数
+    pend: torch.Tensor      # (B,1,H,W) bool。タイミングのずれで遅れた発火が、次のステップに持ち越されているか
 
 
 def wrap(core: State2) -> State3:
@@ -69,7 +75,8 @@ def wrap(core: State2) -> State3:
     B, _, H, W = core.w.shape
     K = Physio3.k_slots
     z = lambda c: torch.zeros(B, c, H, W, device=core.w.device)
-    return State3(core, z(6), z(3), z(1), z(1), torch.zeros(B, K, 3, H, W, device=core.w.device), z(K), z(K))
+    return State3(core, z(6), z(3), z(1), z(1), torch.zeros(B, K, 3, H, W, device=core.w.device), z(K), z(K),
+                  torch.zeros(B, 1, H, W, dtype=torch.bool, device=core.w.device))
 
 
 def init_state(n, h, w, device="cpu") -> State3:
@@ -145,6 +152,57 @@ def rewrite(core: State2, w_new, mask) -> State2:
     return core._replace(w=w, mu=mu, buf=buf)
 
 
+def core_step_jit(s: State2, sense, pend, jitter_p, gen):
+    """床の1ステップ（Step 2 の AttentionCell(dna=False).step、元の設計の引き金）を書き写し、タイミングのずれを足したもの。
+    戻り値：新しい床の状態、記録（Step 2 と同じ名前）、次のステップへの持ち越し"""
+    P = Physio2
+    f1, f2 = s.hist[:, 0:1], s.hist[:, 1:2]
+    e = sense - s.mu
+    e_d = e.detach()
+    sigma = torch.clamp(s.v, min=P.sigma_min ** 2).sqrt()
+    z2 = e_d ** 2 / sigma ** 2
+    k = s.buf.shape[1]
+    ek = (sense - s.buf[:, 0:1]).detach()
+    sigk = torch.clamp(s.vk, min=P.sigma_min ** 2).sqrt()
+    zk2 = ek ** 2 / sigk ** 2
+    zt = z2 if k == 1 else zk2
+    one = torch.ones_like(f1)
+    R = P.gamma_R * s.R + torch.cat([f1 * f1, f1 * f2, f1 * one, f2 * f2, f2 * one, one], 1)
+    r = P.gamma_R * s.r + sense * torch.cat([f1, f2, one], 1)
+    c = P.c_decay * s.c + (1 - P.c_decay) * zt
+    a = 1.0 / P.sigma_window
+    v = (1 - a) * s.v + a * e_d ** 2
+    vk = (1 - a) * s.vk + a * ek ** 2
+    can = s.ref <= 0
+    trig = (c > P.theta) & can
+    due = ((c > P.theta) | pend) & can                   # しきい値を超えた、または前のステップから持ち越した発火
+    if jitter_p > 0:
+        late = (torch.rand(due.shape, device=due.device, generator=gen) < jitter_p) & ~pend
+        hard = due & ~late
+        pend_new = due & late
+    else:
+        hard = due
+        pend_new = torch.zeros_like(due)
+    fire = hard.float()
+    write = hard
+    c = torch.where(hard, torch.zeros_like(c), c)
+    ref = torch.where(hard, torch.full_like(s.ref, P.refractory), (s.ref - 1).clamp(min=0))
+    hist = torch.cat([sense, s.hist[:, :-1]], 1)
+    w_ls = ls_solution(R, r, P.eps).detach()
+    diff = w_ls - s.w
+    B, _, H, W = diff.shape
+    one_g = torch.ones(B, 1, H, W, device=diff.device)               # DNA なしの門：η=1、g=1、Δw=0、Δh=0（Step 2 の gates と同じ）
+    eta, g, dw, dh = one_g, one_g, torch.zeros_like(diff), torch.zeros(B, HIDDEN_CH, H, W, device=diff.device)
+    wf = fire
+    w_new = s.w + wf * (g * s.w + torch.tanh(eta * diff + dw) - s.w)
+    h_new = s.h + wf * (P.h_decay * s.h + torch.tanh(dh) - s.h)
+    mu = (w_new[:, 0:1] * sense + w_new[:, 1:2] * s.hist[:, 0:1] + w_new[:, 2:3])
+    buf = torch.cat([s.buf[:, 1:], ahead(w_new.detach(), sense, s.hist[:, 0:1], k)], 1)
+    new = State2(w_new, R, r, v, c, ref, h_new, hist, mu, s.d, s.win, buf, vk)
+    rec = dict(e=e, sigma=sigma, z2=z2, zk2=zk2, ek=ek, trig=trig, write=write, fire=fire, hard=hard, eta=eta, g=g)
+    return new, rec, pend_new
+
+
 class Cell3:
     """Step 3 のセル。sleep=False で床、sleep=True で眠る段、sleep=True・memory=True で記憶の段"""
 
@@ -156,10 +214,15 @@ class Cell3:
         self.core = AttentionCell(dna=False).to(device)
 
     @torch.no_grad()
-    def step(self, s: State3, sense):
-        """1ステップ進める。戻り値：新しい状態と記録（床の記録に、surprise＝驚きの発火、sleep＝睡眠の書き込み を足したもの）"""
+    def step(self, s: State3, sense, jitter_p=0.0, gen=None):
+        """1ステップ進める。戻り値：新しい状態と記録（床の記録に、surprise＝驚きの発火、sleep＝睡眠の書き込み、記憶の段の記録を足したもの）。
+        jitter_p>0 なら、タイミングのずれ（発火が確率 jitter_p で1ステップ遅れる。gen はずれ専用の乱数）"""
         P = Physio2
-        core, rec = self.core.step(s.core, sense, policy={"kind": "trigger"})
+        if jitter_p == 0 and not bool(s.pend.any()):
+            core, rec = self.core.step(s.core, sense, policy={"kind": "trigger"})
+            pend = torch.zeros_like(s.pend)
+        else:
+            core, rec, pend = core_step_jit(s.core, sense, s.pend, jitter_p, gen)
         fired = rec["hard"]
         RL, rL, q, k = s.RL, s.rL, s.q, s.k
         sleep_m = torch.zeros_like(fired)
@@ -211,4 +274,4 @@ class Cell3:
                 mslot, mn, mage, mg, nw, ev = store(mslot, mn, mage, sl & settled, core.w, RL, sig2s)
                 merged, stored_new, evicted = mg.unsqueeze(1), nw.unsqueeze(1), ev.unsqueeze(1)
         rec = dict(rec, surprise=fired, sleep=sleep_m, recall=recalled, compared=compared, merged=merged, stored_new=stored_new, evicted=evicted)
-        return State3(core, RL, rL, q, k, mslot, mn, mage), rec
+        return State3(core, RL, rL, q, k, mslot, mn, mage, pend), rec

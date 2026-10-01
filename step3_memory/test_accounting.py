@@ -331,6 +331,71 @@ def test_memory_deterministic():
     for a, b in zip(s1[-1].core, s2[-1].core):
         assert torch.equal(a, b)
 
+# ---------------------------------------------------------------------------------------------
+# タイミングのずれ（原則2 の試験。2026-10-02 に足した。封印テストでは記録だけ）
+# ---------------------------------------------------------------------------------------------
+def test_jit_step_without_jitter_is_the_frozen_recipe():
+    """ずれを足すために書き写した床の1ステップ（core_step_jit）は、ずれ0・持ち越しなしなら、Step 2 の凍結したレシピの step と状態のすべてが1ビットも同じ"""
+    cfg, g, ws = world(seed=11)
+    cfg2, g2, ws2 = world(seed=11)
+    ref = AttentionCell(dna=False)
+    a, b = init_state2(2, H, Wd), init_state2(2, H, Wd)
+    pend = torch.zeros(2, 1, H, Wd, dtype=torch.bool)
+    with torch.no_grad():
+        for t in range(600):
+            if t == 299:
+                ws, ws2 = W.set_period(ws, 24.0), W.set_period(ws2, 24.0)
+            a, ra, pend = C.core_step_jit(a, W.sense(ws, cfg, g), pend, 0.0, None)
+            b, rb = ref.step(b, W.sense(ws2, cfg2, g2), policy={"kind": "trigger"})
+            assert torch.equal(ra["hard"], rb["hard"])
+            ws, ws2 = W.advance(ws), W.advance(ws2)
+    for x, y in zip(a, b):
+        assert torch.equal(x, y)
+    assert not bool(pend.any())
+
+
+def test_jitter_delays_by_exactly_one_step():
+    """ずれ1（必ず遅れる）なら、発火はすべて前のステップの持ち越しで、持ち越されたセルは次のステップで必ず発火する（さらには遅れない）"""
+    cell = C.Cell3(sleep=False)
+    cfg, g, ws = world(P=12.0, seed=12)
+    gj = torch.Generator().manual_seed(5)
+    st = C.init_state(2, H, Wd)
+    n_fire = 0
+    for t in range(400):
+        if t == 199:
+            ws = W.set_period(ws, 24.0)
+        prev = st
+        st, rec = cell.step(st, W.sense(ws, cfg, g), jitter_p=1.0, gen=gj)
+        assert torch.equal(rec["hard"], prev.pend)             # 発火＝前のステップの持ち越しだけ
+        assert not bool((st.pend & prev.pend).any())           # 持ち越しはさらに遅れない
+        n_fire += int(rec["hard"].sum())
+        ws = W.advance(ws)
+    assert n_fire > 0
+
+
+def test_jitter_is_reproducible_with_its_own_generator():
+    """ずれは専用の乱数から引く：同じ乱数なら2回回して1ビットも同じ。ずれ0 のときとは違う発火になる"""
+    def go(p):
+        cell = C.Cell3(sleep=True, memory=True)
+        cfg, g, ws = world(P=12.0, seed=13)
+        gj = torch.Generator().manual_seed(9)
+        st = C.init_state(2, H, Wd)
+        fires = []
+        for t in range(900):
+            if t == 449:
+                ws = W.set_period(ws, 20.0)
+            st, rec = cell.step(st, W.sense(ws, cfg, g), jitter_p=p, gen=gj)
+            fires.append(rec["hard"].clone())
+            ws = W.advance(ws)
+        return st, torch.stack(fires)
+    s1, f1 = go(0.1)
+    s2, f2 = go(0.1)
+    s0, f0 = go(0.0)
+    assert torch.equal(f1, f2)
+    for a, b in zip(s1.core, s2.core):
+        assert torch.equal(a, b)
+    assert not torch.equal(f1, f0)
+
 if __name__ == "__main__":
     tests = [v for k, v in dict(globals()).items() if k.startswith("test_")]
     for t in tests:

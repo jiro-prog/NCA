@@ -90,8 +90,9 @@ def adult_core(wcfg, P1, g, dev):
 
 
 @torch.no_grad()
-def run(cell, wcfg, seed, start, plan=Plan(), dev="cpu", ceiling=False, sealed=False):
-    """1つの世界の実現の束（組×n_per）を、並びの最後まで回して、切り替えごと・セルごとの記録を返す"""
+def run(cell, wcfg, seed, start, plan=Plan(), dev="cpu", ceiling=False, sealed=False, jitter_p=0.0):
+    """1つの世界の実現の束（組×n_per）を、並びの最後まで回して、切り替えごと・セルごとの記録を返す。
+    jitter_p>0 なら、タイミングのずれ（原則2）を入れる。ずれの乱数は、世界の乱数と分けて評価の乱数＋9 から作る"""
     if not sealed:
         check_dev_seed(seed, "評価の乱数")
     B = plan.n_per * len(plan.groups)
@@ -101,6 +102,7 @@ def run(cell, wcfg, seed, start, plan=Plan(), dev="cpu", ceiling=False, sealed=F
     T = len(plan.seq) * plan.dwell
     n_sw = len(plan.seq) - 1
     g = torch.Generator(device=dev).manual_seed(seed)
+    g_jit = torch.Generator(device=dev).manual_seed(seed + 9) if jitter_p > 0 else None
     if start == "adult":
         core, ws = adult_core(wcfg, sched[0], g, dev)
         st = C.wrap(core)
@@ -151,7 +153,7 @@ def run(cell, wcfg, seed, start, plan=Plan(), dev="cpu", ceiling=False, sealed=F
             num = (core.mu - m_new) ** 2
             den = (m_old - m_new) ** 2
         prev = st
-        st, rec = cell.step(st, sense)
+        st, rec = cell.step(st, sense, jitter_p=jitter_p, gen=g_jit)
         fired = rec["surprise"]
         if memory:
             f0 = fired[:, 0]
