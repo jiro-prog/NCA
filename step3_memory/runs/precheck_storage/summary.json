@@ -1,0 +1,466 @@
+{
+ "adult|300": {
+  "し1": [
+   {
+    "group": "12/24/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7670,
+     10
+    ],
+    "ever_full": 10,
+    "evictions": 0,
+    "new": 23050,
+    "merges": 39795,
+    "junk": 6,
+    "dup": 4,
+    "occupied": 23050,
+    "n_cells": 7680
+   },
+   {
+    "group": "12/20/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7536,
+     144
+    ],
+    "ever_full": 144,
+    "evictions": 0,
+    "new": 23184,
+    "merges": 39863,
+    "junk": 2,
+    "dup": 143,
+    "occupied": 23184,
+    "n_cells": 7680
+   }
+  ],
+  "し2": [
+   {
+    "group": "12/24/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7671,
+     9
+    ],
+    "ever_full": 9,
+    "evictions": 0,
+    "new": 23049,
+    "merges": 127694,
+    "junk": 7,
+    "dup": 2,
+    "occupied": 23049,
+    "n_cells": 7680
+   },
+   {
+    "group": "12/20/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7537,
+     143
+    ],
+    "ever_full": 143,
+    "evictions": 0,
+    "new": 23183,
+    "merges": 120826,
+    "junk": 2,
+    "dup": 142,
+    "occupied": 23183,
+    "n_cells": 7680
+   }
+  ],
+  "し3": [
+   {
+    "group": "12/24/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7669,
+     11
+    ],
+    "ever_full": 11,
+    "evictions": 0,
+    "new": 23051,
+    "merges": 57172,
+    "junk": 8,
+    "dup": 3,
+    "occupied": 23051,
+    "n_cells": 7680
+   },
+   {
+    "group": "12/20/8",
+    "used_hist": [
+     0,
+     0,
+     1,
+     7557,
+     122
+    ],
+    "ever_full": 122,
+    "evictions": 0,
+    "new": 23161,
+    "merges": 50121,
+    "junk": 2,
+    "dup": 121,
+    "occupied": 23161,
+    "n_cells": 7680
+   }
+  ]
+ },
+ "adult|301": {
+  "し1": [
+   {
+    "group": "12/24/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7675,
+     5
+    ],
+    "ever_full": 5,
+    "evictions": 0,
+    "new": 23045,
+    "merges": 39789,
+    "junk": 3,
+    "dup": 2,
+    "occupied": 23045,
+    "n_cells": 7680
+   },
+   {
+    "group": "12/20/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7552,
+     128
+    ],
+    "ever_full": 128,
+    "evictions": 0,
+    "new": 23168,
+    "merges": 39857,
+    "junk": 2,
+    "dup": 127,
+    "occupied": 23168,
+    "n_cells": 7680
+   }
+  ],
+  "し2": [
+   {
+    "group": "12/24/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7671,
+     9
+    ],
+    "ever_full": 9,
+    "evictions": 0,
+    "new": 23049,
+    "merges": 126994,
+    "junk": 7,
+    "dup": 2,
+    "occupied": 23049,
+    "n_cells": 7680
+   },
+   {
+    "group": "12/20/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7549,
+     131
+    ],
+    "ever_full": 131,
+    "evictions": 0,
+    "new": 23171,
+    "merges": 120941,
+    "junk": 2,
+    "dup": 130,
+    "occupied": 23171,
+    "n_cells": 7680
+   }
+  ],
+  "し3": [
+   {
+    "group": "12/24/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7669,
+     11
+    ],
+    "ever_full": 11,
+    "evictions": 0,
+    "new": 23051,
+    "merges": 56481,
+    "junk": 9,
+    "dup": 2,
+    "occupied": 23051,
+    "n_cells": 7680
+   },
+   {
+    "group": "12/20/8",
+    "used_hist": [
+     0,
+     0,
+     1,
+     7554,
+     125
+    ],
+    "ever_full": 125,
+    "evictions": 0,
+    "new": 23164,
+    "merges": 50243,
+    "junk": 2,
+    "dup": 124,
+    "occupied": 23164,
+    "n_cells": 7680
+   }
+  ]
+ },
+ "grow|300": {
+  "し1": [
+   {
+    "group": "12/24/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7670,
+     10
+    ],
+    "ever_full": 10,
+    "evictions": 0,
+    "new": 23050,
+    "merges": 38791,
+    "junk": 5,
+    "dup": 5,
+    "occupied": 23050,
+    "n_cells": 7680
+   },
+   {
+    "group": "12/20/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7492,
+     188
+    ],
+    "ever_full": 188,
+    "evictions": 0,
+    "new": 23228,
+    "merges": 38780,
+    "junk": 4,
+    "dup": 187,
+    "occupied": 23228,
+    "n_cells": 7680
+   }
+  ],
+  "し2": [
+   {
+    "group": "12/24/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     6395,
+     1285
+    ],
+    "ever_full": 1285,
+    "evictions": 1,
+    "new": 24325,
+    "merges": 127933,
+    "junk": 1172,
+    "dup": 113,
+    "occupied": 24325,
+    "n_cells": 7680
+   },
+   {
+    "group": "12/20/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     6097,
+     1583
+    ],
+    "ever_full": 1583,
+    "evictions": 29,
+    "new": 24623,
+    "merges": 121839,
+    "junk": 1283,
+    "dup": 303,
+    "occupied": 24623,
+    "n_cells": 7680
+   }
+  ],
+  "し3": [
+   {
+    "group": "12/24/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     5204,
+     2476
+    ],
+    "ever_full": 2476,
+    "evictions": 2,
+    "new": 25516,
+    "merges": 57225,
+    "junk": 1839,
+    "dup": 637,
+    "occupied": 25516,
+    "n_cells": 7680
+   },
+   {
+    "group": "12/20/8",
+    "used_hist": [
+     0,
+     0,
+     3,
+     5345,
+     2332
+    ],
+    "ever_full": 2332,
+    "evictions": 50,
+    "new": 25369,
+    "merges": 51384,
+    "junk": 1687,
+    "dup": 649,
+    "occupied": 25369,
+    "n_cells": 7680
+   }
+  ]
+ },
+ "grow|301": {
+  "し1": [
+   {
+    "group": "12/24/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7676,
+     4
+    ],
+    "ever_full": 4,
+    "evictions": 0,
+    "new": 23044,
+    "merges": 38777,
+    "junk": 0,
+    "dup": 4,
+    "occupied": 23044,
+    "n_cells": 7680
+   },
+   {
+    "group": "12/20/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     7529,
+     151
+    ],
+    "ever_full": 151,
+    "evictions": 0,
+    "new": 23191,
+    "merges": 38800,
+    "junk": 2,
+    "dup": 151,
+    "occupied": 23191,
+    "n_cells": 7680
+   }
+  ],
+  "し2": [
+   {
+    "group": "12/24/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     5365,
+     2315
+    ],
+    "ever_full": 2315,
+    "evictions": 1,
+    "new": 25355,
+    "merges": 126801,
+    "junk": 2228,
+    "dup": 87,
+    "occupied": 25355,
+    "n_cells": 7680
+   },
+   {
+    "group": "12/20/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     6380,
+     1300
+    ],
+    "ever_full": 1300,
+    "evictions": 32,
+    "new": 24340,
+    "merges": 121516,
+    "junk": 1008,
+    "dup": 294,
+    "occupied": 24340,
+    "n_cells": 7680
+   }
+  ],
+  "し3": [
+   {
+    "group": "12/24/8",
+    "used_hist": [
+     0,
+     0,
+     0,
+     4763,
+     2917
+    ],
+    "ever_full": 2917,
+    "evictions": 7,
+    "new": 25957,
+    "merges": 56696,
+    "junk": 2620,
+    "dup": 298,
+    "occupied": 25957,
+    "n_cells": 7680
+   },
+   {
+    "group": "12/20/8",
+    "used_hist": [
+     0,
+     0,
+     2,
+     5752,
+     1926
+    ],
+    "ever_full": 1926,
+    "evictions": 31,
+    "new": 24964,
+    "merges": 51222,
+    "junk": 1434,
+    "dup": 495,
+    "occupied": 24964,
+    "n_cells": 7680
+   }
+  ]
+ }
+}
