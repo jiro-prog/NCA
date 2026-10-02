@@ -170,6 +170,68 @@ def test_deterministic_no_dice_at_runtime():
     assert torch.equal(s1[-1].RL, s2[-1].RL) and torch.equal(s1[-1].q, s2[-1].q) and torch.equal(s1[-1].k, s2[-1].k)
 
 
+DICE = ("rand", "randn", "randint", "rand_like", "randn_like", "randint_like", "randperm", "bernoulli", "multinomial", "normal", "poisson")
+DICE_T = ("uniform_", "normal_", "bernoulli_", "random_", "exponential_", "geometric_", "log_normal_", "cauchy_")
+
+
+def test_no_dice_without_jitter():
+    """ずれを切った通常の条件（jitter_p=0）では、床・眠る段・記憶の段のどれも、セルの1ステップの中で乱数の関数を一度も呼ばない（原則3。2026-10-02、そうの確認で足した）。
+    セルの step を呼ぶ間だけ、torch の乱数の関数を「呼ばれたら止める」ものに差し替え、ずれの入り口（core_step_jit）も止める。全体の乱数の状態も変わらない。
+    世界のノイズ（環境のゆらぎ）は世界の乱数から、セルの外で作る。驚きの発火・睡眠の書き込み・しまう・思い出すが、この筋書きの中で実際に起きることも確かめる"""
+    calls = []
+
+    def trap(name):
+        def f(*a, **k):
+            calls.append(name)
+            raise AssertionError(f"実行時に乱数 {name} を呼んだ")
+        return f
+
+    def trapped_step(cell, st, sense, targets, **kw):
+        saved = [(obj, n, obj.__dict__.get(n)) for obj, n in targets]
+        try:
+            for obj, n, _ in saved:
+                setattr(obj, n, trap(n))
+            return cell.step(st, sense, **kw)
+        finally:
+            for obj, n, f in saved:
+                if f is None:
+                    delattr(obj, n)
+                else:
+                    setattr(obj, n, f)
+
+    dice = [(torch, n) for n in DICE] + [(torch.Tensor, n) for n in DICE_T]
+    for sleep, memory in ((False, False), (True, False), (True, True)):
+        cell = C.Cell3(sleep=sleep, memory=memory)
+        cfg, g, ws = world(P=12.0, seed=8)
+        st = C.init_state(2, H, Wd)
+        n_fire = n_sleep = n_store = n_recall = 0
+        for t in range(2400):
+            if t % 600 == 599:
+                ws = W.set_period(ws, [24.0, 12.0, 24.0, 12.0][(t // 600) % 4])
+            sense = W.sense(ws, cfg, g)
+            rng0 = torch.get_rng_state()
+            st, rec = trapped_step(cell, st, sense, dice + [(C, "core_step_jit")])
+            assert torch.equal(torch.get_rng_state(), rng0)
+            n_fire += int(rec["surprise"].sum())
+            n_sleep += int(rec["sleep"].sum())
+            n_store += int(rec["merged"].sum() + rec["stored_new"].sum())
+            n_recall += int(rec["recall"].sum())
+            ws = W.advance(ws)
+        assert not calls, calls
+        assert n_fire > 0
+        assert (n_sleep > 0) == sleep
+        assert (n_store > 0 and n_recall > 0) == memory
+    # 対照：ずれを入れると、同じ罠がずれのサイコロ（torch.rand）を捕まえる（罠が空振りしていないことの確かめ）
+    cell = C.Cell3(sleep=True, memory=True)
+    cfg, g, ws = world(P=12.0, seed=8)
+    sense = W.sense(ws, cfg, g)
+    try:
+        trapped_step(cell, C.init_state(2, H, Wd), sense, dice, jitter_p=0.1, gen=torch.Generator().manual_seed(0))
+    except AssertionError:
+        pass
+    assert calls == ["rand"], calls
+
+
 def test_memory_numbers():
     """メモリの会計（1セルあたりの状態の数）：床25、眠る段36（DESIGN.md 10.4）"""
     assert C.memory_numbers(sleep=False) == 25

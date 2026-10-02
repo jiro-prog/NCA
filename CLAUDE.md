@@ -457,7 +457,7 @@
   セルの驚きの信号は `Physio2.surprise_ahead`（1 はこれまでどおり、B は4）。`train.py` の `--ahead`、`--sigma-min`、`--visible-only`、`--pairs`
 - `SUMMARY.md`：Step 1・Step 2 の中間まとめ（原理の発見、パッチのまま残っているもの、わかっていないこと。2026-09-29）
 - `step3_memory/`：記憶と忘却。`DESIGN.md`（設計書。チェックリストの順、10章で残りの項目を順に決めている）、`precheck/`（実装前の模擬。Step 2 のセルを書き換えずに呼び、発火したときに書くものだけを外から差し替える）：`headroom.py`（記憶が役に立つ余地）、`diagnose_floor.py`・`diagnose_floor_cells.py`（床の慣れの原因）、`sleep.py`（睡眠の段の前の模擬：① σ₄ だけ・② 係数だけ・③ 両方）、`absorb_check.py`・`sleep_followup.py`・`periodic_counts.py`（見逃したセルが戻るか）、`sleep_timing.py`・`timing_by_switch.py`（いつ寝るか：(い)(ろ)(は)）。`storage_check.py`・`storage_detail.py`・`storage_why.py`・`storage_settled.py`（しまうタイミングの診断）、`recall.py`・`recall_detail.py`（思い出し方の模擬）。
-  **`cell.py`（Step 3 のセル `Cell3`：Step 2 の凍結したレシピを書き換えずに包み、床・眠る段・記憶の段。タイミングのずれも）、`evaluate.py`（評価のプロトコルと見張りの記録。開発では封印の乱数と周期を拒む）、`check_cell.py`（本物のセルと模擬の回帰の確かめ：状態まで1ビットも同じ）、`test_accounting.py`（会計のテスト24件）、
+  **`cell.py`（Step 3 のセル `Cell3`：Step 2 の凍結したレシピを書き換えずに包み、床・眠る段・記憶の段。タイミングのずれも）、`evaluate.py`（評価のプロトコルと見張りの記録。開発では封印の乱数と周期を拒む）、`check_cell.py`（本物のセルと模擬の回帰の確かめ：状態まで1ビットも同じ）、`test_accounting.py`（会計のテスト25件。ずれを切るとセルが乱数の関数を一度も呼ばないことも直接確かめる）、
   `sealed_select3.py`（封印の周期を式だけで選ぶ。一度だけ）、`sealed3.py`（封印の定義）、`sealed_test3.py`（封印テスト。一度だけ。試運転は `--dry 1`）**。モジュール名は Step 2 の model.py・protocol.py とぶつからないように変えてある。Step 3 の開発の評価の乱数は300番台、封印は9301〜9304
 - 各 run の出力は `*/runs/<名前>/`。GIFはgitに入れない（`--eval-only` で同じものを作り直せる）
 
