@@ -36,6 +36,7 @@ from model import N_HIST, Physio2, ahead, irreducible, nll  # noqa: E402
 from model import init_state as init_state2  # noqa: E402
 from protocol import exact_w, noise_gain  # noqa: E402
 from sealed import check_dev_seed  # noqa: E402
+from sealed3 import check_dev_groups  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -95,6 +96,7 @@ def run(cell, wcfg, seed, start, plan=Plan(), dev="cpu", ceiling=False, sealed=F
     jitter_p>0 なら、タイミングのずれ（原則2）を入れる。ずれの乱数は、世界の乱数と分けて評価の乱数＋9 から作る"""
     if not sealed:
         check_dev_seed(seed, "評価の乱数")
+        check_dev_groups(plan.groups)
     B = plan.n_per * len(plan.groups)
     S_ = wcfg.size
     per = {name: torch.tensor([grp[i] for grp in plan.groups for _ in range(plan.n_per)], dtype=torch.float64) for i, name in enumerate("ABC")}

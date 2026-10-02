@@ -186,6 +186,17 @@ def test_dev_code_refuses_sealed_seeds():
     raise AssertionError("封印の乱数が拒まれなかった")
 
 
+def test_dev_code_refuses_sealed_periods():
+    """開発の評価は封印の周期（13・48・7・30）を拒む（2026-10-02 に足した。DESIGN.md 10.3 のコードの守り）"""
+    import evaluate as E
+    for grp in ((13.0, 48.0, 7.0), (12.0, 30.0, 8.0)):
+        try:
+            E.run(C.Cell3(sleep=True), W.WorldConfig(size=H, zone=H), 300, "grow", plan=E.Plan(groups=(grp,), n_per=1, dwell=20, window=5, end=(3, 5)))
+        except ValueError:
+            continue
+        raise AssertionError(f"封印の周期 {grp} が拒まれなかった")
+
+
 # ---------------------------------------------------------------------------------------------
 # 記憶の段（2026-10-02 に足した。DESIGN.md 12章）
 # ---------------------------------------------------------------------------------------------
