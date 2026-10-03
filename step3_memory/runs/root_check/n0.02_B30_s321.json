@@ -1,0 +1,55 @@
+{
+ "noise": 0.02,
+ "group": [
+  12.0,
+  30.0,
+  8.0
+ ],
+ "seed": 321,
+ "n_per": 8,
+ "dwell": 1800,
+ "window": 300,
+ "patterns": {
+  "A": {
+   "period": 12.0,
+   "v4": 24.494897427831784,
+   "recalls": 38107,
+   "harmful": 80,
+   "noop": 13796,
+   "ok": 24231,
+   "quiet_fires": 66,
+   "quiet_cellsteps": 35011584,
+   "restless": 0.00018850903746599982
+  },
+  "B": {
+   "period": 30.0,
+   "v4": 11.50424953903803,
+   "recalls": 81007,
+   "harmful": 256,
+   "noop": 27106,
+   "ok": 53645,
+   "quiet_fires": 20256,
+   "quiet_cellsteps": 34108416,
+   "restless": 0.05938710258488697
+  },
+  "C": {
+   "period": 8.0,
+   "v4": 28.284271247461906,
+   "recalls": 6426,
+   "harmful": 245,
+   "noop": 6174,
+   "ok": 7,
+   "quiet_fires": 7,
+   "quiet_cellsteps": 11520000,
+   "restless": 6.076388888888889e-05
+  }
+ },
+ "totals": {
+  "mis_change": 581,
+  "mis_noop": 47076,
+  "rec_ok": 77883,
+  "fires": 188644,
+  "recalls": 125540
+ },
+ "elapsed": 139.68234252929688
+}
