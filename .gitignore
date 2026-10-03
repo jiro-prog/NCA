@@ -4,6 +4,8 @@ __pycache__/
 /*.log
 # 評価のGIFは --eval-only で同じものを作り直せるので、gitには入れない
 */runs/**/*.gif
+# 説明用の動画も、スクリプトで同じものを作り直せるので入れない
+*/runs/**/*.mp4
 # 試運転の出力は入れない
 */runs/smoke*/
 /queue/
