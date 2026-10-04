@@ -1,0 +1,151 @@
+{
+ "noise": 0.02,
+ "size": 40,
+ "groups": [
+  [
+   13.0,
+   48.0,
+   7.0
+  ],
+  [
+   13.0,
+   30.0,
+   7.0
+  ]
+ ],
+ "seed": 9304,
+ "dwell": 600,
+ "scope": "all",
+ "counts": [
+  {
+   "recalls": 269866,
+   "old": {
+    "ok": 85229,
+    "noop": 172777,
+    "harmful": 11860
+   },
+   "new": {
+    "2/3": {
+     "ok": 214057,
+     "noop": 54028,
+     "harmful": 1184,
+     "mixed": 597
+    },
+    "1/2": {
+     "ok": 214057,
+     "noop": 54028,
+     "harmful": 1184,
+     "mixed": 597
+    },
+    "3/4": {
+     "ok": 213579,
+     "noop": 53716,
+     "harmful": 1178,
+     "mixed": 1393
+    }
+   },
+   "cross": {
+    "ok->ok": 84911,
+    "ok->noop": 19,
+    "ok->harmful": 24,
+    "ok->mixed": 275,
+    "noop->ok": 118466,
+    "noop->noop": 54009,
+    "noop->harmful": 0,
+    "noop->mixed": 302,
+    "harmful->ok": 10680,
+    "harmful->noop": 0,
+    "harmful->harmful": 1160,
+    "harmful->mixed": 20
+   },
+   "pair": {
+    "A<-A": 34664,
+    "A<-B": 11564,
+    "A<-C": 3258,
+    "A<-X": 264,
+    "B<-A": 34736,
+    "B<-B": 179391,
+    "B<-C": 0,
+    "B<-X": 333,
+    "C<-A": 5654,
+    "C<-B": 0,
+    "C<-C": 2,
+    "C<-X": 0
+   }
+  },
+  {
+   "recalls": 153600,
+   "old": {
+    "ok": 98224,
+    "noop": 54431,
+    "harmful": 945
+   },
+   "new": {
+    "2/3": {
+     "ok": 101274,
+     "noop": 51493,
+     "harmful": 661,
+     "mixed": 172
+    },
+    "1/2": {
+     "ok": 101274,
+     "noop": 51493,
+     "harmful": 661,
+     "mixed": 172
+    },
+    "3/4": {
+     "ok": 101095,
+     "noop": 51191,
+     "harmful": 653,
+     "mixed": 661
+    }
+   },
+   "cross": {
+    "ok->ok": 98121,
+    "ok->noop": 4,
+    "ok->harmful": 38,
+    "ok->mixed": 61,
+    "noop->ok": 2832,
+    "noop->noop": 51489,
+    "noop->harmful": 0,
+    "noop->mixed": 110,
+    "harmful->ok": 321,
+    "harmful->noop": 0,
+    "harmful->harmful": 623,
+    "harmful->mixed": 1
+   },
+   "pair": {
+    "A<-A": 30338,
+    "A<-B": 8854,
+    "A<-C": 3271,
+    "A<-X": 61,
+    "B<-A": 37220,
+    "B<-B": 70934,
+    "B<-C": 0,
+    "B<-X": 111,
+    "C<-A": 2809,
+    "C<-B": 0,
+    "C<-C": 2,
+    "C<-X": 0
+   }
+  }
+ ],
+ "old_totals": {
+  "mis_change": 12805,
+  "mis_noop": 227208,
+  "rec_ok": 183453
+ },
+ "mixed_end": [
+  {
+   "occupied": 36812,
+   "mixed": 0
+  },
+  {
+   "occupied": 36867,
+   "mixed": 0
+  }
+ ],
+ "elapsed": 105.27263474464417,
+ "same_as_before": true,
+ "device": "cuda"
+}
