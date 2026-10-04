@@ -1,0 +1,85 @@
+{
+ "noise": 0.025,
+ "size": 32,
+ "groups": [
+  [
+   12.0,
+   48.0,
+   8.0
+  ]
+ ],
+ "seed": 320,
+ "dwell": 1800,
+ "scope": "B",
+ "counts": [
+  {
+   "recalls": 513291,
+   "old": {
+    "ok": 93,
+    "noop": 491372,
+    "harmful": 21826
+   },
+   "new": {
+    "2/3": {
+     "ok": 487665,
+     "noop": 25543,
+     "harmful": 83,
+     "mixed": 0
+    },
+    "1/2": {
+     "ok": 487665,
+     "noop": 25543,
+     "harmful": 83,
+     "mixed": 0
+    },
+    "3/4": {
+     "ok": 487665,
+     "noop": 25543,
+     "harmful": 83,
+     "mixed": 0
+    }
+   },
+   "cross": {
+    "ok->ok": 93,
+    "ok->noop": 0,
+    "ok->harmful": 0,
+    "ok->mixed": 0,
+    "noop->ok": 465829,
+    "noop->noop": 25543,
+    "noop->harmful": 0,
+    "noop->mixed": 0,
+    "harmful->ok": 21743,
+    "harmful->noop": 0,
+    "harmful->harmful": 83,
+    "harmful->mixed": 0
+   },
+   "pair": {
+    "A<-A": 0,
+    "A<-B": 0,
+    "A<-C": 0,
+    "A<-X": 0,
+    "B<-A": 25626,
+    "B<-B": 487665,
+    "B<-C": 0,
+    "B<-X": 0,
+    "C<-A": 0,
+    "C<-B": 0,
+    "C<-C": 0,
+    "C<-X": 0
+   }
+  }
+ ],
+ "old_totals": {
+  "mis_change": 22636,
+  "mis_noop": 514322,
+  "rec_ok": 28571
+ },
+ "mixed_end": [
+  {
+   "occupied": 23041,
+   "mixed": 0
+  }
+ ],
+ "elapsed": 177.56762623786926,
+ "same_as_before": true
+}
